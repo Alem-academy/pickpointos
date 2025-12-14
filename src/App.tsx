@@ -15,6 +15,7 @@ import Applications from "@/pages/hr/Applications";
 import EmployeeProfile from "@/pages/hr/EmployeeProfile";
 import Timesheet from "@/pages/hr/Timesheet";
 import Discipline from "@/pages/hr/Discipline";
+import Employees from "@/pages/hr/Employees";
 import RentPage from "@/pages/finance/Rent";
 
 
@@ -30,6 +31,7 @@ function App() {
             <Route element={<ProtectedRoute allowedRoles={['hr', 'admin']} />}>
               <Route path="/hr" element={<HRDashboard />} />
               <Route path="/hr/applications" element={<Applications />} />
+              <Route path="/hr/employees" element={<Employees />} />
               <Route path="hr/employees/:id" element={<EmployeeProfile />} />
               <Route path="/hr/timesheet" element={<Timesheet />} />
               <Route path="/hr/discipline" element={<Discipline />} />

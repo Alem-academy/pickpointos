@@ -1,13 +1,19 @@
+# Build Stage
 FROM node:20-alpine
 
 WORKDIR /app
 
+# Copy package files first for better caching
 COPY package*.json ./
-RUN npm install --only=production
 
+# Install dependencies
+RUN npm install
+
+# Copy source code
 COPY . .
 
-ENV PORT=8080
+# Expose port (default 8080)
 EXPOSE 8080
 
+# Start command
 CMD ["npm", "start"]
