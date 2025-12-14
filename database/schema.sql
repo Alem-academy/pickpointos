@@ -128,7 +128,9 @@ CREATE TABLE financial_transactions (
     -- Source (e.g., 'wb_report', 'manual_entry', 'payroll_calc')
     source VARCHAR(50) NOT NULL,
     
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    CONSTRAINT unique_financial_transaction UNIQUE (pvz_id, transaction_date, type, source, amount)
 );
 
 -- Indexes for performance
@@ -232,6 +234,16 @@ CREATE TABLE fact_wb_revenues (
     total_revenue DECIMAL(12, 2) NOT NULL,
     wb_commission DECIMAL(12, 2),
     
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Mappings for Excel Import (Used by Parser)
+CREATE TABLE import_mappings (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    mapping JSONB NOT NULL, -- The column mapping config
+    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
