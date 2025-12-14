@@ -1,0 +1,33 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/pvz-parser', './parser']
+
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/pvz-parser']
+
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'pvz-parser'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/pvz-parser'
+      - '--region'
+      - 'europe-west1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'GOOGLE_SHEET_ID=${_GOOGLE_SHEET_ID}'
+      - '--add-cloudsql-instances'
+      - 'gen-lang-client-0534671855:europe-west1:pvz-analytics-db'
+
+images:
+  - 'gcr.io/$PROJECT_ID/pvz-parser'
+
+substitutions:
+  _GOOGLE_SHEET_ID: '1RqrxGhAHJVAPy6-H4O-jCF-Hvu_FtRgqO_3iZ4mxJ0o'
