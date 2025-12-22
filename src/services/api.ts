@@ -41,7 +41,7 @@ export type EmployeeStatus = 'new' | 'review' | 'revision' | 'signing' | 'active
 export interface Document {
     id: string;
     employee_id: string;
-    type: 'contract' | 'order_hiring' | 'order_firing' | 'order_transfer' | 'explanation' | 'other';
+    type: 'contract' | 'order' | 'id_scan' | 'other';
     status: 'draft' | 'sent_to_employee' | 'signed' | 'rejected' | 'archived';
     scan_url?: string;
     created_at: string;
@@ -234,17 +234,27 @@ export const api = {
     },
 
     async calculatePayroll(data: { pvzId: string; month: string }): Promise<PayrollRecord[]> {
-        const res = await axiosInstance.post('/payroll/calculate', data);
+        const res = await axiosInstance.post('/finance/payroll/calculate', data);
         return res.data;
     },
 
     async getPnL(pvzId: string, month: string): Promise<PnLReport> {
-        const res = await axiosInstance.get('/reports/pnl', { params: { pvzId, month } });
+        const res = await axiosInstance.get('/finance/pnl', { params: { pvzId, month } });
         return res.data;
     },
 
     async getAnalyticsDashboard(month?: string): Promise<any> {
         const res = await axiosInstance.get('/analytics/dashboard', { params: { month } });
+        return res.data;
+    },
+
+    async getHRStats(): Promise<any> {
+        const res = await axiosInstance.get('/analytics/hr-stats');
+        return res.data;
+    },
+
+    async getRFStats(): Promise<any> {
+        const res = await axiosInstance.get('/analytics/rf-stats');
         return res.data;
     },
 

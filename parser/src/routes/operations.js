@@ -77,7 +77,7 @@ router.patch('/shifts/:id', async (req, res) => {
         if (type) { sql += `, type = $${paramIdx++}`; params.push(type); }
         if (status) { sql += `, status = $${paramIdx++}`; params.push(status); }
         if (plannedHours !== undefined) { sql += `, planned_hours = $${paramIdx++}`; params.push(plannedHours); }
-        if (factHours !== undefined) { sql += `, fact_hours = $${paramIdx++}`; params.push(factHours); }
+        if (factHours !== undefined) { sql += `, actual_hours = $${paramIdx++}`; params.push(factHours); }
 
         sql += ` WHERE id = $1 RETURNING *`;
 
@@ -187,7 +187,7 @@ router.get('/timesheets', async (req, res) => {
 
         let sql = `
             SELECT 
-                s.id, s.employee_id, s.pvz_id, s.date, s.type, s.status, s.planned_hours, s.fact_hours,
+                s.id, s.employee_id, s.pvz_id, s.date, s.type, s.status, s.planned_hours, s.actual_hours as fact_hours,
                 e.full_name as employee_name,
                 p.name as pvz_name
             FROM shifts s

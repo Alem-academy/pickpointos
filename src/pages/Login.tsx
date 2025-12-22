@@ -30,7 +30,7 @@ export default function Login() {
 
             if (role === 'finance') email = 'admin@pvz.kz';
 
-            await login(email, password);
+            await login({ email, password });
 
             const target = location.state?.from?.pathname || (role === 'rf' ? '/rf' : '/hr');
             navigate(target, { replace: true });
@@ -76,7 +76,7 @@ export default function Login() {
             await SigexService.authenticate(signature);
 
             // 4. Login (Mocking user for now as we don't have user mapping yet)
-            await login('eds_user@example.com', 'password123'); // Hack for now
+            await login({ email: 'eds_user@example.com', password: 'password123' }); // Hack for now
             navigate('/hr', { replace: true }); // Default to HR for EDS users for now
 
         } catch (error) {

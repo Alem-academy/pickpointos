@@ -1,11 +1,15 @@
-import { useState, useEffect } from 'react';
-import { api, type ExpenseRequest } from '@/services/api';
+import { useState } from 'react';
+import { api } from '@/services/api';
+import { useExpenses } from '@/hooks/use-queries';
+import { type ExpenseRequest } from '@/types/schemas';
 import { Plus, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 export default function Expenses() {
-    const [expenses, setExpenses] = useState<ExpenseRequest[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const queryClient = useQueryClient();
+    const { data: expenses, isLoading, error } = useExpenses();
     const [showModal, setShowModal] = useState(false);
     const [newExpense, setNewExpense] = useState({
         amount: '',
@@ -13,22 +17,6 @@ export default function Expenses() {
         description: '',
         pvzId: 'PVZ-001' // Mock default
     });
-
-    const loadData = async () => {
-        setIsLoading(true);
-        try {
-            const data = await api.getExpenses();
-            setExpenses(data);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        loadData();
-    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -39,25 +27,40 @@ export default function Expenses() {
             });
             setShowModal(false);
             setNewExpense({ amount: '', category: 'supplies', description: '', pvzId: 'PVZ-001' });
-            loadData();
+            queryClient.invalidateQueries({ queryKey: ['expenses'] });
+            toast.success('Заявка создана успешно');
         } catch (err) {
             console.error(err);
-            alert('Ошибка создания заявки');
+            toast.error('Ошибка создания заявки');
         }
     };
 
     const handleStatusUpdate = async (id: string, status: 'approved' | 'rejected') => {
+        // Keeping confirm for safety in operations
         if (!confirm(`Вы уверены, что хотите ${status === 'approved' ? 'одобрить' : 'отклонить'} заявку?`)) return;
         try {
             await api.updateExpenseStatus(id, status);
-            loadData();
+            queryClient.invalidateQueries({ queryKey: ['expenses'] });
+            toast.success(`Заявка ${status === 'approved' ? 'одобрена' : 'отклонена'}`);
         } catch (err) {
             console.error(err);
-            alert('Ошибка обновления статуса');
+            toast.error('Ошибка обновления статуса');
         }
     };
 
+    if (isLoading) {
+        return (
+            <div className="flex h-64 items-center justify-center">
+                <div className="h-12 w-12 animate-spin rounded-full border-4 border-black border-t-transparent" />
+            </div>
+        );
+    }
 
+    if (error) {
+        return <div className="p-8 text-center text-red-500">Ошибка загрузки расходов.</div>;
+    }
+
+    const safeExpenses = expenses || [];
 
     return (
         <div className="p-8">
@@ -75,55 +78,49 @@ export default function Expenses() {
                 </button>
             </div>
 
-            {isLoading ? (
-                <div className="flex h-64 items-center justify-center">
-                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-black border-t-transparent" />
+            <div className="grid gap-6 md:grid-cols-3">
+                {/* Pending */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2 rounded-xl bg-orange-50 p-4 text-orange-700">
+                        <Clock className="h-5 w-5" />
+                        <h2 className="font-bold uppercase">На рассмотрении</h2>
+                        <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-xs font-black">
+                            {safeExpenses.filter(e => e.status === 'pending').length}
+                        </span>
+                    </div>
+                    {safeExpenses.filter(e => e.status === 'pending').map(expense => (
+                        <ExpenseCard key={expense.id} expense={expense} onStatusUpdate={handleStatusUpdate} />
+                    ))}
                 </div>
-            ) : (
-                <div className="grid gap-6 md:grid-cols-3">
-                    {/* Pending */}
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2 rounded-xl bg-orange-50 p-4 text-orange-700">
-                            <Clock className="h-5 w-5" />
-                            <h2 className="font-bold uppercase">На рассмотрении</h2>
-                            <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-xs font-black">
-                                {expenses.filter(e => e.status === 'pending').length}
-                            </span>
-                        </div>
-                        {expenses.filter(e => e.status === 'pending').map(expense => (
-                            <ExpenseCard key={expense.id} expense={expense} onStatusUpdate={handleStatusUpdate} />
-                        ))}
-                    </div>
 
-                    {/* Approved */}
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2 rounded-xl bg-green-50 p-4 text-green-700">
-                            <CheckCircle className="h-5 w-5" />
-                            <h2 className="font-bold uppercase">Одобрено</h2>
-                            <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-xs font-black">
-                                {expenses.filter(e => e.status === 'approved').length}
-                            </span>
-                        </div>
-                        {expenses.filter(e => e.status === 'approved').map(expense => (
-                            <ExpenseCard key={expense.id} expense={expense} />
-                        ))}
+                {/* Approved */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2 rounded-xl bg-green-50 p-4 text-green-700">
+                        <CheckCircle className="h-5 w-5" />
+                        <h2 className="font-bold uppercase">Одобрено</h2>
+                        <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-xs font-black">
+                            {safeExpenses.filter(e => e.status === 'approved').length}
+                        </span>
                     </div>
-
-                    {/* Rejected */}
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2 rounded-xl bg-red-50 p-4 text-red-700">
-                            <XCircle className="h-5 w-5" />
-                            <h2 className="font-bold uppercase">Отклонено</h2>
-                            <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-xs font-black">
-                                {expenses.filter(e => e.status === 'rejected').length}
-                            </span>
-                        </div>
-                        {expenses.filter(e => e.status === 'rejected').map(expense => (
-                            <ExpenseCard key={expense.id} expense={expense} />
-                        ))}
-                    </div>
+                    {safeExpenses.filter(e => e.status === 'approved').map(expense => (
+                        <ExpenseCard key={expense.id} expense={expense} />
+                    ))}
                 </div>
-            )}
+
+                {/* Rejected */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-2 rounded-xl bg-red-50 p-4 text-red-700">
+                        <XCircle className="h-5 w-5" />
+                        <h2 className="font-bold uppercase">Отклонено</h2>
+                        <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-xs font-black">
+                            {safeExpenses.filter(e => e.status === 'rejected').length}
+                        </span>
+                    </div>
+                    {safeExpenses.filter(e => e.status === 'rejected').map(expense => (
+                        <ExpenseCard key={expense.id} expense={expense} />
+                    ))}
+                </div>
+            </div>
 
             {/* New Expense Modal */}
             {showModal && (

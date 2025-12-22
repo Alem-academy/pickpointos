@@ -1,28 +1,37 @@
-import { useState, useEffect } from 'react';
-import { api } from '@/services/api';
+import { useAnalytics } from '@/hooks/use-queries';
 import { TrendingUp, TrendingDown, DollarSign, Activity, Building } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Dashboard() {
-    const [data, setData] = useState<any>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const { data, isLoading, error } = useAnalytics();
 
-    useEffect(() => {
-        loadData();
-    }, []);
+    if (isLoading) {
+        return (
+            <div className="p-8 space-y-8">
+                <div className="mb-8 space-y-2">
+                    <Skeleton className="h-10 w-48" />
+                    <Skeleton className="h-6 w-64" />
+                </div>
+                <div className="grid gap-6 md:grid-cols-3">
+                    {[1, 2, 3].map(i => (
+                        <Skeleton key={i} className="h-40 w-full rounded-3xl" />
+                    ))}
+                </div>
+                <div className="grid gap-8 lg:grid-cols-2">
+                    <Skeleton className="h-96 w-full rounded-3xl" />
+                    <Skeleton className="h-96 w-full rounded-3xl" />
+                </div>
+            </div>
+        );
+    }
 
-    const loadData = async () => {
-        try {
-            const result = await api.getAnalyticsDashboard();
-            setData(result);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    if (isLoading) return <div className="p-8 text-xl font-bold">Загрузка аналитики...</div>;
-    if (!data) return <div className="p-8 text-xl font-bold text-red-500">Ошибка загрузки данных</div>;
+    if (error || !data) {
+        return (
+            <div className="p-8 text-center text-red-500 font-bold">
+                Нет данных или ошибка загрузки: {(error as Error)?.message}
+            </div>
+        );
+    }
 
     return (
         <div className="p-8">

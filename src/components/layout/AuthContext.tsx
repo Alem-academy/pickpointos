@@ -1,61 +1,68 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import type { User } from "@/types";
+import { createContext, useContext, useState, useEffect } from "react";
+import type { ReactNode } from "react";
+import { UserSchema, type User, type LoginCredentials } from "@/types/auth";
 import { authService } from "@/services/auth";
 
 interface AuthContextType {
     user: User | null;
+    login: (credentials: LoginCredentials) => Promise<void>;
+    logout: () => void;
     isLoading: boolean;
-    login: (email: string, password: string) => Promise<void>;
-    logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const initAuth = async () => {
-            try {
-                const currentUser = await authService.getCurrentUser();
-                setUser(currentUser);
-            } catch (error) {
-                console.error("Auth init failed", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        initAuth();
+        initializeAuth();
     }, []);
 
-    const login = async (email: string) => {
-        // BYPASS LOGIN API
-        // Immediately set user as logged in
-        const mockUser: User = {
-            id: '650e8400-e29b-41d4-a716-446655440000',
-            email: email,
-            role: 'admin', // Default generic role, actual permissions handled by UI state mostly
-            name: 'Super Admin'
-        };
-
-        // Decide role based on input email for UI testing if needed, or just default to admin
-        if (email.includes('hr')) mockUser.role = 'hr';
-        if (email.includes('manager')) mockUser.role = 'rf';
-
-        setUser(mockUser);
-        localStorage.setItem('token', 'dev-bypass-token');
-    };
-
-    const logout = async () => {
-        setIsLoading(true);
+    const initializeAuth = async () => {
         try {
-            await authService.logout();
-            setUser(null);
-            localStorage.removeItem("user");
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+                const parsed = JSON.parse(storedUser);
+                const validatedUser = UserSchema.parse(parsed);
+                setUser(validatedUser);
+            }
+        } catch (error) {
+            console.warn("Auth restoration failed:", error);
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const login = async (credentials: LoginCredentials) => {
+        setIsLoading(true);
+        try {
+            // Call actual auth service
+            const response = await authService.login(credentials.email, credentials.password);
+
+            // Validate response against our strict schema
+            const validatedUser = UserSchema.parse(response);
+
+            localStorage.setItem('user', JSON.stringify(validatedUser));
+            if (validatedUser.token) {
+                localStorage.setItem('token', validatedUser.token);
+            }
+            setUser(validatedUser);
+        } catch (error) {
+            console.error("Login failed:", error);
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const logout = () => {
+        localStorage.clear();
+        setUser(null);
+        window.location.href = '/login';
     };
 
     return (

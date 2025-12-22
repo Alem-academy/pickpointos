@@ -267,4 +267,67 @@ router.post('/payroll/calculate', async (req, res) => {
     }
 });
 
+// GET /pnl - Get PnL Report
+router.get('/pnl', async (req, res) => {
+    try {
+        const { pvzId, month } = req.query; // YYYY-MM
+
+        if (!month) {
+            return res.status(400).json({ error: 'Month is required' });
+        }
+
+        const startOfMonth = new Date(month);
+        startOfMonth.setDate(1);
+        const endOfMonth = new Date(startOfMonth);
+        endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+        endOfMonth.setDate(0);
+
+        let sql = `
+            SELECT 
+                COALESCE(SUM(CASE WHEN type = 'revenue' THEN amount ELSE 0 END), 0) as revenue,
+                COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as opex
+            FROM financial_transactions
+            WHERE transaction_date >= $1 AND transaction_date <= $2
+        `;
+        const params = [startOfMonth, endOfMonth];
+
+        if (pvzId) {
+            sql += ` AND pvz_id = $3`;
+            params.push(pvzId);
+        }
+
+        const result = await query(sql, params);
+        const row = result.rows[0];
+
+        // Payroll (Should be calculated from fact_payroll)
+        let payrollSql = `
+            SELECT COALESCE(SUM(total_amount), 0) as total
+            FROM fact_payroll
+            WHERE month = $1
+        `;
+        const payrollParams = [startOfMonth];
+        if (pvzId) {
+            payrollSql += ` AND pvz_id = $2`;
+            payrollParams.push(pvzId);
+        }
+        const payrollRes = await query(payrollSql, payrollParams);
+
+        const revenue = parseFloat(row.revenue);
+        const opex = Math.abs(parseFloat(row.opex));
+        const payroll = parseFloat(payrollRes.rows[0].total);
+        const netProfit = revenue - opex - payroll;
+
+        res.json({
+            revenue,
+            opex,
+            payroll,
+            netProfit
+        });
+
+    } catch (err) {
+        console.error('Error calculating PnL:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 export default router;

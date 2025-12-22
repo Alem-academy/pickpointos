@@ -22,7 +22,7 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    if (allowedRoles && !allowedRoles.includes(user.role)) {
+    if (allowedRoles && !allowedRoles.includes(user.role as Role)) {
         // Redirect to their appropriate dashboard if they try to access wrong area
         const target = user.role === 'hr' ? '/hr' : '/rf';
         return <Navigate to={target} replace />;

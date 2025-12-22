@@ -1,59 +1,42 @@
-import { useState, useEffect, useCallback } from 'react';
-import { api, type PVZ, type PnLReport } from '@/services/api';
+import { useState } from 'react';
+import { api, type PVZ } from '@/services/api';
+import { usePnL } from '@/hooks/use-queries';
 import { Calculator, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, subMonths, addMonths } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { TOOLTIPS } from '@/constants/tooltips';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 export default function PnLPage() {
-    const [pvzList, setPvzList] = useState<PVZ[]>([]);
+    const queryClient = useQueryClient();
     const [selectedPvzId, setSelectedPvzId] = useState<string>('');
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [report, setReport] = useState<PnLReport | null>(null);
 
-    useEffect(() => {
-        const loadPvzList = async () => {
-            try {
-                const list = await api.getPvzList();
-                setPvzList(list);
-                if (list.length > 0) setSelectedPvzId(list[0].id);
-            } catch (err) {
-                console.error(err);
-            }
-        };
-        loadPvzList();
-    }, []);
+    const { data: pvzList } = useQuery<PVZ[]>({
+        queryKey: ['pvz-list'],
+        queryFn: api.getPvzList,
+    });
 
-    const loadReport = useCallback(async () => {
-        try {
-            const dateStr = format(currentDate, 'yyyy-MM-dd');
-            const data = await api.getPnL(selectedPvzId, dateStr);
-            setReport(data);
-        } catch (err) {
-            console.error(err);
-        }
-    }, [currentDate, selectedPvzId]);
+    // Auto-select first PVZ when list loads
+    if (!selectedPvzId && pvzList && pvzList.length > 0) {
+        setSelectedPvzId(pvzList[0].id);
+    }
 
-    useEffect(() => {
-        if (selectedPvzId) {
-            const fetch = async () => {
-                await loadReport();
-            };
-            fetch();
-        }
-    }, [selectedPvzId, currentDate, loadReport]);
+    // Use React Query for PnL data
+    const dateStr = format(currentDate, 'yyyy-MM-dd');
+    const { data: report, isLoading } = usePnL(selectedPvzId, dateStr);
 
     const handleCalculatePayroll = async () => {
         try {
-            const dateStr = format(currentDate, 'yyyy-MM-dd');
             await api.calculatePayroll({ pvzId: selectedPvzId, month: dateStr });
-            loadReport();
-            alert('Зарплата пересчитана');
+            queryClient.invalidateQueries({ queryKey: ['pnl', selectedPvzId, dateStr] });
+            toast.success('Зарплата пересчитана');
         } catch (err) {
             console.error(err);
-            alert('Ошибка расчета');
+            toast.error('Ошибка расчета');
         }
     };
 
@@ -70,9 +53,9 @@ export default function PnLPage() {
                         onChange={e => setSelectedPvzId(e.target.value)}
                         className="h-12 rounded-xl border-2 border-black bg-white px-4 font-bold"
                     >
-                        {pvzList.map(pvz => (
+                        {pvzList?.map(pvz => (
                             <option key={pvz.id} value={pvz.id}>{pvz.name}</option>
-                        ))}
+                        )) || <option>Загрузка ПВЗ...</option>}
                     </select>
 
                     <Tooltip text={TOOLTIPS.pnl.calculate_btn}>
@@ -100,7 +83,11 @@ export default function PnLPage() {
                 </button>
             </div>
 
-            {report && (
+            {isLoading ? (
+                <div className="flex h-64 items-center justify-center">
+                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-black border-t-transparent" />
+                </div>
+            ) : report ? (
                 <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
                     {/* Revenue */}
                     <Tooltip text={TOOLTIPS.pnl.revenue}>
@@ -160,6 +147,8 @@ export default function PnLPage() {
                         </div>
                     </Tooltip>
                 </div>
+            ) : (
+                <div className="text-center text-muted-foreground py-10">Выберите ПВЗ для просмотра отчета.</div>
             )}
         </div>
     );

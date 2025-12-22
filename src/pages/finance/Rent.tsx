@@ -1,44 +1,37 @@
-import { useState, useEffect } from 'react';
+// I realized I missed useRent in use-queries.ts. I will add it in the next step.
+// For now, I will keep Rent as is or update it after I adding the hook.
+// Actually, I can add the hook logic here directly or just add the hook in the next tool call.
+// Let's replace the content assuming the hook exists or will exist. Use api calls for mutations.
 import { api } from '@/services/api';
+import { useRent } from '@/hooks/use-queries';
 import { Building, CheckCircle, AlertCircle, Wallet } from 'lucide-react';
 import { format } from 'date-fns';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Rent() {
-    const [rentData, setRentData] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [stats, setStats] = useState({ total: 0, paid: 0, pending: 0 });
+    const queryClient = useQueryClient();
+    const { data: rentData, isLoading } = useRent();
 
-    const loadData = async () => {
-        setIsLoading(true);
-        try {
-            const data = await api.getRentOverview();
-            setRentData(data);
-
-            // Calculate stats
-            const total = data.reduce((acc: number, item: any) => acc + item.amount, 0);
-            const paid = data.filter((item: any) => item.status === 'paid').reduce((acc: number, item: any) => acc + item.amount, 0);
-            const pending = total - paid;
-            setStats({ total, paid, pending });
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        loadData();
-    }, []);
+    // Calculate stats
+    const safeRentData = rentData || [];
+    const total = safeRentData.reduce((acc: number, item: any) => acc + item.amount, 0);
+    const paid = safeRentData.filter((item: any) => item.status === 'paid').reduce((acc: number, item: any) => acc + item.amount, 0);
+    const pending = total - paid;
+    const stats = { total, paid, pending };
 
     const handlePay = async (pvzId: string, amount: number) => {
+        // We can use a custom toast for confirmation if we want, but keeping confirm for now is safer for money ops
+        // or we could use a modal. For "Visual Polish", sticking to confirm is fine for safety, but toast for result.
         if (!confirm(`Подтвердить оплату аренды ${amount.toLocaleString()} ₸?`)) return;
         try {
             await api.payRent(pvzId, format(new Date(), 'yyyy-MM'), amount);
-            alert('Оплата прошла успешно');
-            loadData();
+            queryClient.invalidateQueries({ queryKey: ['rent'] });
+            toast.success('Оплата прошла успешно');
         } catch (err) {
             console.error(err);
-            alert('Ошибка оплаты');
+            toast.error('Ошибка оплаты');
         }
     };
 
@@ -77,12 +70,25 @@ export default function Rent() {
             {/* List */}
             <div className="space-y-4">
                 {isLoading ? (
-                    <div className="flex h-64 items-center justify-center">
-                        <div className="h-12 w-12 animate-spin rounded-full border-4 border-black border-t-transparent" />
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="rounded-2xl border-2 border-slate-100 bg-white p-6">
+                                <div className="flex justify-between mb-4">
+                                    <Skeleton className="h-12 w-12 rounded-xl" />
+                                    <Skeleton className="h-6 w-20" />
+                                </div>
+                                <Skeleton className="h-6 w-48 mb-4" />
+                                <div className="space-y-2 mb-6 p-4 bg-slate-50 rounded-xl">
+                                    <Skeleton className="h-4 w-full" />
+                                    <Skeleton className="h-4 w-full" />
+                                </div>
+                                <Skeleton className="h-12 w-full rounded-xl" />
+                            </div>
+                        ))}
                     </div>
                 ) : (
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {rentData.map(item => (
+                        {safeRentData.map((item: any) => (
                             <div key={item.pvzId} className="group relative overflow-hidden rounded-2xl border-2 border-slate-200 bg-white p-6 transition-all hover:-translate-y-1 hover:shadow-xl">
                                 <div className="mb-4 flex items-start justify-between">
                                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 font-black text-xl">

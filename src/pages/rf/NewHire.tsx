@@ -38,7 +38,7 @@ export default function NewHire() {
         // Validation
         const missingFiles = Object.entries(files).filter(([, file]) => !file);
         if (missingFiles.length > 0) {
-            alert(`Please upload all required documents: ${missingFiles.map(([key]) => key.replace('_', ' ')).join(', ')}`);
+            alert(`Пожалуйста, загрузите все обязательные документы: ${missingFiles.map(([key]) => key.replace('_', ' ')).join(', ')}`);
             return;
         }
 
@@ -55,15 +55,15 @@ export default function NewHire() {
                 <div className="mb-4 rounded-full bg-green-100 p-4 text-green-600 dark:bg-green-900/20">
                     <CheckCircle2 className="h-12 w-12" />
                 </div>
-                <h2 className="text-2xl font-bold">Application Submitted!</h2>
+                <h2 className="text-2xl font-bold">Заявка отправлена!</h2>
                 <p className="mt-2 text-muted-foreground">
-                    The HR department will review the documents. You can track the status in the dashboard.
+                    HR отдел рассмотрит документы. Вы можете отслеживать статус в дашборде.
                 </p>
                 <button
                     onClick={() => navigate("/rf")}
                     className="mt-8 rounded-lg bg-primary px-6 py-2 text-primary-foreground hover:bg-primary/90"
                 >
-                    Back to Dashboard
+                    Вернуться в Дашборд
                 </button>
             </div>
         );
@@ -72,17 +72,17 @@ export default function NewHire() {
     return (
         <div className="mx-auto max-w-3xl p-8">
             <div className="mb-8">
-                <h1 className="text-3xl font-bold">New Candidate</h1>
-                <p className="text-muted-foreground">Submit a new employee application for review.</p>
+                <h1 className="text-3xl font-bold">Новый Кандидат</h1>
+                <p className="text-muted-foreground">Заполните форму для регистрации нового сотрудника.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8 rounded-xl border bg-card p-6 shadow-sm">
                 {/* Personal Info */}
                 <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Personal Information</h3>
+                    <h3 className="text-lg font-semibold">Личная Информация</h3>
                     <div className="grid gap-6 md:grid-cols-2">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">First Name</label>
+                            <label className="text-sm font-medium">Имя</label>
                             <input
                                 required
                                 className="w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
@@ -90,7 +90,7 @@ export default function NewHire() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Last Name</label>
+                            <label className="text-sm font-medium">Фамилия</label>
                             <input
                                 required
                                 className="w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
@@ -98,7 +98,7 @@ export default function NewHire() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Phone Number</label>
+                            <label className="text-sm font-medium">Номер телефона</label>
                             <input
                                 required
                                 type="tel"
@@ -113,28 +113,28 @@ export default function NewHire() {
 
                 {/* Documents */}
                 <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Required Documents</h3>
+                    <h3 className="text-lg font-semibold">Документы</h3>
                     <div className="grid gap-6 md:grid-cols-2">
                         <FileUploadField
-                            label="ID Card (Main Page)"
+                            label="Уд. личности (Лицевая)"
                             file={files.id_main}
                             onChange={(e) => handleFileChange('id_main', e)}
                             onRemove={() => removeFile('id_main')}
                         />
                         <FileUploadField
-                            label="ID Card (Registration)"
+                            label="Уд. личности (Обратная)"
                             file={files.id_register}
                             onChange={(e) => handleFileChange('id_register', e)}
                             onRemove={() => removeFile('id_register')}
                         />
                         <FileUploadField
-                            label="IIN (Individual Identification Number)"
+                            label="ИИН (Справка/Документ)"
                             file={files.iin}
                             onChange={(e) => handleFileChange('iin', e)}
                             onRemove={() => removeFile('iin')}
                         />
                         <FileUploadField
-                            label="Bank Details (IBAN)"
+                            label="Реквизиты (IBAN)"
                             file={files.bank_details}
                             onChange={(e) => handleFileChange('bank_details', e)}
                             onRemove={() => removeFile('bank_details')}
@@ -152,11 +152,11 @@ export default function NewHire() {
                         )}
                     >
                         {isLoading ? (
-                            "Submitting..."
+                            "Отправка..."
                         ) : (
                             <>
                                 <UserPlus className="h-4 w-4" />
-                                Submit Application
+                                Отправить Заявку
                             </>
                         )}
                     </button>
@@ -190,7 +190,7 @@ function FileUploadField({
                 >
                     <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground text-center">
-                        <span className="font-semibold text-primary">Click to upload</span>
+                        <span className="font-semibold text-primary">Нажмите для загрузки</span>
                     </p>
                     <input
                         ref={inputRef}

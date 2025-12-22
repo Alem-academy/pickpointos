@@ -114,4 +114,83 @@ router.get('/dashboard', async (req, res) => {
     }
 });
 
+// GET /hr-stats
+router.get('/hr-stats', async (req, res) => {
+    try {
+        const totalEmployeesRes = await query(`SELECT COUNT(*) as count FROM employees WHERE status = 'active'`);
+        const newHiresRes = await query(`
+            SELECT COUNT(*) as count FROM employees 
+            WHERE status = 'active' AND hired_at >= date_trunc('month', CURRENT_DATE)
+        `);
+        const pendingAppsRes = await query(`SELECT COUNT(*) as count FROM employees WHERE status IN ('new', 'review')`);
+
+        // Recent activity: simply latest created employees for now
+        const recentActivityRes = await query(`
+            SELECT id, full_name, status, created_at 
+            FROM employees 
+            ORDER BY created_at DESC 
+            LIMIT 5
+        `);
+
+        res.json({
+            totalEmployees: parseInt(totalEmployeesRes.rows[0].count),
+            newHires: parseInt(newHiresRes.rows[0].count),
+            pendingApplications: parseInt(pendingAppsRes.rows[0].count),
+            recentActivity: recentActivityRes.rows
+        });
+    } catch (err) {
+        console.error('Error fetching HR stats:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// GET /rf-stats
+router.get('/rf-stats', async (req, res) => {
+    try {
+        // For dev/demo, if no pvz_id on user, pick the first one
+        let pvzId = req.user?.pvz_id;
+
+        if (!pvzId) {
+            const firstPvz = await query('SELECT id FROM pvz_points LIMIT 1');
+            if (firstPvz.rows.length > 0) {
+                pvzId = firstPvz.rows[0].id;
+            }
+        }
+
+        if (!pvzId) {
+            return res.status(404).json({ error: 'No PVZ assigned or found' });
+        }
+
+        const pvzInfoRes = await query('SELECT * FROM pvz_points WHERE id = $1', [pvzId]);
+        const pvz = pvzInfoRes.rows[0];
+
+        // Today's Shift
+        const shiftsRes = await query(`
+            SELECT s.*, e.full_name as employee_name
+            FROM shifts s
+            JOIN employees e ON s.employee_id = e.id
+            WHERE s.pvz_id = $1 AND s.date = CURRENT_DATE
+        `, [pvzId]);
+
+        // Monthly Expenses
+        const expensesRes = await query(`
+            SELECT COALESCE(SUM(amount), 0) as total
+            FROM expense_requests
+            WHERE pvz_id = $1 
+            AND created_at >= date_trunc('month', CURRENT_DATE)
+            AND status = 'approved'
+        `, [pvzId]);
+
+        res.json({
+            pvz,
+            todaysShifts: shiftsRes.rows,
+            monthlyExpenses: parseFloat(expensesRes.rows[0].total)
+        });
+
+    } catch (err) {
+        console.error('Error fetching RF stats:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 export default router;

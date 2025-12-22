@@ -4,7 +4,12 @@ import type { User } from '@/types';
 export const authService = {
     login: async (email: string, password: string): Promise<User> => {
         const response = await api.post('/auth/login', { email, password });
-        return { ...response.data.user, token: response.data.token };
+        const userData = response.data.user;
+        return {
+            ...userData,
+            name: userData.full_name || userData.name || 'User',
+            token: response.data.token
+        };
     },
 
     logout: async (): Promise<void> => {
@@ -21,10 +26,16 @@ export const authService = {
             const storedUserStr = localStorage.getItem('user');
             const storedUser = storedUserStr ? JSON.parse(storedUserStr) : null;
 
+            const userData = response.data;
+            const user: User = {
+                ...userData,
+                name: userData.full_name || userData.name || 'User'
+            };
+
             if (storedUser && storedUser.token) {
-                return { ...response.data, token: storedUser.token };
+                return { ...user, token: storedUser.token } as User & { token: string };
             }
-            return response.data;
+            return user;
         } catch (error) {
             console.error('Session expired or invalid:', error);
             localStorage.removeItem('user');

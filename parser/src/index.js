@@ -53,7 +53,7 @@ app.post('/parse', async (req, res) => {
 // Mount Routes
 app.use('/auth', authRoutes);
 app.use('/', hrRoutes);
-app.use('/', financeRoutes); // Configured with /finance prefix internally where needed
+app.use('/finance', financeRoutes);
 app.use('/', operationsRoutes);
 app.use('/', documentsRoutes);
 app.use('/analytics', analyticsRoutes);

@@ -31,7 +31,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
         loadDocuments();
     }, [loadDocuments]);
 
-    const handleGenerate = async (type: 'contract' | 'order_hiring') => {
+    const handleGenerate = async (type: 'contract' | 'order') => {
         setIsGenerating(type);
         try {
             const { content } = await api.generateDocument(employeeId, type);
@@ -70,11 +70,11 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                         Трудовой договор
                     </button>
                     <button
-                        onClick={() => handleGenerate('order_hiring')}
+                        onClick={() => handleGenerate('order')}
                         disabled={!!isGenerating}
                         className="flex items-center gap-2 rounded-lg border border-primary bg-primary/5 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
                     >
-                        {isGenerating === 'order_hiring' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                        {isGenerating === 'order' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
                         Приказ о приеме
                     </button>
                 </div>
@@ -96,7 +96,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                     <div>
                                         <p className="font-medium">
                                             {doc.type === 'contract' ? 'Трудовой договор' :
-                                                doc.type === 'order_hiring' ? 'Приказ о приеме' :
+                                                doc.type === 'order' ? 'Приказ о приеме' :
                                                     'Документ'}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
