@@ -7,6 +7,43 @@ import { SigexService } from "@/services/sigex";
 // @ts-ignore
 import { NCALayerClient } from 'ncalayer-js-client';
 
+interface RoleButtonProps {
+    role: 'admin' | 'hr' | 'rf' | 'finance';
+    icon: any;
+    label: string;
+    desc: string;
+    colorClass: string;
+    isLoading: boolean;
+    selectedRole: string | null;
+    onClick: (role: 'admin' | 'hr' | 'rf' | 'finance') => void;
+}
+
+const RoleButton = ({ role, icon: Icon, label, desc, colorClass, isLoading, selectedRole, onClick }: RoleButtonProps) => (
+    <button
+        onClick={() => onClick(role)}
+        disabled={isLoading}
+        className={cn(
+            "group relative flex items-center justify-between rounded-2xl border-2 border-slate-100 bg-white p-5 text-left transition-all hover:border-black hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]",
+            isLoading && "opacity-50 cursor-not-allowed"
+        )}
+    >
+        <div className="flex items-center gap-4">
+            <div className={cn("rounded-xl p-3", colorClass)}>
+                <Icon className="h-6 w-6" />
+            </div>
+            <div>
+                <h3 className="font-black text-slate-900">{label}</h3>
+                <p className="text-sm font-bold text-slate-400">{desc}</p>
+            </div>
+        </div>
+        {isLoading && selectedRole === role ? (
+            <Loader2 className="h-5 w-5 animate-spin text-black" />
+        ) : (
+            <ArrowRight className="h-5 w-5 text-slate-300 transition-transform group-hover:translate-x-1 group-hover:text-black" />
+        )}
+    </button>
+);
+
 export default function Login() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -14,7 +51,7 @@ export default function Login() {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedRole, setSelectedRole] = useState<'admin' | 'hr' | 'rf' | 'finance' | null>(null);
 
-    const [password, setPassword] = useState('password123');
+    const [password, setPassword] = useState('');
 
     const handleLogin = async (role: 'admin' | 'hr' | 'rf' | 'finance') => {
         setSelectedRole(role);
@@ -30,7 +67,9 @@ export default function Login() {
 
             if (role === 'finance') email = 'admin@pvz.kz';
 
-            await login({ email, password });
+            // Default dev password if empty
+            const pass = password || 'password123';
+            await login({ email, password: pass });
 
             const target = location.state?.from?.pathname || (role === 'rf' ? '/rf' : '/hr');
             navigate(target, { replace: true });
@@ -87,32 +126,6 @@ export default function Login() {
         }
     };
 
-    const RoleButton = ({ role, icon: Icon, label, desc, colorClass }: any) => (
-        <button
-            onClick={() => handleLogin(role)}
-            disabled={isLoading}
-            className={cn(
-                "group relative flex items-center justify-between rounded-2xl border-2 border-slate-100 bg-white p-5 text-left transition-all hover:border-black hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]",
-                isLoading && "opacity-50 cursor-not-allowed"
-            )}
-        >
-            <div className="flex items-center gap-4">
-                <div className={cn("rounded-xl p-3", colorClass)}>
-                    <Icon className="h-6 w-6" />
-                </div>
-                <div>
-                    <h3 className="font-black text-slate-900">{label}</h3>
-                    <p className="text-sm font-bold text-slate-400">{desc}</p>
-                </div>
-            </div>
-            {isLoading && selectedRole === role ? (
-                <Loader2 className="h-5 w-5 animate-spin text-black" />
-            ) : (
-                <ArrowRight className="h-5 w-5 text-slate-300 transition-transform group-hover:translate-x-1 group-hover:text-black" />
-            )}
-        </button>
-    );
-
     return (
         <div className="flex min-h-screen bg-slate-50">
             {/* Left Section: Login */}
@@ -129,12 +142,18 @@ export default function Login() {
 
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700">Пароль</label>
+                            <label htmlFor="password" className="text-sm font-bold text-slate-700">Пароль</label>
                             <input
+                                id="password"
+                                name="password"
                                 type="password"
+                                autoComplete="current-password"
+                                autoCapitalize="none"
+                                autoCorrect="off"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="w-full rounded-xl border-2 border-slate-200 p-3 font-bold text-slate-900 focus:border-blue-500 focus:outline-none"
+                                placeholder="Введите пароль (по умолчанию: password123)"
                             />
                         </div>
 
@@ -145,6 +164,9 @@ export default function Login() {
                                 label="Администратор"
                                 desc="Полный доступ к системе"
                                 colorClass="bg-slate-100 text-slate-900"
+                                isLoading={isLoading}
+                                selectedRole={selectedRole}
+                                onClick={handleLogin}
                             />
                             <RoleButton
                                 role="hr"
@@ -152,6 +174,9 @@ export default function Login() {
                                 label="HR Менеджер"
                                 desc="Найм, кадры, табель"
                                 colorClass="bg-blue-100 text-blue-700"
+                                isLoading={isLoading}
+                                selectedRole={selectedRole}
+                                onClick={handleLogin}
                             />
                             <RoleButton
                                 role="rf"
@@ -159,6 +184,9 @@ export default function Login() {
                                 label="Управляющий (РФ)"
                                 desc="Управление точками и сменами"
                                 colorClass="bg-emerald-100 text-emerald-700"
+                                isLoading={isLoading}
+                                selectedRole={selectedRole}
+                                onClick={handleLogin}
                             />
                             <RoleButton
                                 role="finance"
@@ -166,6 +194,9 @@ export default function Login() {
                                 label="Финансист"
                                 desc="Расходы, аренда, P&L"
                                 colorClass="bg-yellow-100 text-yellow-700"
+                                isLoading={isLoading}
+                                selectedRole={selectedRole}
+                                onClick={handleLogin}
                             />
                         </div>
                     </div>

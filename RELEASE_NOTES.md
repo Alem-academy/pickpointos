@@ -4,7 +4,9 @@
 This release focuses on the **complete Russian localization** of the PVZ Management OS frontend and critical **backend stability fixes**. The application is now fully localized for Russian-speaking users across all roles (HR, Operations, Finance, Analytics).
 
 > [!IMPORTANT]
-> **Hotfix v1.0.1**: Resolved a TypeScript build error preventing deployment on Railway (`Type 'string' is not assignable to type 'number'` in NewEmployeePage). The build is now passing green.
+> **Hotfix v1.0.1**: Resolved a TypeScript build error preventing deployment on Railway.
+>
+> **Hotfix v1.0.2**: Fixed an issue where the password input was difficult to use on mobile devices due to lack of `autoComplete` attributes and unnecessary component re-renders.
 
 ## ✨ New Features
 - **Full Russian Localization**: All interfaces, buttons, errors, and tooltips are now in Russian.
