@@ -15,6 +15,13 @@ export const getClient = () => pool.connect();
 
 
 function getConfig() {
+    if (process.env.DATABASE_URL) {
+        return {
+            connectionString: process.env.DATABASE_URL,
+            ssl: { rejectUnauthorized: false }
+        };
+    }
+
     const config = {
         host: process.env.DB_HOST,
         port: parseInt(process.env.DB_PORT || '5432'),
