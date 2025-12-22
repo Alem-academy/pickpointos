@@ -61,6 +61,7 @@ CREATE TABLE employees (
     phone VARCHAR(20),
     role employee_role NOT NULL DEFAULT 'employee',
     status employee_status NOT NULL DEFAULT 'new',
+    password_hash VARCHAR(255), -- For Auth
     
     -- Relations
     main_pvz_id UUID REFERENCES pvz_points(id), -- Основной ПВЗ (TZ 3.33)

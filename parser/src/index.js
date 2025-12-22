@@ -9,6 +9,7 @@ import financeRoutes from './routes/finance.js';
 import operationsRoutes from './routes/operations.js';
 import documentsRoutes from './routes/documents.js';
 import analyticsRoutes from './routes/analytics.js';
+import authRoutes from './routes/auth.js';
 
 dotenv.config();
 
@@ -49,6 +50,7 @@ app.post('/parse', async (req, res) => {
 });
 
 // Mount Routes
+app.use('/auth', authRoutes);
 app.use('/', hrRoutes);
 app.use('/', financeRoutes); // Configured with /finance prefix internally where needed
 app.use('/', operationsRoutes);

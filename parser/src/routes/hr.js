@@ -1,5 +1,6 @@
 import express from 'express';
 import { query } from '../db-client.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ router.get('/pvz', async (req, res) => {
 });
 
 // GET /employees - List employees with filters
-router.get('/employees', async (req, res) => {
+router.get('/employees', authenticateToken, async (req, res) => {
     try {
         const { pvzId, status, search } = req.query;
 
