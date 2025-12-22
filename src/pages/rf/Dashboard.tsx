@@ -86,7 +86,7 @@ export default function RFDashboard() {
                     <CardContent>
                         {todayShift && todayShift.length > 0 ? (
                             <div className="space-y-4">
-                                {todayShift.map((emp) => (
+                                {todayShift?.map((emp) => (
                                     <div key={emp.id} className="flex items-center gap-3">
                                         <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold">
                                             {emp.full_name?.charAt(0) || 'U'}

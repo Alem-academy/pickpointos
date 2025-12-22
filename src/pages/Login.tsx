@@ -51,7 +51,6 @@ export default function Login() {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedRole, setSelectedRole] = useState<'admin' | 'hr' | 'rf' | 'finance' | null>(null);
 
-    const [password, setPassword] = useState('');
 
     const handleLogin = async (role: 'admin' | 'hr' | 'rf' | 'finance') => {
         setSelectedRole(role);
@@ -68,8 +67,7 @@ export default function Login() {
             if (role === 'finance') email = 'admin@pvz.kz';
 
             // Default dev password if empty
-            const pass = password || 'password123';
-            await login({ email, password: pass });
+            await login({ email, password: 'password123' });
 
             const target = location.state?.from?.pathname || (role === 'rf' ? '/rf' : '/hr');
             navigate(target, { replace: true });
@@ -142,21 +140,6 @@ export default function Login() {
                     </div>
 
                     <div className="space-y-4">
-                        <div className="space-y-2">
-                            <label htmlFor="password" className="text-sm font-bold text-slate-700">Пароль</label>
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                autoComplete="current-password"
-                                autoCapitalize="none"
-                                autoCorrect="off"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full rounded-xl border-2 border-slate-200 p-3 font-bold text-slate-900 focus:border-blue-500 focus:outline-none"
-                                placeholder="Введите пароль (по умолчанию: password123)"
-                            />
-                        </div>
 
                         <div className="grid gap-4">
                             <RoleButton
