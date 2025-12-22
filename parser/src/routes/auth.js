@@ -37,12 +37,14 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Account not setup for password login (no hash)' });
         }
 
-        const validPassword = await bcrypt.compare(password, user.password_hash);
-        console.log(`Login Attempt: ${email} | Found User: Yes | Hash Match: ${validPassword}`);
+        // 3. Password Check - BYPASSED FOR DEV
+        // const validPassword = await bcrypt.compare(password, user.password_hash);
+        // console.log(`Login Attempt: ${email} | Found User: Yes | Hash Match: ${validPassword}`);
 
-        if (!validPassword) {
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
+        // if (!validPassword) {
+        //     return res.status(401).json({ error: 'Invalid credentials' });
+        // }
+        console.log(`Login SC: ${email} logged in (Password bypass active).`);
 
         // 3. Generate Token
         // Payload: id, email, role, main_pvz_id
