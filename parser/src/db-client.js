@@ -1,15 +1,18 @@
 import pg from 'pg';
 
-export const createClient = () => {
-    const config = getConfig();
-    const safeConfig = { ...config, password: '***' };
-    console.log('Creating DB client with config:', safeConfig);
-    return new pg.Client(config);
-};
+// Singleton Pool
+const pool = new pg.Pool(getConfig());
 
-export const createPool = () => {
-    return new pg.Pool(getConfig());
-};
+pool.on('error', (err, client) => {
+    console.error('Unexpected error on idle client', err);
+    process.exit(-1);
+});
+
+export const query = (text, params) => pool.query(text, params);
+
+// For transactions where we need a single client instance
+export const getClient = () => pool.connect();
+
 
 function getConfig() {
     const config = {

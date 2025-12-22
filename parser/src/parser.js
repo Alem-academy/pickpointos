@@ -1,5 +1,5 @@
 import { getSheetData } from './sheets-client.js';
-import { createClient } from './db-client.js';
+import { getClient } from './db-client.js';
 
 // Mapping based on user description
 // ID ПВЗ, Регион, Адрес, Дата, Оборот, Продажа по тарифу, Возврат по тарифу, ...
@@ -61,7 +61,7 @@ function parseDate(value) {
 }
 
 export const parseSheet = async (sheetId) => {
-    const client = createClient();
+    const client = await getClient();
     let stats = {
         processed: 0,
         inserted: 0,
@@ -69,8 +69,7 @@ export const parseSheet = async (sheetId) => {
     };
 
     try {
-        await client.connect();
-        console.log('🔌 Connected to database');
+        console.log('🔌 Acquired DB client from pool');
 
         // 1. Read Headers
         const headerRows = await getSheetData(sheetId, 'A1:Z1');
@@ -153,7 +152,7 @@ export const parseSheet = async (sheetId) => {
         await client.query('ROLLBACK');
         throw error;
     } finally {
-        await client.end();
+        client.release();
     }
 
     return stats;

@@ -1,6 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import { createClient } from './db-client.js';
+import { query } from './db-client.js';
 import { parseSheet } from './parser.js';
 import redis from './redis-client.js';
 import cors from 'cors';
@@ -22,24 +22,24 @@ app.get('/health', (req, res) => {
 
 // GET /pvz - List all PVZ points
 app.get('/pvz', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
-        const result = await client.query('SELECT id, name, address, brand FROM pvz_points ORDER BY name');
+        // await client.connect();
+        const result = await query('SELECT id, name, address, brand FROM pvz_points ORDER BY name');
         res.json(result.rows);
     } catch (err) {
         console.error('Error fetching PVZ:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // GET /employees - List employees with filters
 app.get('/employees', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { pvzId, status, search } = req.query;
 
         let query = `
@@ -68,21 +68,21 @@ app.get('/employees', async (req, res) => {
 
         query += ' ORDER BY e.created_at DESC';
 
-        const result = await client.query(query, params);
+        const result = await query(query, params);
         res.json(result.rows);
     } catch (err) {
         console.error('Error fetching employees:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // POST /employees - Create new employee
 app.post('/employees', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { iin, full_name, phone, email, role, main_pvz_id, status, address, base_rate, probation_until, hired_at } = req.body;
 
         // Basic validation
@@ -90,7 +90,7 @@ app.post('/employees', async (req, res) => {
             return res.status(400).json({ error: 'Missing required fields (IIN, Full Name, Role)' });
         }
 
-        const result = await client.query(`
+        const result = await query(`
             INSERT INTO employees (
                 iin, full_name, phone, email, role, main_pvz_id, status,
                 address, base_rate, probation_until, hired_at
@@ -116,18 +116,18 @@ app.post('/employees', async (req, res) => {
         console.error('Error creating employee:', err);
         res.status(500).json({ error: 'Internal server error', details: err.message });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // GET /employees/:id - Get single employee details
 app.get('/employees/:id', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { id } = req.params;
 
-        const result = await client.query(`
+        const result = await query(`
             SELECT e.*, p.name as main_pvz_name, p.address as main_pvz_address
             FROM employees e 
             LEFT JOIN pvz_points p ON e.main_pvz_id = p.id
@@ -143,15 +143,15 @@ app.get('/employees/:id', async (req, res) => {
         console.error('Error fetching employee:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // PATCH /employees/:id/status - Update employee status
 app.patch('/employees/:id/status', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { id } = req.params;
         const { status } = req.body;
 
@@ -173,7 +173,7 @@ app.patch('/employees/:id/status', async (req, res) => {
 
         query += ` WHERE id = $2 RETURNING *`;
 
-        const result = await client.query(query, params);
+        const result = await query(query, params);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Employee not found' });
@@ -184,15 +184,15 @@ app.patch('/employees/:id/status', async (req, res) => {
         console.error('Error updating employee status:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // POST /employees/:id/transfer - Transfer employee to another PVZ
 app.post('/employees/:id/transfer', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { id } = req.params;
         const { pvzId, date, comment } = req.body;
 
@@ -201,7 +201,7 @@ app.post('/employees/:id/transfer', async (req, res) => {
         }
 
         // Update employee's main PVZ
-        const result = await client.query(`
+        const result = await query(`
             UPDATE employees 
             SET main_pvz_id = $1, updated_at = NOW()
             WHERE id = $2
@@ -220,15 +220,15 @@ app.post('/employees/:id/transfer', async (req, res) => {
         console.error('Error transferring employee:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // GET /timesheets - Get aggregated timesheet data
 app.get('/timesheets', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { month, pvzId } = req.query; // month in YYYY-MM format
 
         if (!month) {
@@ -254,21 +254,21 @@ app.get('/timesheets', async (req, res) => {
 
         query += ` ORDER BY s.date ASC`;
 
-        const result = await client.query(query, params);
+        const result = await query(query, params);
         res.json(result.rows);
     } catch (err) {
         console.error('Error fetching timesheets:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // POST /timesheets/approve - Approve timesheet for a month
 app.post('/timesheets/approve', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { month, pvzId } = req.body;
 
         if (!month) {
@@ -287,13 +287,13 @@ app.post('/timesheets/approve', async (req, res) => {
             params.push(pvzId);
         }
 
-        const result = await client.query(query, params);
+        const result = await query(query, params);
         res.json({ message: 'Timesheet approved', updatedCount: result.rowCount });
     } catch (err) {
         console.error('Error approving timesheet:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
@@ -301,9 +301,9 @@ app.post('/timesheets/approve', async (req, res) => {
 
 // POST /discipline - Create a disciplinary record
 app.post('/discipline', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { employeeId, type, reason, comment, date } = req.body;
 
         if (!employeeId || !type || !date) {
@@ -319,15 +319,15 @@ app.post('/discipline', async (req, res) => {
         console.error('Error creating discipline record:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // GET /discipline - Get disciplinary records
 app.get('/discipline', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { employeeId } = req.query;
 
         // Mock data
@@ -345,18 +345,18 @@ app.get('/discipline', async (req, res) => {
         console.error('Error fetching discipline records:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // GET /motivation/bonuses - Calculate tenure bonuses
 app.get('/motivation/bonuses', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
 
         // Fetch active employees with their hire dates
-        const result = await client.query(`
+        const result = await query(`
             SELECT id, full_name, hired_at, main_pvz_id 
             FROM employees 
             WHERE status = 'active' AND hired_at IS NOT NULL
@@ -391,7 +391,7 @@ app.get('/motivation/bonuses', async (req, res) => {
         console.error('Error calculating bonuses:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
@@ -399,13 +399,13 @@ app.get('/motivation/bonuses', async (req, res) => {
 
 // GET /finance/rent - List rent details for all PVZs
 app.get('/finance/rent', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
 
         // Mock data for now, ideally this comes from a 'leases' table
         // We'll join with PVZ table to get names
-        const result = await client.query('SELECT id, name, address FROM pvz_points');
+        const result = await query('SELECT id, name, address FROM pvz_points');
 
         const rentData = result.rows.map(pvz => {
             // Mock logic: Rent is based on ID length * 50000 for variety
@@ -428,15 +428,15 @@ app.get('/finance/rent', async (req, res) => {
         console.error('Error fetching rent data:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // POST /finance/rent/pay - Record a rent payment
 app.post('/finance/rent/pay', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { pvzId, month, amount } = req.body;
 
         if (!pvzId || !month || !amount) {
@@ -451,7 +451,7 @@ app.post('/finance/rent/pay', async (req, res) => {
         console.error('Error paying rent:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
@@ -459,9 +459,9 @@ app.post('/finance/rent/pay', async (req, res) => {
 
 // GET /finance/expenses - List expenses
 app.get('/finance/expenses', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { status } = req.query;
 
         // Mock data
@@ -481,15 +481,15 @@ app.get('/finance/expenses', async (req, res) => {
         console.error('Error fetching expenses:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // POST /finance/expenses - Create expense request
 app.post('/finance/expenses', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { amount, category, description, pvzId } = req.body;
 
         if (!amount || !category || !pvzId) {
@@ -514,15 +514,15 @@ app.post('/finance/expenses', async (req, res) => {
         console.error('Error creating expense:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // PATCH /finance/expenses/:id/status - Approve/Reject
 app.patch('/finance/expenses/:id/status', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { id } = req.params;
         const { status } = req.body; // 'approved' | 'rejected'
 
@@ -538,7 +538,7 @@ app.patch('/finance/expenses/:id/status', async (req, res) => {
         console.error('Error updating expense status:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
@@ -548,26 +548,26 @@ import { CONTRACT_TEMPLATE, HIRING_ORDER_TEMPLATE, fillTemplate } from './servic
 
 // GET /employees/:id/documents - List documents for employee
 app.get('/employees/:id/documents', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { id } = req.params;
-        const result = await client.query('SELECT * FROM documents WHERE employee_id = $1 ORDER BY created_at DESC', [id]);
+        const result = await query('SELECT * FROM documents WHERE employee_id = $1 ORDER BY created_at DESC', [id]);
         res.json(result.rows);
     } catch (err) {
         console.error('Error fetching documents:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // GET /documents/stats - Get document statistics
 app.get('/documents/stats', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
-        const result = await client.query(`
+        // await client.connect();
+        const result = await query(`
             SELECT COUNT(*) as count 
             FROM documents 
             WHERE status IN ('sent_to_employee', 'signed')
@@ -577,19 +577,19 @@ app.get('/documents/stats', async (req, res) => {
         console.error('Error fetching document stats:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // POST /documents/generate - Generate a new document (Contract)
 app.post('/documents/generate', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { employeeId, type } = req.body;
 
         // Fetch employee data
-        const empResult = await client.query(`
+        const empResult = await query(`
             SELECT e.*, p.name as pvz_name, p.address as pvz_address 
             FROM employees e 
             LEFT JOIN pvz_points p ON e.main_pvz_id = p.id 
@@ -617,7 +617,7 @@ app.post('/documents/generate', async (req, res) => {
             });
         } else if (type === 'order_hiring') {
             // Find contract number if exists
-            const contractRes = await client.query('SELECT id, created_at FROM documents WHERE employee_id = $1 AND type = \'contract\' LIMIT 1', [employeeId]);
+            const contractRes = await query('SELECT id, created_at FROM documents WHERE employee_id = $1 AND type = \'contract\' LIMIT 1', [employeeId]);
             const contractNum = contractRes.rows.length > 0 ? `TR-${contractRes.rows[0].id.slice(0, 8).toUpperCase()}` : '_______';
             const contractDate = contractRes.rows.length > 0 ? new Date(contractRes.rows[0].created_at).toLocaleDateString('ru-RU') : '_______';
 
@@ -642,7 +642,7 @@ app.post('/documents/generate', async (req, res) => {
         // OR just save a placeholder URL since we generate it on the fly.
         // Let's save a placeholder and return the content in the response for preview.
 
-        const docResult = await client.query(`
+        const docResult = await query(`
             INSERT INTO documents (employee_id, type, status, created_at)
             VALUES ($1, $2, 'draft', NOW())
             RETURNING *
@@ -657,22 +657,22 @@ app.post('/documents/generate', async (req, res) => {
         console.error('Error generating document:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // POST /documents/:id/sign - Sign a document (Mock eGov)
 app.post('/documents/:id/sign', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { id } = req.params;
         const { signature, signType } = req.body; // Optional: store signature data
 
         // In a real implementation, we would verify the signature here using Sigex or NCALayer
         // For now, we trust the client if they send a signature (or just mock it)
 
-        const result = await client.query(`
+        const result = await query(`
             UPDATE documents 
             SET status = 'signed', signed_at = NOW(), external_id = $1
             WHERE id = $2
@@ -687,7 +687,7 @@ app.post('/documents/:id/sign', async (req, res) => {
         // ONLY if this was the Contract or Hiring Order
         const docType = result.rows[0].type;
         if (['contract', 'order_hiring'].includes(docType)) {
-            await client.query(`
+            await query(`
                 UPDATE employees 
                 SET status = 'active', hired_at = COALESCE(hired_at, NOW())
                 WHERE id = (SELECT employee_id FROM documents WHERE id = $1) 
@@ -700,7 +700,7 @@ app.post('/documents/:id/sign', async (req, res) => {
         console.error('Error signing document:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
@@ -708,9 +708,9 @@ app.post('/documents/:id/sign', async (req, res) => {
 
 // GET /shifts - List shifts
 app.get('/shifts', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { pvzId, start, end } = req.query;
 
         let query = `
@@ -737,28 +737,28 @@ app.get('/shifts', async (req, res) => {
 
         query += ' ORDER BY s.date ASC';
 
-        const result = await client.query(query, params);
+        const result = await query(query, params);
         res.json(result.rows);
     } catch (err) {
         console.error('Error fetching shifts:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // POST /shifts - Create a single shift manually
 app.post('/shifts', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { employeeId, pvzId, date, type, status, plannedHours } = req.body;
 
         if (!employeeId || !pvzId || !date) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        const result = await client.query(`
+        const result = await query(`
             INSERT INTO shifts (employee_id, pvz_id, date, type, status, planned_hours)
             VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *
@@ -769,15 +769,15 @@ app.post('/shifts', async (req, res) => {
         console.error('Error creating shift:', err);
         res.status(500).json({ error: 'Internal server error', details: err.message });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // PATCH /shifts/:id - Update a shift
 app.patch('/shifts/:id', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { id } = req.params;
         const { employeeId, date, type, status, plannedHours, factHours } = req.body;
 
@@ -794,7 +794,7 @@ app.patch('/shifts/:id', async (req, res) => {
 
         query += ` WHERE id = $1 RETURNING *`;
 
-        const result = await client.query(query, params);
+        const result = await query(query, params);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Shift not found' });
@@ -805,18 +805,18 @@ app.patch('/shifts/:id', async (req, res) => {
         console.error('Error updating shift:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // DELETE /shifts/:id - Delete a shift
 app.delete('/shifts/:id', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { id } = req.params;
 
-        const result = await client.query('DELETE FROM shifts WHERE id = $1 RETURNING id', [id]);
+        const result = await query('DELETE FROM shifts WHERE id = $1 RETURNING id', [id]);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Shift not found' });
@@ -827,15 +827,15 @@ app.delete('/shifts/:id', async (req, res) => {
         console.error('Error deleting shift:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // POST /shifts/generate - Generate A/B Schedule
 app.post('/shifts/generate', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { pvzId, teamA, teamB, startDate, endDate } = req.body;
 
         if (!pvzId || !teamA || !teamB || !startDate || !endDate) {
@@ -879,10 +879,10 @@ app.post('/shifts/generate', async (req, res) => {
         // Note: ON CONFLICT DO NOTHING to avoid breaking if some shifts exist
         let insertedCount = 0;
 
-        await client.query('BEGIN');
+        await query('BEGIN');
 
         for (const shift of shifts) {
-            const result = await client.query(`
+            const result = await query(`
                 INSERT INTO shifts (employee_id, pvz_id, date, type, status)
                 VALUES ($1, $2, $3, $4, $5)
                 ON CONFLICT (employee_id, date) DO NOTHING
@@ -892,16 +892,16 @@ app.post('/shifts/generate', async (req, res) => {
             if (result.rows.length > 0) insertedCount++;
         }
 
-        await client.query('COMMIT');
+        await query('COMMIT');
 
         res.json({ message: 'Schedule generated', generated: insertedCount, total_days: shifts.length });
 
     } catch (err) {
-        await client.query('ROLLBACK');
+        await query('ROLLBACK');
         console.error('Error generating schedule:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
@@ -909,9 +909,9 @@ app.post('/shifts/generate', async (req, res) => {
 
 // GET /expenses - List expense requests
 app.get('/expenses', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { pvzId, status } = req.query;
 
         let query = `
@@ -935,28 +935,28 @@ app.get('/expenses', async (req, res) => {
 
         query += ' ORDER BY er.created_at DESC';
 
-        const result = await client.query(query, params);
+        const result = await query(query, params);
         res.json(result.rows);
     } catch (err) {
         console.error('Error fetching expenses:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // POST /expenses/request - Create expense request
 app.post('/expenses/request', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { pvzId, requesterId, amount, category, description } = req.body;
 
         if (!pvzId || !requesterId || !amount || !category) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        const result = await client.query(`
+        const result = await query(`
             INSERT INTO expense_requests (pvz_id, requester_id, amount, category, description, status)
             VALUES ($1, $2, $3, $4, $5, 'pending')
             RETURNING *
@@ -967,15 +967,15 @@ app.post('/expenses/request', async (req, res) => {
         console.error('Error creating expense request:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // PATCH /expenses/:id/status - Approve/Reject/Pay
 app.patch('/expenses/:id/status', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { id } = req.params;
         const { status, approvedById, rejectionReason } = req.body;
 
@@ -983,7 +983,7 @@ app.patch('/expenses/:id/status', async (req, res) => {
             return res.status(400).json({ error: 'Invalid status' });
         }
 
-        await client.query('BEGIN');
+        await query('BEGIN');
 
         // Update Request
         let updateQuery = 'UPDATE expense_requests SET status = $1, updated_at = NOW()';
@@ -1000,10 +1000,10 @@ app.patch('/expenses/:id/status', async (req, res) => {
 
         updateQuery += ` WHERE id = $2 RETURNING *`;
 
-        const result = await client.query(updateQuery, params);
+        const result = await query(updateQuery, params);
 
         if (result.rows.length === 0) {
-            await client.query('ROLLBACK');
+            await query('ROLLBACK');
             return res.status(404).json({ error: 'Expense request not found' });
         }
 
@@ -1011,21 +1011,21 @@ app.patch('/expenses/:id/status', async (req, res) => {
 
         // If status is 'paid', create a financial transaction
         if (status === 'paid') {
-            await client.query(`
+            await query(`
                 INSERT INTO financial_transactions (pvz_id, type, amount, description, transaction_date, source)
                 VALUES ($1, 'expense', $2, $3, NOW(), 'expense_request')
             `, [expense.pvz_id, -Math.abs(expense.amount), `Expense: ${expense.category} - ${expense.description || ''}`]);
         }
 
-        await client.query('COMMIT');
+        await query('COMMIT');
         res.json(expense);
 
     } catch (err) {
-        await client.query('ROLLBACK');
+        await query('ROLLBACK');
         console.error('Error updating expense status:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
@@ -1033,9 +1033,9 @@ app.patch('/expenses/:id/status', async (req, res) => {
 
 // POST /payroll/calculate - Calculate Monthly Payroll
 app.post('/payroll/calculate', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { pvzId, month } = req.body; // month: '2023-11-01'
 
         if (!pvzId || !month) {
@@ -1049,7 +1049,7 @@ app.post('/payroll/calculate', async (req, res) => {
         endOfMonth.setDate(0); // Last day
 
         // 1. Fetch Shifts
-        const shiftsResult = await client.query(`
+        const shiftsResult = await query(`
             SELECT s.employee_id, SUM(s.actual_hours) as total_hours, e.base_rate
             FROM shifts s
             JOIN employees e ON s.employee_id = e.id
@@ -1061,13 +1061,13 @@ app.post('/payroll/calculate', async (req, res) => {
         `, [pvzId, startOfMonth, endOfMonth]);
 
         // 2. Calculate & Upsert
-        await client.query('BEGIN');
+        await query('BEGIN');
 
         const payrolls = [];
         for (const row of shiftsResult.rows) {
             const totalAmount = parseFloat(row.total_hours) * parseFloat(row.base_rate || 0);
 
-            const result = await client.query(`
+            const result = await query(`
                 INSERT INTO fact_payroll (pvz_id, employee_id, month, total_hours, rate, total_amount, status)
                 VALUES ($1, $2, $3, $4, $5, $6, 'calculated')
                 ON CONFLICT (employee_id, month) 
@@ -1081,23 +1081,23 @@ app.post('/payroll/calculate', async (req, res) => {
             payrolls.push(result.rows[0]);
         }
 
-        await client.query('COMMIT');
+        await query('COMMIT');
         res.json(payrolls);
 
     } catch (err) {
-        await client.query('ROLLBACK');
+        await query('ROLLBACK');
         console.error('Error calculating payroll:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // GET /reports/pnl - Profit & Loss Report
 app.get('/reports/pnl', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { pvzId, month } = req.query; // month: '2023-11-01'
 
         if (!pvzId || !month) {
@@ -1112,7 +1112,7 @@ app.get('/reports/pnl', async (req, res) => {
 
         // 1. Revenue (WB + Manual)
         // For MVP we just sum manual transactions type='revenue'
-        const revenueRes = await client.query(`
+        const revenueRes = await query(`
             SELECT COALESCE(SUM(amount), 0) as total
             FROM financial_transactions
             WHERE pvz_id = $1 
@@ -1122,7 +1122,7 @@ app.get('/reports/pnl', async (req, res) => {
         `, [pvzId, startOfMonth, endOfMonth]);
 
         // 2. OpEx (Expenses)
-        const opexRes = await client.query(`
+        const opexRes = await query(`
             SELECT COALESCE(SUM(amount), 0) as total
             FROM financial_transactions
             WHERE pvz_id = $1 
@@ -1132,7 +1132,7 @@ app.get('/reports/pnl', async (req, res) => {
         `, [pvzId, startOfMonth, endOfMonth]);
 
         // 3. Payroll (Calculated)
-        const payrollRes = await client.query(`
+        const payrollRes = await query(`
             SELECT COALESCE(SUM(total_amount), 0) as total
             FROM fact_payroll
             WHERE pvz_id = $1 
@@ -1157,23 +1157,23 @@ app.get('/reports/pnl', async (req, res) => {
         console.error('Error fetching P&L:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 // --- Mapping API Endpoints ---
 
 app.post('/mappings', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
+        // await client.connect();
         const { name, mapping, isActive } = req.body;
 
         if (!name || !mapping) {
             return res.status(400).json({ error: 'Name and mapping are required' });
         }
 
-        const result = await client.query(`
+        const result = await query(`
             INSERT INTO import_mappings (name, mapping, is_active)
             VALUES ($1, $2, $3)
             RETURNING *
@@ -1184,21 +1184,21 @@ app.post('/mappings', async (req, res) => {
         console.error('Error creating mapping:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
 app.get('/mappings', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
-        await client.connect();
-        const result = await client.query('SELECT * FROM import_mappings ORDER BY created_at DESC');
+        // await client.connect();
+        const result = await query('SELECT * FROM import_mappings ORDER BY created_at DESC');
         res.json(result.rows);
     } catch (err) {
         console.error('Error fetching mappings:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
@@ -1231,7 +1231,7 @@ app.post('/parse', async (req, res) => {
 // --- Analytics Dashboard API ---
 
 app.get('/analytics/dashboard', async (req, res) => {
-    const client = createClient();
+    // const client = createClient();
     try {
         // Try to get from cache first
         const { month } = req.query;
@@ -1243,7 +1243,7 @@ app.get('/analytics/dashboard', async (req, res) => {
             return res.json(JSON.parse(cachedData));
         }
 
-        await client.connect();
+        // await client.connect();
         // const { month } = req.query; // Already destructured above
 
         const now = new Date();
@@ -1252,7 +1252,7 @@ app.get('/analytics/dashboard', async (req, res) => {
         const endOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0);
 
         // 1. Aggregates
-        const financialsRes = await client.query(`
+        const financialsRes = await query(`
             SELECT 
                 COALESCE(SUM(CASE WHEN type = 'revenue' THEN amount ELSE 0 END), 0) as revenue,
                 COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as opex
@@ -1260,7 +1260,7 @@ app.get('/analytics/dashboard', async (req, res) => {
             WHERE transaction_date >= $1 AND transaction_date <= $2
         `, [startOfMonth, endOfMonth]);
 
-        const payrollRes = await client.query(`
+        const payrollRes = await query(`
             SELECT COALESCE(SUM(total_amount), 0) as total
             FROM fact_payroll
             WHERE month = $1
@@ -1272,7 +1272,7 @@ app.get('/analytics/dashboard', async (req, res) => {
         const netProfit = revenue - opex - payroll;
 
         // 2. Check for Parser Data (Missing Data Warning)
-        const parserCheckRes = await client.query(`
+        const parserCheckRes = await query(`
             SELECT EXISTS(
                 SELECT 1 FROM financial_transactions 
                 WHERE source = 'wb_sheet' 
@@ -1283,7 +1283,7 @@ app.get('/analytics/dashboard', async (req, res) => {
         const hasParserData = parserCheckRes.rows[0].has_parser_data;
 
         // 3. Top PVZ
-        const topPvzRes = await client.query(`
+        const topPvzRes = await query(`
             SELECT p.name, COALESCE(SUM(ft.amount), 0) as revenue
             FROM pvz_points p
             LEFT JOIN financial_transactions ft ON p.id = ft.pvz_id 
@@ -1296,7 +1296,7 @@ app.get('/analytics/dashboard', async (req, res) => {
 
         // 4. Recent Activity (Mock + Real mix)
         // For now, just fetching latest transactions
-        const activityRes = await client.query(`
+        const activityRes = await query(`
             SELECT 
                 ft.id,
                 ft.type as action,
@@ -1342,7 +1342,7 @@ app.get('/analytics/dashboard', async (req, res) => {
         console.error('Error fetching analytics dashboard:', err);
         res.status(500).json({ error: 'Internal server error' });
     } finally {
-        await client.end();
+        // await client.end();
     }
 });
 
