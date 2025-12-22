@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS transfers CASCADE;
 DROP TABLE IF EXISTS documents CASCADE;
 DROP TABLE IF EXISTS employees CASCADE;
 DROP TABLE IF EXISTS pvz_points CASCADE;
+DROP TABLE IF EXISTS import_mappings CASCADE;
 
 DROP TYPE IF EXISTS expense_status CASCADE;
 DROP TYPE IF EXISTS expense_category CASCADE;
@@ -234,7 +235,6 @@ CREATE TABLE fact_wb_revenues (
     total_revenue DECIMAL(12, 2) NOT NULL,
     wb_commission DECIMAL(12, 2),
     
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

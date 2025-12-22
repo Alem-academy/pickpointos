@@ -33,22 +33,22 @@ UPDATE employees SET fired_at = '2023-09-20' WHERE id = '650e8400-e29b-41d4-a716
 -- Insert sample financial transactions
 INSERT INTO financial_transactions (pvz_id, type, amount, description, transaction_date, source) VALUES
     -- Revenue for PVZ 1 (Almaty)
-    ('550e8400-e29b-41d4-a716-446655440001', 'revenue', 2500000, 'WB Sales - Week 43', '2023-10-23', 'wb_report'),
-    ('550e8400-e29b-41d4-a716-446655440001', 'fine', -45000, 'Late delivery penalty', '2023-10-23', 'wb_report'),
-    ('550e8400-e29b-41d4-a716-446655440001', 'expense', -180000, 'Rent - October', '2023-10-01', 'manual_entry'),
-    ('550e8400-e29b-41d4-a716-446655440001', 'payout', -850000, 'Payroll - October', '2023-10-25', 'payroll_calc'),
+    ('550e8400-e29b-41d4-a716-446655440001', 'revenue', 2500000, 'WB Sales - Current Week', CURRENT_DATE, 'wb_report'),
+    ('550e8400-e29b-41d4-a716-446655440001', 'fine', -45000, 'Late delivery penalty', CURRENT_DATE, 'wb_report'),
+    ('550e8400-e29b-41d4-a716-446655440001', 'expense', -180000, 'Rent - Current Month', date_trunc('month', CURRENT_DATE), 'manual_entry'),
+    ('550e8400-e29b-41d4-a716-446655440001', 'payout', -850000, 'Payroll - Current Month', CURRENT_DATE, 'payroll_calc'),
     
     -- Revenue for PVZ 2 (Astana)
-    ('550e8400-e29b-41d4-a716-446655440002', 'revenue', 3200000, 'WB Sales - Week 43', '2023-10-23', 'wb_report'),
-    ('550e8400-e29b-41d4-a716-446655440002', 'fine', -32000, 'Quality issues', '2023-10-23', 'wb_report'),
-    ('550e8400-e29b-41d4-a716-446655440002', 'expense', -220000, 'Rent - October', '2023-10-01', 'manual_entry'),
-    ('550e8400-e29b-41d4-a716-446655440002', 'payout', -1100000, 'Payroll - October', '2023-10-25', 'payroll_calc'),
+    ('550e8400-e29b-41d4-a716-446655440002', 'revenue', 3200000, 'WB Sales - Current Week', CURRENT_DATE, 'wb_report'),
+    ('550e8400-e29b-41d4-a716-446655440002', 'fine', -32000, 'Quality issues', CURRENT_DATE, 'wb_report'),
+    ('550e8400-e29b-41d4-a716-446655440002', 'expense', -220000, 'Rent - Current Month', date_trunc('month', CURRENT_DATE), 'manual_entry'),
+    ('550e8400-e29b-41d4-a716-446655440002', 'payout', -1100000, 'Payroll - Current Month', CURRENT_DATE, 'payroll_calc'),
     
     -- Revenue for PVZ 3 (Shymkent)
-    ('550e8400-e29b-41d4-a716-446655440003', 'revenue', 1800000, 'WB Sales - Week 43', '2023-10-23', 'wb_report'),
-    ('550e8400-e29b-41d4-a716-446655440003', 'fine', -28000, 'Damaged goods', '2023-10-23', 'wb_report'),
-    ('550e8400-e29b-41d4-a716-446655440003', 'expense', -150000, 'Rent - October', '2023-10-01', 'manual_entry'),
-    ('550e8400-e29b-41d4-a716-446655440003', 'payout', -720000, 'Payroll - October', '2023-10-25', 'payroll_calc');
+    ('550e8400-e29b-41d4-a716-446655440003', 'revenue', 1800000, 'WB Sales - Current Week', CURRENT_DATE, 'wb_report'),
+    ('550e8400-e29b-41d4-a716-446655440003', 'fine', -28000, 'Damaged goods', CURRENT_DATE, 'wb_report'),
+    ('550e8400-e29b-41d4-a716-446655440003', 'expense', -150000, 'Rent - Current Month', date_trunc('month', CURRENT_DATE), 'manual_entry'),
+    ('550e8400-e29b-41d4-a716-446655440003', 'payout', -720000, 'Payroll - Current Month', CURRENT_DATE, 'payroll_calc');
 
 -- Insert HR admin user
 INSERT INTO employees (id, iin, full_name, email, phone, role, status, base_rate, hired_at) VALUES

@@ -11,7 +11,7 @@ export default function Employees() {
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [pvzList, setPvzList] = useState<PVZ[]>([]);
     const [selectedPvz, setSelectedPvz] = useState<string>('');
-    const [statusFilter] = useState<string>('active');
+    const [statusFilter, setStatusFilter] = useState<string>('');
     const [showAddModal, setShowAddModal] = useState(false);
 
     const loadData = useCallback(async () => {

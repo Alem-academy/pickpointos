@@ -418,7 +418,7 @@ app.get('/finance/rent', async (req, res) => {
                 address: pvz.address,
                 landlord: 'ИП Арендодатель ' + pvz.id.substring(0, 4),
                 amount: rentAmount,
-                dueDate: '2023-11-25', // Fixed for MVP
+                dueDate: new Date().toISOString().split('T')[0], // Due today for MVP
                 status: isPaid ? 'paid' : 'pending'
             };
         });
@@ -465,10 +465,11 @@ app.get('/finance/expenses', async (req, res) => {
         const { status } = req.query;
 
         // Mock data
+        const today = new Date().toISOString().split('T')[0];
         let expenses = [
-            { id: '1', category: 'office', description: 'Paper & Pens', amount: 15000, created_at: '2023-11-20', status: 'approved', pvz_id: 'PVZ-001' },
-            { id: '2', category: 'repair', description: 'Printer Repair', amount: 25000, created_at: '2023-11-22', status: 'pending', pvz_id: 'PVZ-002' },
-            { id: '3', category: 'other', description: 'Coffee for clients', amount: 5000, created_at: '2023-11-23', status: 'rejected', pvz_id: 'PVZ-001' }
+            { id: '1', category: 'office', description: 'Paper & Pens', amount: 15000, created_at: today, status: 'approved', pvz_id: 'PVZ-001' },
+            { id: '2', category: 'repair', description: 'Printer Repair', amount: 25000, created_at: today, status: 'pending', pvz_id: 'PVZ-002' },
+            { id: '3', category: 'other', description: 'Coffee for clients', amount: 5000, created_at: today, status: 'rejected', pvz_id: 'PVZ-001' }
         ];
 
         if (status) {
