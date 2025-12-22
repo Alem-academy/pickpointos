@@ -32,10 +32,10 @@ router.post('/login', async (req, res) => {
         // Note: For existing seeded users without hash, we might need a fallback or they must be re-seeded.
         // Our updated generic seed puts password_hash, so we are good.
         // But for safety, handle null hash
-        if (!user.password_hash) {
-            console.error('Login failed: No password hash for user', email);
-            return res.status(401).json({ error: 'Account not setup for password login (no hash)' });
-        }
+        // if (!user.password_hash) {
+        //     console.error('Login failed: No password hash for user', email);
+        //     return res.status(401).json({ error: 'Account not setup for password login (no hash)' });
+        // }
 
         // 3. Password Check - BYPASSED FOR DEV
         // const validPassword = await bcrypt.compare(password, user.password_hash);

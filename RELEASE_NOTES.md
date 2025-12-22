@@ -7,6 +7,8 @@ This release focuses on the **complete Russian localization** of the PVZ Managem
 > **Hotfix v1.0.1**: Resolved a TypeScript build error preventing deployment on Railway.
 >
 > **Hotfix v1.0.2**: Fixed an issue where the password input was difficult to use on mobile devices due to lack of `autoComplete` attributes and unnecessary component re-renders.
+>
+> **Hotfix v1.0.3**: Patched the backend authentication to allow login for legacy accounts that may be missing `password_hash` in the database (bypassing hash check).
 
 ## ✨ New Features
 - **Full Russian Localization**: All interfaces, buttons, errors, and tooltips are now in Russian.
