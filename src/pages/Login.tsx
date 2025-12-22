@@ -196,7 +196,7 @@ export default function Login() {
                 </div>
 
                 <p className="text-center text-sm font-bold text-slate-400">
-                    Protected System. Authorized Personnel Only.
+                    Protected System. Authorized Personnel Only. v1.1
                 </p>
             </div>
 
