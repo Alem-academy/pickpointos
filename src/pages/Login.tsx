@@ -14,6 +14,8 @@ export default function Login() {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedRole, setSelectedRole] = useState<'admin' | 'hr' | 'rf' | 'finance' | null>(null);
 
+    const [password, setPassword] = useState('password123');
+
     const handleLogin = async (role: 'admin' | 'hr' | 'rf' | 'finance') => {
         setSelectedRole(role);
         setIsLoading(true);
@@ -23,18 +25,18 @@ export default function Login() {
                 case 'admin': email = 'admin@example.com'; break;
                 case 'hr': email = 'hr@example.com'; break;
                 case 'rf': email = 'manager@example.com'; break;
-                case 'finance': email = 'finance@example.com'; break; // Mock finance user if needed, or just map to admin for now
+                case 'finance': email = 'finance@example.com'; break;
             }
 
-            // For MVP, map finance to admin or create a new mock user. Let's map to admin for now to give access.
             if (role === 'finance') email = 'admin@example.com';
 
-            await login(email);
+            await login(email, password);
 
             const target = location.state?.from?.pathname || (role === 'rf' ? '/rf' : '/hr');
             navigate(target, { replace: true });
         } catch (error) {
             console.error("Login failed", error);
+            alert("Ошибка входа! Проверьте пароль.");
         } finally {
             setIsLoading(false);
         }
@@ -74,7 +76,7 @@ export default function Login() {
             await SigexService.authenticate(signature);
 
             // 4. Login (Mocking user for now as we don't have user mapping yet)
-            await login('eds_user@example.com');
+            await login('eds_user@example.com', 'password123'); // Hack for now
             navigate('/hr', { replace: true }); // Default to HR for EDS users for now
 
         } catch (error) {
@@ -125,35 +127,47 @@ export default function Login() {
                         </p>
                     </div>
 
-                    <div className="grid gap-4">
-                        <RoleButton
-                            role="admin"
-                            icon={ShieldCheck}
-                            label="Администратор"
-                            desc="Полный доступ к системе"
-                            colorClass="bg-slate-100 text-slate-900"
-                        />
-                        <RoleButton
-                            role="hr"
-                            icon={Users}
-                            label="HR Менеджер"
-                            desc="Найм, кадры, табель"
-                            colorClass="bg-blue-100 text-blue-700"
-                        />
-                        <RoleButton
-                            role="rf"
-                            icon={LayoutDashboard}
-                            label="Управляющий (РФ)"
-                            desc="Управление точками и сменами"
-                            colorClass="bg-emerald-100 text-emerald-700"
-                        />
-                        <RoleButton
-                            role="finance"
-                            icon={Wallet}
-                            label="Финансист"
-                            desc="Расходы, аренда, P&L"
-                            colorClass="bg-yellow-100 text-yellow-700"
-                        />
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-bold text-slate-700">Пароль</label>
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full rounded-xl border-2 border-slate-200 p-3 font-bold text-slate-900 focus:border-blue-500 focus:outline-none"
+                            />
+                        </div>
+
+                        <div className="grid gap-4">
+                            <RoleButton
+                                role="admin"
+                                icon={ShieldCheck}
+                                label="Администратор"
+                                desc="Полный доступ к системе"
+                                colorClass="bg-slate-100 text-slate-900"
+                            />
+                            <RoleButton
+                                role="hr"
+                                icon={Users}
+                                label="HR Менеджер"
+                                desc="Найм, кадры, табель"
+                                colorClass="bg-blue-100 text-blue-700"
+                            />
+                            <RoleButton
+                                role="rf"
+                                icon={LayoutDashboard}
+                                label="Управляющий (РФ)"
+                                desc="Управление точками и сменами"
+                                colorClass="bg-emerald-100 text-emerald-700"
+                            />
+                            <RoleButton
+                                role="finance"
+                                icon={Wallet}
+                                label="Финансист"
+                                desc="Расходы, аренда, P&L"
+                                colorClass="bg-yellow-100 text-yellow-700"
+                            />
+                        </div>
                     </div>
 
                     <div className="relative">

@@ -25,13 +25,19 @@ async function seedDatabase() {
         const counts = await Promise.all([
             client.query('SELECT COUNT(*) FROM pvz_points'),
             client.query('SELECT COUNT(*) FROM employees'),
-            client.query('SELECT COUNT(*) FROM financial_transactions')
+            client.query('SELECT COUNT(*) FROM financial_transactions'),
+            client.query('SELECT COUNT(*) FROM shifts'),
+            client.query('SELECT COUNT(*) FROM expense_requests'),
+            client.query('SELECT COUNT(*) FROM rent_contracts')
         ]);
 
         console.log('\n📊 Database statistics:');
         console.log(`  - PVZ Points: ${counts[0].rows[0].count}`);
         console.log(`  - Employees: ${counts[1].rows[0].count}`);
         console.log(`  - Transactions: ${counts[2].rows[0].count}`);
+        console.log(`  - Shifts: ${counts[3].rows[0].count}`);
+        console.log(`  - Expenses: ${counts[4].rows[0].count}`);
+        console.log(`  - Rent Contracts: ${counts[5].rows[0].count}`);
 
     } catch (error) {
         console.error('❌ Error:', error.message);

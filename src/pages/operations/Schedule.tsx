@@ -26,7 +26,7 @@ export default function SchedulePage() {
     const [editingShift, setEditingShift] = useState<Shift | null>(null);
     const [shiftDate, setShiftDate] = useState('');
     const [shiftEmployeeId, setShiftEmployeeId] = useState('');
-    const [shiftType, setShiftType] = useState<'work' | 'vacation' | 'sick' | 'training'>('work');
+    const [shiftType, setShiftType] = useState<'scheduled' | 'extra'>('scheduled');
     const [shiftHours, setShiftHours] = useState(12);
 
     useEffect(() => {
@@ -92,7 +92,7 @@ export default function SchedulePage() {
         setEditingShift(null);
         setShiftDate(format(date, 'yyyy-MM-dd'));
         setShiftEmployeeId('');
-        setShiftType('work');
+        setShiftType('scheduled');
         setShiftHours(12);
         setShowShiftModal(true);
     };
@@ -368,10 +368,8 @@ export default function SchedulePage() {
                                     value={shiftType}
                                     onChange={e => setShiftType(e.target.value as any)}
                                 >
-                                    <option value="work">Рабочая смена</option>
-                                    <option value="vacation">Отпуск</option>
-                                    <option value="sick">Больничный</option>
-                                    <option value="training">Обучение</option>
+                                    <option value="scheduled">Плановая смена</option>
+                                    <option value="extra">Доп. выход</option>
                                 </select>
                             </div>
                             <div>

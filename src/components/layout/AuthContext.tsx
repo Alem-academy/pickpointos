@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import type { User } from "@/types";
-import { authService } from "@/services/mock/auth";
+import { authService } from "@/services/auth";
 
 interface AuthContextType {
     user: User | null;
     isLoading: boolean;
-    login: (email: string) => Promise<void>;
+    login: (email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
 }
 
@@ -29,10 +29,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         initAuth();
     }, []);
 
-    const login = async (email: string) => {
+    const login = async (email: string, password: string) => {
         setIsLoading(true);
         try {
-            const user = await authService.login(email);
+            const user = await authService.login(email, password);
             setUser(user);
             localStorage.setItem("user", JSON.stringify(user));
         } finally {
