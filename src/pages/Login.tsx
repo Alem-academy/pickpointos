@@ -22,13 +22,13 @@ export default function Login() {
         try {
             let email = '';
             switch (role) {
-                case 'admin': email = 'admin@example.com'; break;
-                case 'hr': email = 'hr@example.com'; break;
-                case 'rf': email = 'manager@example.com'; break;
-                case 'finance': email = 'finance@example.com'; break;
+                case 'admin': email = 'admin@pvz.kz'; break;
+                case 'hr': email = 'aigul.kasymova@pvz.kz'; break;
+                case 'rf': email = 'aidar.bekbolatov@pvz.kz'; break;
+                case 'finance': email = 'admin@pvz.kz'; break;
             }
 
-            if (role === 'finance') email = 'admin@example.com';
+            if (role === 'finance') email = 'admin@pvz.kz';
 
             await login(email, password);
 

@@ -73,6 +73,7 @@ INSERT INTO shifts (employee_id, pvz_id, date, type, status, planned_hours, actu
 
 -- Insert HR admin user
 INSERT INTO employees (id, iin, full_name, email, phone, role, status, base_rate, hired_at, password_hash) VALUES
-    ('650e8400-e29b-41d4-a716-446655440099', '800101400999', 'Айгүл Қасымова', 'aigul.kasymova@pvz.kz', '+7 (701) 999-99-99', 'hr', 'active', 650000, '2022-01-10', '$2b$10$56W0szsuUZopLXUoi6h9VOGlZrLWdxzYHAcbuJ0KG93SNaUMZT.Ma');
+    ('650e8400-e29b-41d4-a716-446655440099', '800101400999', 'Айгүл Қасымова', 'aigul.kasymova@pvz.kz', '+7 (701) 999-99-99', 'hr', 'active', 650000, '2022-01-10', '$2b$10$56W0szsuUZopLXUoi6h9VOGlZrLWdxzYHAcbuJ0KG93SNaUMZT.Ma'),
+    ('650e8400-e29b-41d4-a716-446655440000', '000000000000', 'Super Admin', 'admin@pvz.kz', '+7 (700) 000-00-00', 'admin', 'active', 0, '2020-01-01', '$2b$10$56W0szsuUZopLXUoi6h9VOGlZrLWdxzYHAcbuJ0KG93SNaUMZT.Ma');
 
 COMMIT;
