@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Save } from "lucide-react";
-import { api } from "@/services/api";
+import { api, type EmployeeRole } from "@/services/api";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-
-import { EmployeeRole } from "@/types";
 
 export default function NewEmployeePage() {
     const navigate = useNavigate();
@@ -30,7 +28,11 @@ export default function NewEmployeePage() {
         e.preventDefault();
         setIsLoading(true);
         try {
-            await api.createEmployee(formData);
+            const payload = {
+                ...formData,
+                base_rate: Number(formData.base_rate)
+            };
+            await api.createEmployee(payload);
             toast.success("Сотрудник успешно создан");
             navigate('/hr/employees');
         } catch (err) {
@@ -109,7 +111,7 @@ export default function NewEmployeePage() {
                         <label className="text-sm font-black uppercase text-slate-500">Роль</label>
                         <select
                             value={formData.role}
-                            onChange={e => setFormData({ ...formData, role: e.target.value })}
+                            onChange={e => setFormData({ ...formData, role: e.target.value as EmployeeRole })}
                             className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 p-3 font-bold focus:border-black focus:outline-none"
                         >
                             <option value="employee">Сотрудник</option>
