@@ -1,3 +1,4 @@
+import './config.js';
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -11,7 +12,7 @@ import documentsRoutes from './routes/documents.js';
 import analyticsRoutes from './routes/analytics.js';
 import authRoutes from './routes/auth.js';
 
-dotenv.config();
+dotenv.config({ path: '../.env' });
 
 const app = express();
 const port = process.env.PORT || 8080;
