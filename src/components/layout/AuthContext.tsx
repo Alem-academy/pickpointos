@@ -29,15 +29,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         initAuth();
     }, []);
 
-    const login = async (email: string, password: string) => {
-        setIsLoading(true);
-        try {
-            const user = await authService.login(email, password);
-            setUser(user);
-            localStorage.setItem("user", JSON.stringify(user));
-        } finally {
-            setIsLoading(false);
-        }
+    const login = async (email: string) => {
+        // BYPASS LOGIN API
+        // Immediately set user as logged in
+        const mockUser: User = {
+            id: '650e8400-e29b-41d4-a716-446655440000',
+            email: email,
+            role: 'admin', // Default generic role, actual permissions handled by UI state mostly
+            name: 'Super Admin'
+        };
+
+        // Decide role based on input email for UI testing if needed, or just default to admin
+        if (email.includes('hr')) mockUser.role = 'hr';
+        if (email.includes('manager')) mockUser.role = 'rf';
+
+        setUser(mockUser);
+        localStorage.setItem('token', 'dev-bypass-token');
     };
 
     const logout = async () => {

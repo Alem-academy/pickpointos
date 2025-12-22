@@ -5,19 +5,14 @@ dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
+// BYPASS AUTHENTICATION MIDDLEWARE
 export const authenticateToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
-
-    if (!token) {
-        return res.status(401).json({ error: 'Access token required' });
-    }
-
-    jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) {
-            return res.status(403).json({ error: 'Invalid token' });
-        }
-        req.user = user;
-        next();
-    });
+    // Hardcode "Super Admin" for every request
+    req.user = {
+        id: '650e8400-e29b-41d4-a716-446655440000',
+        email: 'admin@pvz.kz',
+        role: 'admin',
+        main_pvz_id: null
+    };
+    next();
 };
