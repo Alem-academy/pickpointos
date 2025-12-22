@@ -73,9 +73,10 @@ export default function Login() {
 
             const target = location.state?.from?.pathname || (role === 'rf' ? '/rf' : '/hr');
             navigate(target, { replace: true });
-        } catch (error) {
+        } catch (error: any) {
             console.error("Login failed", error);
-            alert("Ошибка входа! Проверьте пароль.");
+            const errorMessage = error.response?.data?.error || error.message || "Неизвестная ошибка";
+            alert(`Ошибка входа: ${errorMessage}`);
         } finally {
             setIsLoading(false);
         }
