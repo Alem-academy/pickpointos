@@ -47,9 +47,15 @@ export default function SchedulePage() {
             const start = startOfMonth(currentDate).toISOString();
             const end = endOfMonth(currentDate).toISOString();
             const data = await api.getShifts(selectedPvzId, start, end);
-            setShifts(data);
+            if (Array.isArray(data)) {
+                setShifts(data);
+            } else {
+                console.error("Received non-array shifts data:", data);
+                setShifts([]);
+            }
         } catch (err) {
             console.error(err);
+            setShifts([]);
         }
     }, [currentDate, selectedPvzId]);
 

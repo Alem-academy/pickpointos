@@ -55,14 +55,14 @@ export default function Timesheet() {
     });
 
     // Group shifts by employee
-    const employees = Array.from(new Set(timesheetData.map(s => s.employee_id))).map(id => {
+    const employees = Array.isArray(timesheetData) ? Array.from(new Set(timesheetData.map(s => s.employee_id))).map(id => {
         const shift = timesheetData.find(s => s.employee_id === id);
         return {
             id,
             name: shift?.employee_name || 'Unknown',
             shifts: timesheetData.filter(s => s.employee_id === id)
         };
-    });
+    }) : [];
 
     return (
         <div className="p-8">
