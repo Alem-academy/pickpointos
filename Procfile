@@ -1,1 +1,1 @@
-web: npm start
+web: node parser/src/index.js

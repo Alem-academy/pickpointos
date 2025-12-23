@@ -1,0 +1,14 @@
+# Force Railway to use Node.js provider
+providers = ["node"]
+
+[phases.setup]
+nixPkgs = ["nodejs", "npm", "python3"]
+
+[phases.install]
+cmds = ["npm install"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "node parser/src/index.js"
