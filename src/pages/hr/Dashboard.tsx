@@ -120,10 +120,8 @@ export default function HRDashboard() {
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-8">
-                            {stats?.recentActivity?.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">Нет активности.</p>
-                            ) : (
-                                stats?.recentActivity?.map((act) => (
+                            {Array.isArray(stats?.recentActivity) && stats.recentActivity.length > 0 ? (
+                                stats.recentActivity.map((act) => (
                                     <div key={act.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
                                         <div className="flex items-center gap-4">
                                             <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">
@@ -139,6 +137,8 @@ export default function HRDashboard() {
                                         </div>
                                     </div>
                                 ))
+                            ) : (
+                                <p className="text-sm text-muted-foreground">Нет активности.</p>
                             )}
                         </div>
                     </CardContent>

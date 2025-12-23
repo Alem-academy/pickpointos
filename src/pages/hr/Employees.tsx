@@ -23,10 +23,11 @@ export default function Employees() {
     }
 
     // Filter locally by search term (React Query handles status filter via API)
-    const filteredEmployees = employees?.filter((emp) =>
+    const safeEmployees = Array.isArray(employees) ? employees : [];
+    const filteredEmployees = safeEmployees.filter((emp) =>
         emp.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         emp.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    ) || [];
+    );
 
     const getStatusColor = (status: string) => {
         switch (status) {

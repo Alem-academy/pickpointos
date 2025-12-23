@@ -84,7 +84,7 @@ export default function Dashboard() {
                         <h2 className="text-2xl font-black uppercase">Топ ПВЗ по выручке</h2>
                     </div>
                     <div className="space-y-4">
-                        {data.topPvz.map((pvz: any, index: number) => (
+                        {Array.isArray(data.topPvz) && data.topPvz.map((pvz: any, index: number) => (
                             <div key={index} className="flex items-center justify-between rounded-xl bg-slate-50 p-4">
                                 <div className="flex items-center gap-4">
                                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black font-bold text-white">
@@ -95,7 +95,7 @@ export default function Dashboard() {
                                 <span className="font-black">{Number(pvz.revenue).toLocaleString()} ₸</span>
                             </div>
                         ))}
-                        {data.topPvz.length === 0 && (
+                        {(!Array.isArray(data.topPvz) || data.topPvz.length === 0) && (
                             <div className="text-center font-bold text-slate-400">Нет данных</div>
                         )}
                     </div>
@@ -108,7 +108,7 @@ export default function Dashboard() {
                         <h2 className="text-2xl font-black uppercase">Последняя активность</h2>
                     </div>
                     <div className="space-y-4">
-                        {data.recentActivity.map((item: any) => (
+                        {Array.isArray(data.recentActivity) && data.recentActivity.map((item: any) => (
                             <div key={item.id} className="flex items-start gap-4 rounded-xl border-l-4 border-black bg-slate-50 p-4">
                                 <div className="flex-1">
                                     <div className="font-black">{item.action}</div>
