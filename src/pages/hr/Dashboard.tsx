@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Users, UserPlus, FileText, ArrowUpRight, ArrowDownRight, Briefcase } from "lucide-react";
+import { Users, UserPlus, FileText, ArrowUpRight, ArrowDownRight, Briefcase, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useHRStats } from "@/hooks/use-queries";
