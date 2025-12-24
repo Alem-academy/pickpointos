@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api, type Employee } from '@/services/api';
-import { ArrowRight, X, UserPlus } from 'lucide-react';
+import { ArrowRight, X, UserPlus, Eye } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { TOOLTIPS } from '@/constants/tooltips';
+import { CandidateModal } from '@/components/hr/CandidateModal';
 
 export default function Applications() {
     const [employees, setEmployees] = useState<Employee[]>([]);
+    const [selectedCandidate, setSelectedCandidate] = useState<Employee | null>(null);
 
     const loadEmployees = useCallback(async () => {
         try {
@@ -27,6 +29,7 @@ export default function Applications() {
         try {
             await api.updateEmployeeStatus(id, newStatus);
             loadEmployees();
+            if (selectedCandidate) setSelectedCandidate(null); // Close modal if open
         } catch (err) {
             console.error(err);
         }
@@ -71,22 +74,39 @@ export default function Applications() {
                                 .map(employee => (
                                     <div key={employee.id} className="rounded-2xl border-2 border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-black hover:shadow-md">
                                         <div className="mb-4">
-                                            <h3 className="text-lg">{employee.full_name}</h3>
+                                            <h3 className="text-lg font-bold">{employee.full_name}</h3>
                                             <p className="text-muted-foreground">{employee.phone}</p>
-                                            <p className="text-sm font-bold text-blue-600">{employee.main_pvz_name || 'ПВЗ не назначен'}</p>
+                                            <p className="mt-1 flex items-center gap-1 text-sm font-bold text-blue-600">
+                                                <span className="h-2 w-2 rounded-full bg-blue-600"></span>
+                                                {employee.main_pvz_name || 'ПВЗ не назначен'}
+                                            </p>
                                         </div>
 
                                         <div className="flex gap-2">
-                                            {col.id !== 'signing' ? (
+                                            {/* View Button (Primary for New) */}
+                                            {col.id === 'new' && (
+                                                <button
+                                                    onClick={() => setSelectedCandidate(employee)}
+                                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-3 text-sm font-bold text-slate-700 hover:bg-slate-200"
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                    Анкета
+                                                </button>
+                                            )}
+
+                                            {col.id !== 'new' && col.id !== 'signing' && (
                                                 <Tooltip text={TOOLTIPS.hr.card_move}>
                                                     <button
-                                                        onClick={() => handleStatusUpdate(employee.id, col.id === 'new' ? 'review' : 'signing')}
+                                                        onClick={() => handleStatusUpdate(employee.id, 'signing')}
                                                         className="flex w-full items-center justify-center gap-2 rounded-xl bg-black py-3 text-sm font-bold text-white hover:bg-gray-800"
                                                     >
-                                                        Далее <ArrowRight className="h-4 w-4" />
+                                                        В оформление <ArrowRight className="h-4 w-4" />
                                                     </button>
                                                 </Tooltip>
-                                            ) : (
+                                            )}
+
+                                            {/* Signing Action */}
+                                            {col.id === 'signing' && (
                                                 <Tooltip text="Перейти к оформлению документов">
                                                     <button
                                                         onClick={() => window.location.href = `/hr/employees/${employee.id}`}
@@ -96,6 +116,7 @@ export default function Applications() {
                                                     </button>
                                                 </Tooltip>
                                             )}
+
                                             <Tooltip text={TOOLTIPS.hr.card_reject}>
                                                 <button
                                                     onClick={() => handleStatusUpdate(employee.id, 'fired')}
@@ -111,6 +132,16 @@ export default function Applications() {
                     </div>
                 ))}
             </div>
+
+            {/* Candidate Details Modal */}
+            {selectedCandidate && (
+                <CandidateModal
+                    candidate={selectedCandidate}
+                    onClose={() => setSelectedCandidate(null)}
+                    onApprove={() => handleStatusUpdate(selectedCandidate.id, 'review')}
+                    onReject={() => handleStatusUpdate(selectedCandidate.id, 'fired')}
+                />
+            )}
         </div>
     );
 }

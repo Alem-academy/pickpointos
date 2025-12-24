@@ -57,7 +57,7 @@ router.get('/employees', authenticateToken, async (req, res) => {
 // POST /employees - Create new employee
 router.post('/employees', async (req, res) => {
     try {
-        const { iin, full_name, phone, email, role, main_pvz_id, status, address, base_rate, probation_until, hired_at } = req.body;
+        const { iin, full_name, phone, email, role, main_pvz_id, status, address, base_rate, probation_until, hired_at, iban } = req.body;
 
         // Basic validation
         if (!iin || !full_name || !role) {
@@ -67,9 +67,9 @@ router.post('/employees', async (req, res) => {
         const result = await query(`
             INSERT INTO employees (
                 iin, full_name, phone, email, role, main_pvz_id, status,
-                address, base_rate, probation_until, hired_at
+                address, base_rate, probation_until, hired_at, iban
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             RETURNING *
         `, [
             iin,
@@ -82,7 +82,8 @@ router.post('/employees', async (req, res) => {
             address || null,
             base_rate || null,
             probation_until || null,
-            hired_at || null
+            hired_at || null,
+            iban || null
         ]);
 
         res.status(201).json(result.rows[0]);

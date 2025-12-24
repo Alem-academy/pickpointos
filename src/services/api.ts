@@ -68,6 +68,7 @@ export interface Employee {
     address?: string;
     hired_at: string | null;
     created_at: string;
+    iban?: string; // KZ IBAN
 }
 
 export interface Shift {
