@@ -20,8 +20,12 @@ const port = process.env.PORT || 8080;
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import { runMigrations } from './services/migrator.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Run migrations (will log errors but not crash to allow server to start, or we could await)
+runMigrations().catch(console.error);
 
 app.use(cors());
 app.use(express.json());
