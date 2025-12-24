@@ -113,15 +113,16 @@ export default function RFDashboard() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Box className="h-5 w-5 text-blue-600" />
-                            Инвентарь и Оборудование
+                            Инвентарь и Закупки
                         </CardTitle>
-                        <CardDescription>Статус и запросы</CardDescription>
+                        <CardDescription>Заказ расходников</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">12</div>
-                        <p className="text-xs text-muted-foreground">Отслеживаемые предметы</p>
-                        <Button variant="link" className="px-0 text-blue-600 h-auto mt-2">
-                            Проверить Инвентарь &rarr;
+                        <p className="mb-4 text-sm text-muted-foreground">
+                            Пакеты, скотч, бумага и хозтовары.
+                        </p>
+                        <Button variant="outline" className="w-full" onClick={() => navigate('/finance/expenses')}>
+                            Создать Закупочный Акт &rarr;
                         </Button>
                     </CardContent>
                 </Card>
@@ -135,12 +136,15 @@ export default function RFDashboard() {
                         <CardDescription>Требуется действие</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between text-sm">
-                                <span>Подтвердить Табели</span>
-                                <span className="font-bold text-orange-500">2 ожидают</span>
+                        <div className="space-y-4">
+                            <div
+                                className="flex items-center justify-between cursor-pointer rounded-lg p-2 hover:bg-slate-50 transition-colors"
+                                onClick={() => navigate('/operations/timesheets')}
+                            >
+                                <span className="text-sm font-medium">Подтвердить Табели</span>
+                                <span className="text-xs font-bold text-orange-500 bg-orange-50 px-2 py-1 rounded">2 ожидают</span>
                             </div>
-                            <div className="flex items-center justify-between text-sm">
+                            <div className="flex items-center justify-between text-sm p-2 opacity-50">
                                 <span>Утверждение Расходов</span>
                                 <span className="font-bold text-slate-500">0</span>
                             </div>
