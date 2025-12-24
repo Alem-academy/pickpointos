@@ -55,6 +55,10 @@ export function Sidebar() {
             { to: "/rf", icon: LayoutDashboard, label: "Дашборд", end: true },
             { to: "/rf/new-hire", icon: UserPlus, label: "Нанять" },
             { to: "/rf/my-point", icon: Building2, label: "Мой ПВЗ" },
+            // Operations & Finance access for RF
+            { to: "/operations/schedule", icon: Calendar, label: "График" },
+            { to: "/finance/expenses", icon: Receipt, label: "Расходы" },
+            { to: "/operations/timesheets", icon: Clock, label: "Табели" },
         ];
 
         const opsLinks: SidebarLink[] = [

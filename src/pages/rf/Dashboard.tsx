@@ -113,16 +113,16 @@ export default function RFDashboard() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Box className="h-5 w-5 text-blue-600" />
-                            Инвентарь и Закупки
+                            Расходы и Заявки
                         </CardTitle>
-                        <CardDescription>Заказ расходников</CardDescription>
+                        <CardDescription>Расходники и Ремонт</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <p className="mb-4 text-sm text-muted-foreground">
-                            Пакеты, скотч, бумага и хозтовары.
+                            Заказ пакетов, канцелярии. Заявки на ремонт (кондиционеры, мебель).
                         </p>
                         <Button variant="outline" className="w-full" onClick={() => navigate('/finance/expenses')}>
-                            Создать Закупочный Акт &rarr;
+                            Создать Заявку &rarr;
                         </Button>
                     </CardContent>
                 </Card>
@@ -149,23 +149,6 @@ export default function RFDashboard() {
                                 <span className="font-bold text-slate-500">0</span>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Быстрые действия</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        <Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/rf/my-point')}>
-                            <Building2 className="mr-2 h-4 w-4" /> Информация о ПВЗ
-                        </Button>
-                        <Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/finance/expenses')}>
-                            <TrendingUp className="mr-2 h-4 w-4" /> Запросить Расходы
-                        </Button>
-                        <Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/operations/schedule')}>
-                            <Calendar className="mr-2 h-4 w-4" /> Планировать Неделю
-                        </Button>
                     </CardContent>
                 </Card>
             </div>
