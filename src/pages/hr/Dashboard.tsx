@@ -158,9 +158,18 @@ export default function HRDashboard() {
                             <Users className="mr-2 h-4 w-4" />
                             База Сотрудников
                         </Button>
-                        <Button variant="secondary" className="w-full justify-start">
-                            <Briefcase className="mr-2 h-4 w-4" />
-                            Создать Вакансию (Скоро)
+                        <Button variant="secondary" className="w-full justify-start" onClick={async () => {
+                            if (!confirm('Запустить синхронизацию данных из Google Sheets? Это может занять время.')) return;
+                            try {
+                                await import('@/services/api').then(m => m.api.triggerParser());
+                                alert('Синхронизация успешно запущена!');
+                                window.location.reload();
+                            } catch (e) {
+                                alert('Ошибка синхронизации: ' + (e as Error).message);
+                            }
+                        }}>
+                            <TrendingUp className="mr-2 h-4 w-4" />
+                            Синхронизировать Данные
                         </Button>
                     </CardContent>
                 </Card>

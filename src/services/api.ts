@@ -272,6 +272,11 @@ export const api = {
         const res = await axiosInstance.patch(`/pvz/checklist/${pvzId}/item/${itemId}`, { status });
         return res.data;
     },
+
+    async triggerParser(sheetId?: string): Promise<{ message: string; stats: any }> {
+        const res = await axiosInstance.post('/parse', { sheetId });
+        return res.data;
+    },
 };
 
 // Axios Instance (default export for auth service)
