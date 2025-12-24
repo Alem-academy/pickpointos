@@ -7,7 +7,8 @@ import { api, type PVZ } from "@/services/api";
 interface FileUploadState {
     id_main: File | null;
     id_register: File | null;
-    iin: File | null;
+    cert_075: File | null;
+    photo: File | null;
     bank_details: File | null;
 }
 
@@ -32,7 +33,8 @@ export default function NewHire() {
     const [files, setFiles] = useState<FileUploadState>({
         id_main: null,
         id_register: null,
-        iin: null,
+        cert_075: null,
+        photo: null,
         bank_details: null,
     });
 
@@ -65,24 +67,24 @@ export default function NewHire() {
         }
 
         // 2. Validate IBAN (Basic Alphanumeric check)
-        // KZ IBAN is 20 chars, but we'll accept basic alphanumeric > 15 for flexibility
         if (!/^[A-Z0-9]{16,34}$/.test(formData.iban.toUpperCase().replace(/\s/g, ''))) {
             alert('Некорректный формат IBAN. Должен содержать буквы и цифры.');
             return;
         }
 
-        // 3. Files optional for MVP? No, let's require at least one ID
-        if (!files.id_main) {
-            alert('Загрузите хотя бы лицевую сторону удостоверения');
+        // 3. Required Files Check
+        const missingFiles = [];
+        if (!files.id_main) missingFiles.push("Уд. личности (Лиц.)");
+        if (!files.photo) missingFiles.push("Фото 3х4"); // Photo is mandatory often
+
+        if (missingFiles.length > 0) {
+            alert(`Загрузите обязательные документы: ${missingFiles.join(', ')}`);
             return;
         }
 
         setIsLoading(true);
 
         try {
-            // In a real app, upload files first -> get URLs -> createEmployee
-            // For MVP/Demo: we create employee and assume files are handled separately or just logged
-
             await api.createEmployee({
                 full_name: `${formData.lastName} ${formData.firstName}`,
                 iin: formData.iin,
@@ -93,7 +95,6 @@ export default function NewHire() {
                 status: 'new', // HR Request status
                 base_rate: Number(formData.baseRate),
                 iban: formData.iban,
-                // Files would typically be sent here or in a separate call
             });
 
             // If success
@@ -118,7 +119,7 @@ export default function NewHire() {
                 </p>
                 <div className="mt-8 flex gap-4">
                     <button
-                        onClick={() => window.location.reload()} // Quick restart
+                        onClick={() => window.location.reload()}
                         className="rounded-lg border px-6 py-2 hover:bg-slate-50"
                     >
                         Создать еще
@@ -293,10 +294,16 @@ export default function NewHire() {
                             onRemove={() => removeFile('id_register')}
                         />
                         <FileUploadField
-                            label="ИИН (Справка/Документ)"
-                            file={files.iin}
-                            onChange={(e) => handleFileChange('iin', e)}
-                            onRemove={() => removeFile('iin')}
+                            label="Мед. справка 075/у"
+                            file={files.cert_075}
+                            onChange={(e) => handleFileChange('cert_075', e)}
+                            onRemove={() => removeFile('cert_075')}
+                        />
+                        <FileUploadField
+                            label="Фото 3х4 (для дела)"
+                            file={files.photo}
+                            onChange={(e) => handleFileChange('photo', e)}
+                            onRemove={() => removeFile('photo')}
                         />
                         <FileUploadField
                             label="Реквизиты (Скриншот)"
