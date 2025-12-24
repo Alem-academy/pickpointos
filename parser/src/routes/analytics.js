@@ -110,7 +110,7 @@ router.get('/dashboard', async (req, res) => {
 
     } catch (err) {
         console.error('Error fetching analytics dashboard:', err);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Internal server error', details: err.message });
     }
 });
 
