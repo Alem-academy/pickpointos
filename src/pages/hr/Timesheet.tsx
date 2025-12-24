@@ -20,9 +20,7 @@ export default function Timesheet() {
             setPvzList(list);
 
             // Auto-select PVZ for RF users or if user has a main_pvz
-            if (user?.main_pvz_id) {
-                setSelectedPvz(user.main_pvz_id);
-            } else if (user?.pvz_id) {
+            if (user?.pvz_id) {
                 // Fallback if property name differs in some contexts
                 setSelectedPvz(user.pvz_id);
             }

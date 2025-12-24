@@ -29,7 +29,7 @@ export default function Expenses() {
             setPvzList(list);
             // Default to user's PVZ or first one
             if (user?.pvz_id) {
-                setNewExpense(prev => ({ ...prev, pvzId: user.pvz_id }));
+                setNewExpense(prev => ({ ...prev, pvzId: user.pvz_id || '' }));
             } else if (list.length > 0) {
                 setNewExpense(prev => ({ ...prev, pvzId: list[0].id }));
             }
