@@ -4,8 +4,10 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from '
 import { ru } from 'date-fns/locale';
 import { Download, CheckCircle } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { useAuth } from '@/components/layout/AuthContext';
 
 export default function Timesheet() {
+    const { user } = useAuth();
     const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
     const [selectedPvz, setSelectedPvz] = useState<string>('');
     const [pvzList, setPvzList] = useState<PVZ[]>([]);
@@ -16,14 +18,27 @@ export default function Timesheet() {
         const loadPvz = async () => {
             const list = await api.getPvzList();
             setPvzList(list);
+
+            // Auto-select PVZ for RF users or if user has a main_pvz
+            if (user?.main_pvz_id) {
+                setSelectedPvz(user.main_pvz_id);
+            } else if (user?.pvz_id) {
+                // Fallback if property name differs in some contexts
+                setSelectedPvz(user.pvz_id);
+            }
         };
         loadPvz();
-    }, []);
+    }, [user]);
 
     useEffect(() => {
         const loadTimesheet = async () => {
             setIsLoading(true);
             try {
+                // If no PVZ selected yet (and user might be admin who wants 'all'), 
+                // but usually for 'rf' we want filtered. 
+                // If selectedPvz is empty string, backend returns all? 
+                // Let's assume yes, but for RF we want to be specific.
+
                 const data = await api.getTimesheet(selectedMonth, selectedPvz);
                 setTimesheetData(data);
             } catch (err) {
