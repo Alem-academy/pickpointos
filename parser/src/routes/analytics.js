@@ -10,7 +10,16 @@ router.get('/dashboard', async (req, res) => {
         // Try to get from cache first
         const { month } = req.query;
         const cacheKey = `analytics:dashboard:${month || 'current'}`;
-        const cachedData = await redis.get(cacheKey);
+
+        // Safe Redis Get
+        let cachedData = null;
+        try {
+            if (redis.status === 'ready') {
+                cachedData = await redis.get(cacheKey);
+            }
+        } catch (redisErr) {
+            console.warn('Redis get failed, skipping cache:', redisErr.message);
+        }
 
         if (cachedData) {
             console.log('Serving analytics from cache');
@@ -104,7 +113,13 @@ router.get('/dashboard', async (req, res) => {
         };
 
         // Cache for 5 minutes
-        await redis.setex(cacheKey, 300, JSON.stringify(responseData));
+        try {
+            if (redis.status === 'ready') {
+                await redis.setex(cacheKey, 300, JSON.stringify(responseData));
+            }
+        } catch (redisErr) {
+            console.warn('Redis set failed:', redisErr.message);
+        }
 
         res.json(responseData);
 
