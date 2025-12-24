@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { UserPlus, Box, Calendar, AlertTriangle, Building2, TrendingUp } from "lucide-react";
+import { UserPlus, Box, Calendar, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRFStats } from "@/hooks/use-queries";
