@@ -13,7 +13,12 @@ export default function Expenses() {
     const queryClient = useQueryClient();
 
     // DETERMINE ROLE & FILTER
+    // DETERMINE ROLE & FILTER
     const isRF = user?.role === 'rf';
+    // Roles that can manage (approve/reject) and view all
+    const canManage = ['admin', 'financier', 'hr'].includes(user?.role || '');
+
+    // RF sees only their point. Others (Management) see all.
     const filterPvzId = isRF ? (user?.pvz_id || undefined) : undefined;
 
     const { data: expenses, isLoading, error } = useExpenses(undefined, filterPvzId);
@@ -222,7 +227,7 @@ export default function Expenses() {
                 <DetailModal
                     expense={selectedExpense}
                     onClose={() => setSelectedExpense(null)}
-                    onStatusUpdate={!isRF ? handleStatusUpdate : undefined}
+                    onStatusUpdate={canManage ? handleStatusUpdate : undefined}
                 />
             )}
         </div>
