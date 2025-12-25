@@ -1,7 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import { query } from '../db-client.js';
+import { query } from '../lib/db.js';
 import dotenv from 'dotenv';
 import { authenticateToken } from '../middleware/auth.js';
 

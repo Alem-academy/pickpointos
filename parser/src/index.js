@@ -1,8 +1,8 @@
-import './config.js';
+import './config/env.js';
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import { parseSheet } from './parser.js';
+import { parseSheet } from './services/parser.service.js';
 
 // Import Routes
 import hrRoutes from './routes/hr.js';
@@ -27,7 +27,10 @@ const __dirname = path.dirname(__filename);
 // Run migrations (will log errors but not crash to allow server to start, or we could await)
 runMigrations().catch(console.error);
 
-app.use(cors());
+app.use(cors({
+    origin: process.env.CORS_ORIGIN || '*',
+    credentials: true
+}));
 app.use(express.json());
 
 // Request Logger

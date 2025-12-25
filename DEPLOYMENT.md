@@ -24,7 +24,8 @@
    - `PORT`: `8080`
    - `DATABASE_URL`: *Нажмите Reference Variable и выберите `DATABASE_URL` от Postgres*
    - `REDIS_URL`: *Нажмите Reference Variable и выберите `REDIS_URL` от Redis*
-   - `CORS_ORIGIN`: `*` (или URL фронтенда, который мы получим позже)
+   - `CORS_ORIGIN`: `*` (или URL фронтенда, например `https://web-production-xxxx.up.railway.app`)
+   - **Важно:** Убедитесь, что `VITE_API_URL` в сервисе Frontend указывает на этот бэкенд (см. Шаг 7).
 6. Сервис автоматически пересоберется (Deploy).
 
 ## Шаг 5: Инициализация Базы Данных

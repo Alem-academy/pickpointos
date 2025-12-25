@@ -1,4 +1,4 @@
-import { createClient } from './db-client.js';
+import { createClient } from './lib/db.js';
 import dotenv from 'dotenv';
 
 dotenv.config();

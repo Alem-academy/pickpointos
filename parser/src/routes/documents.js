@@ -1,5 +1,5 @@
 import express from 'express';
-import { query } from '../db-client.js';
+import { query } from '../lib/db.js';
 import { CONTRACT_TEMPLATE, HIRING_ORDER_TEMPLATE, fillTemplate } from '../services/templates.js';
 
 const router = express.Router();

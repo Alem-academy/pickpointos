@@ -1,6 +1,6 @@
 import express from 'express';
-import { query } from '../db-client.js';
-import redis from '../redis-client.js';
+import { query } from '../lib/db.js';
+import redis from '../lib/redis.js';
 
 const router = express.Router();
 

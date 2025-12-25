@@ -1,5 +1,5 @@
-import { getSheetData } from './sheets-client.js';
-import { getClient } from './db-client.js';
+import { getSheetData } from '../sheets-client.js';
+import { getClient } from '../lib/db.js';
 
 // Mapping based on user description
 // ID ПВЗ, Регион, Адрес, Дата, Оборот, Продажа по тарифу, Возврат по тарифу, ...
