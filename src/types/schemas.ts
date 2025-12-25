@@ -7,6 +7,7 @@ export const EmployeeSchema = z.object({
     status: z.string(),
     base_rate: z.number(),
     main_pvz_id: z.string().nullable().optional(),
+    main_pvz_name: z.string().nullable().optional(),
     hired_at: z.string().nullable().optional(),
     phone: z.string().nullable().optional(),
     email: z.string().email().nullable().optional(),
@@ -56,6 +57,7 @@ export const ExpenseRequestSchema = z.object({
     status: z.enum(['pending', 'approved', 'rejected', 'paid']),
     created_at: z.string(),
     requester_name: z.string().optional(),
+    pvz_name: z.string().optional(),
 });
 
 export type ExpenseRequest = z.infer<typeof ExpenseRequestSchema>;

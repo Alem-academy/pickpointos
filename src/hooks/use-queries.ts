@@ -35,11 +35,14 @@ export const useRFStats = () => {
     });
 };
 // Finance Hooks
-export const useExpenses = (status?: string) => {
+export const useExpenses = (status?: string, pvzId?: string) => {
     return useQuery<ExpenseRequest[]>({
-        queryKey: ['expenses', status],
+        queryKey: ['expenses', status, pvzId],
         queryFn: async () => {
-            const params = status ? { status } : {};
+            const params: any = {};
+            if (status) params.status = status;
+            if (pvzId) params.pvzId = pvzId;
+
             const { data } = await axiosInstance.get('/finance/expenses', { params });
             return data;
         },
