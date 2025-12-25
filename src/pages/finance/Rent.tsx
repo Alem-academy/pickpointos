@@ -1,7 +1,4 @@
-// I realized I missed useRent in use-queries.ts. I will add it in the next step.
-// For now, I will keep Rent as is or update it after I adding the hook.
-// Actually, I can add the hook logic here directly or just add the hook in the next tool call.
-// Let's replace the content assuming the hook exists or will exist. Use api calls for mutations.
+import { useState } from 'react';
 import { api } from '@/services/api';
 import { useRent } from '@/hooks/use-queries';
 import { Building, CheckCircle, AlertCircle, Wallet } from 'lucide-react';
@@ -14,6 +11,8 @@ export default function Rent() {
     const queryClient = useQueryClient();
     const { data: rentData, isLoading } = useRent();
 
+    const [filter, setFilter] = useState<'all' | 'paid' | 'pending'>('pending');
+
     // Calculate stats
     const safeRentData = rentData || [];
     const total = safeRentData.reduce((acc: number, item: any) => acc + item.amount, 0);
@@ -21,9 +20,13 @@ export default function Rent() {
     const pending = total - paid;
     const stats = { total, paid, pending };
 
+    // Filter Data
+    const filteredData = safeRentData.filter((item: any) => {
+        if (filter === 'all') return true;
+        return item.status === filter;
+    });
+
     const handlePay = async (pvzId: string, amount: number) => {
-        // We can use a custom toast for confirmation if we want, but keeping confirm for now is safer for money ops
-        // or we could use a modal. For "Visual Polish", sticking to confirm is fine for safety, but toast for result.
         if (!confirm(`Подтвердить оплату аренды ${amount.toLocaleString()} ₸?`)) return;
         try {
             await api.payRent(pvzId, format(new Date(), 'yyyy-MM'), amount);
@@ -37,9 +40,33 @@ export default function Rent() {
 
     return (
         <div className="p-8">
-            <div className="mb-8">
-                <h1 className="mb-2 text-4xl font-black">Аренда и Платежи</h1>
-                <p className="text-xl text-muted-foreground">Управление арендой ПВЗ и коммунальными платежами</p>
+            <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 className="mb-2 text-4xl font-black">Аренда и Платежи</h1>
+                    <p className="text-xl text-muted-foreground">Управление арендой ПВЗ и коммунальными платежами</p>
+                </div>
+
+                {/* Filter Tabs */}
+                <div className="flex rounded-xl bg-slate-100 p-1">
+                    <button
+                        onClick={() => setFilter('all')}
+                        className={`rounded-lg px-4 py-2 text-sm font-bold transition-all ${filter === 'all' ? 'bg-white text-black shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Все
+                    </button>
+                    <button
+                        onClick={() => setFilter('pending')}
+                        className={`rounded-lg px-4 py-2 text-sm font-bold transition-all ${filter === 'pending' ? 'bg-white text-black shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        К оплате
+                    </button>
+                    <button
+                        onClick={() => setFilter('paid')}
+                        className={`rounded-lg px-4 py-2 text-sm font-bold transition-all ${filter === 'paid' ? 'bg-white text-black shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Оплаченные
+                    </button>
+                </div>
             </div>
 
             {/* Dashboard */}
@@ -73,22 +100,19 @@ export default function Rent() {
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {[1, 2, 3].map((i) => (
                             <div key={i} className="rounded-2xl border-2 border-slate-100 bg-white p-6">
-                                <div className="flex justify-between mb-4">
-                                    <Skeleton className="h-12 w-12 rounded-xl" />
-                                    <Skeleton className="h-6 w-20" />
-                                </div>
+                                <Skeleton className="h-12 w-12 rounded-xl mb-4" />
                                 <Skeleton className="h-6 w-48 mb-4" />
-                                <div className="space-y-2 mb-6 p-4 bg-slate-50 rounded-xl">
-                                    <Skeleton className="h-4 w-full" />
-                                    <Skeleton className="h-4 w-full" />
-                                </div>
-                                <Skeleton className="h-12 w-full rounded-xl" />
+                                <Skeleton className="h-24 w-full rounded-xl" />
                             </div>
                         ))}
                     </div>
                 ) : (
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {safeRentData.map((item: any) => (
+                        {filteredData.length === 0 ? (
+                            <div className="col-span-full py-12 text-center text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl">
+                                Нет записей в этой категории
+                            </div>
+                        ) : filteredData.map((item: any) => (
                             <div key={item.pvzId} className="group relative overflow-hidden rounded-2xl border-2 border-slate-200 bg-white p-6 transition-all hover:-translate-y-1 hover:shadow-xl">
                                 <div className="mb-4 flex items-start justify-between">
                                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 font-black text-xl">

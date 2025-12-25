@@ -18,10 +18,20 @@ export default function Expenses() {
     // Roles that can manage (approve/reject) and view all
     const canManage = ['admin', 'financier', 'hr'].includes(user?.role || '');
 
-    // RF sees only their point. Others (Management) see all.
-    const filterPvzId = isRF ? (user?.pvz_id || undefined) : undefined;
+    // State for filter
+    const [selectedPvzFilter, setSelectedPvzFilter] = useState<string>('all');
 
-    const { data: expenses, isLoading, error } = useExpenses(undefined, filterPvzId);
+    // RF sees only their point. Others (Management) see all.
+    // If not RF, use the selected filter (or undefined for all)
+    const activePvzId = isRF ? (user?.pvz_id || undefined) : (selectedPvzFilter === 'all' ? undefined : selectedPvzFilter);
+
+    const { data: expenses, isLoading, error } = useExpenses(undefined, activePvzId);
+
+    // Calculate Stats
+    const safeExpenses = expenses || [];
+    const pendingCount = safeExpenses.filter(e => e.status === 'pending').length;
+    const pendingAmount = safeExpenses.filter(e => e.status === 'pending').reduce((sum, e) => sum + e.amount, 0);
+    const approvedAmount = safeExpenses.filter(e => e.status === 'approved').reduce((sum, e) => sum + e.amount, 0);
 
     // STATE
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -98,23 +108,57 @@ export default function Expenses() {
         return <div className="p-8 text-center text-red-500">Ошибка загрузки расходов.</div>;
     }
 
-    const safeExpenses = expenses || [];
-
     return (
         <div className="p-8">
-            <div className="mb-8 flex items-center justify-between">
+            <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                     <h1 className="mb-2 text-4xl font-black">Операционные расходы</h1>
                     <p className="text-xl text-muted-foreground">Управление заявками на расходы и ремонт</p>
                 </div>
-                <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="flex items-center gap-2 rounded-xl bg-black px-6 py-3 font-bold text-white shadow-lg transition-transform hover:scale-105"
-                >
-                    <Plus className="h-5 w-5" />
-                    НОВАЯ ЗАЯВКА
-                </button>
+                <div className="flex gap-2">
+                    {/* PVZ Filter for Management */}
+                    {!isRF && (
+                        <select
+                            value={selectedPvzFilter}
+                            onChange={(e) => setSelectedPvzFilter(e.target.value)}
+                            className="h-12 rounded-xl border-2 border-slate-200 bg-white px-4 font-bold outline-none focus:border-black"
+                        >
+                            <option value="all">ВСЕ ПВЗ</option>
+                            {pvzList.map(pvz => (
+                                <option key={pvz.id} value={pvz.id}>{pvz.name}</option>
+                            ))}
+                        </select>
+                    )}
+
+                    <button
+                        onClick={() => setShowCreateModal(true)}
+                        className="flex items-center gap-2 rounded-xl bg-black px-6 font-bold text-white shadow-lg transition-transform hover:scale-105"
+                    >
+                        <Plus className="h-5 w-5" />
+                        НОВАЯ ЗАЯВКА
+                    </button>
+                </div>
             </div>
+
+            {/* Dashboard Stats */}
+            <div className="mb-8 grid gap-6 md:grid-cols-3">
+                <div className="rounded-2xl border-2 border-orange-500 bg-orange-50 p-6 shadow-[4px_4px_0px_0px_rgba(249,115,22,1)]">
+                    <div className="mb-2 flex items-center gap-3 text-orange-700">
+                        <Clock className="h-6 w-6" />
+                        <span className="font-bold uppercase">Ожидают решения</span>
+                    </div>
+                    <p className="text-4xl font-black text-orange-700">{pendingAmount.toLocaleString()} ₸</p>
+                    <p className="mt-1 text-sm font-bold text-orange-600/70">{pendingCount} заявок</p>
+                </div>
+                <div className="rounded-2xl border-2 border-green-600 bg-green-50 p-6 shadow-[4px_4px_0px_0px_rgba(22,163,74,1)]">
+                    <div className="mb-2 flex items-center gap-3 text-green-700">
+                        <CheckCircle className="h-6 w-6" />
+                        <span className="font-bold uppercase">Одобрено (Все)</span>
+                    </div>
+                    <p className="text-4xl font-black text-green-700">{approvedAmount.toLocaleString()} ₸</p>
+                </div>
+            </div>
+
 
             <div className="grid gap-6 md:grid-cols-3">
                 {/* Pending */}
