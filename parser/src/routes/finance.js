@@ -272,15 +272,14 @@ router.get('/pnl', async (req, res) => {
     try {
         const { pvzId, month } = req.query; // YYYY-MM
 
-        if (!month) {
-            return res.status(400).json({ error: 'Month is required' });
-        }
-
-        const startOfMonth = new Date(month);
+        const startOfMonth = month ? new Date(month) : new Date();
         startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0); // Reset time part for consistency
+
         const endOfMonth = new Date(startOfMonth);
         endOfMonth.setMonth(endOfMonth.getMonth() + 1);
         endOfMonth.setDate(0);
+        endOfMonth.setHours(23, 59, 59, 999);
 
         let sql = `
             SELECT 
