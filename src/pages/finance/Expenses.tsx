@@ -14,7 +14,7 @@ export default function Expenses() {
 
     // DETERMINE ROLE & FILTER
     const isRF = user?.role === 'rf';
-    const filterPvzId = isRF ? user?.pvz_id : undefined;
+    const filterPvzId = isRF ? (user?.pvz_id || undefined) : undefined;
 
     const { data: expenses, isLoading, error } = useExpenses(undefined, filterPvzId);
 
