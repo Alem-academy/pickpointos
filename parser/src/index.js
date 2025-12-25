@@ -40,7 +40,9 @@ app.use(cors({
 
         // Check if origin is allowed or if we are in "wildcard" mode (only if credentials not strict, but here we want to be permissive for dev)
         // If CORS_ORIGIN is '*', we must reflect the origin to allow credentials
-        if (process.env.CORS_ORIGIN === '*' || allowedOrigins.indexOf(origin) !== -1) {
+        // Check if origin is allowed or if we are in "wildcard" mode
+        // If CORS_ORIGIN is '*' OR undefined (default permissive), we reflect the origin
+        if (!process.env.CORS_ORIGIN || process.env.CORS_ORIGIN === '*' || allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
             // For debugging: log blocked origin
