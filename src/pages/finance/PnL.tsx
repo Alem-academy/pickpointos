@@ -23,17 +23,15 @@ export default function PnLPage() {
 
 
     // Auto-select first PVZ when list loads
-    useEffect(() => {
-        if (!selectedPvzId && pvzList && pvzList.length > 0) {
-            setSelectedPvzId(pvzList[0].id);
-        }
-    }, [pvzList, selectedPvzId]);
+    // Auto-select removed to default to "All" (empty string)
+    // If backend requires pvzId for payroll calc, disable button if empty
 
     // Use React Query for PnL data
     const dateStr = format(currentDate, 'yyyy-MM-dd');
     const { data: report, isLoading } = usePnL(selectedPvzId, dateStr);
 
     const handleCalculatePayroll = async () => {
+        if (!selectedPvzId) return toast.error('Выберите ПВЗ для пересчета');
         try {
             await api.calculatePayroll({ pvzId: selectedPvzId, month: dateStr });
             queryClient.invalidateQueries({ queryKey: ['pnl', selectedPvzId, dateStr] });
@@ -57,6 +55,7 @@ export default function PnLPage() {
                         onChange={e => setSelectedPvzId(e.target.value)}
                         className="h-12 rounded-xl border-2 border-black bg-white px-4 font-bold"
                     >
+                        <option value="">ВСЕ ПВЗ (Общий)</option>
                         {pvzList?.map(pvz => (
                             <option key={pvz.id} value={pvz.id}>{pvz.name}</option>
                         )) || <option>Загрузка ПВЗ...</option>}
@@ -65,7 +64,13 @@ export default function PnLPage() {
                     <Tooltip text={TOOLTIPS.pnl.calculate_btn}>
                         <button
                             onClick={handleCalculatePayroll}
-                            className="flex h-12 items-center gap-2 rounded-xl bg-black px-6 font-bold text-white shadow-lg hover:bg-gray-800"
+                            disabled={!selectedPvzId}
+                            className={cn(
+                                "flex h-12 items-center gap-2 rounded-xl border-2 border-black px-6 font-bold shadow-lg transition-all",
+                                selectedPvzId
+                                    ? "bg-black text-white hover:bg-gray-800"
+                                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            )}
                         >
                             <Calculator className="h-5 w-5" />
                             Пересчитать ФОТ

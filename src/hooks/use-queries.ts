@@ -53,11 +53,15 @@ export const usePnL = (pvzId: string, month: string) => {
     return useQuery<PnLReport>({
         queryKey: ['pnl', pvzId, month],
         queryFn: async () => {
-            if (!pvzId || !month) return null;
-            const { data } = await axiosInstance.get('/finance/pnl', { params: { pvzId, month } });
+            if (!month) return null;
+            // pvzId can be empty (for ALL)
+            const params: any = { month };
+            if (pvzId) params.pvzId = pvzId;
+
+            const { data } = await axiosInstance.get('/finance/pnl', { params });
             return data;
         },
-        enabled: !!pvzId && !!month,
+        enabled: !!month,
     });
 };
 
