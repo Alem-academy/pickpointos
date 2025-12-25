@@ -61,7 +61,7 @@ app.use((req, res, next) => {
 });
 
 // Serve static files from the React app
-// Assuming backend/src/index.js -> backend/src -> backend -> root -> dist
+// Assuming parser/src/index.js -> parser/src -> parser -> root -> dist
 const distPath = path.join(__dirname, '../../dist');
 console.log(`📂 Static files path: ${distPath}`);
 

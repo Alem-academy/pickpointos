@@ -11,4 +11,4 @@ cmds = ["npm install"]
 cmds = ["npm run build"]
 
 [start]
-cmd = "node backend/src/index.js"
+cmd = "node parser/src/index.js"
