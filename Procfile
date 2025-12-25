@@ -1,1 +1,1 @@
-web: node parser/src/index.js
+web: node backend/src/index.js
