@@ -11,12 +11,7 @@ export default defineConfig({
     },
   },
   server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3000',
-        changeOrigin: true,
-        secure: false,
-      }
-    }
+    // Proxy removed to avoid interfering with Railway deployment logic.
+    // Local development should use VITE_API_URL in .env
   }
 })
