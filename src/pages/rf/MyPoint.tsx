@@ -86,7 +86,7 @@ export default function MyPoint() {
                                         </div>
                                         <div>
                                             <p className="font-bold text-emerald-900">{emp.full_name}</p>
-                                            <p className="text-xs text-emerald-700">{emp.role.toUpperCase()}</p>
+                                            <p className="text-xs text-emerald-700">{emp.role?.toUpperCase() || 'N/A'}</p>
                                         </div>
                                     </div>
                                 ))}

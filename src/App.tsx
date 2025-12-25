@@ -20,6 +20,20 @@ import Timesheet from "@/pages/hr/Timesheet";
 import Discipline from "@/pages/hr/Discipline";
 import Employees from "@/pages/hr/Employees";
 import RentPage from "@/pages/finance/Rent";
+import { useAuth } from "@/components/layout/AuthContext";
+
+function IndexRedirect() {
+  const { user } = useAuth();
+
+  if (!user) return <Navigate to="/login" replace />;
+
+  if (user.role === 'hr') return <Navigate to="/hr/applications" replace />;
+  if (user.role === 'rf') return <Navigate to="/rf" replace />;
+  if (user.role === 'financier') return <Navigate to="/finance/pnl" replace />;
+  if (user.role === 'admin') return <Navigate to="/hr/applications" replace />;
+
+  return <Navigate to="/login" replace />;
+}
 
 
 function App() {
@@ -49,7 +63,7 @@ function App() {
                 <Route path="analytics/dashboard" element={<AnalyticsDashboard />} />
               </Route>
 
-              <Route path="/" element={<Navigate to="/hr/applications" replace />} />
+              <Route path="/" element={<IndexRedirect />} />
             </Route>
 
             {/* Shared Operations & Finance (HR, RF, Admin, Financier) */}
