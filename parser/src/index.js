@@ -121,12 +121,12 @@ app.post('/parse', async (req, res) => {
 });
 
 // Mount Routes
-app.use('/auth', authRoutes);
-app.use('/', hrRoutes);
-app.use('/finance', financeRoutes);
-app.use('/', operationsRoutes);
-app.use('/', documentsRoutes);
-app.use('/analytics', analyticsRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api', hrRoutes);
+app.use('/api/finance', financeRoutes);
+app.use('/api', operationsRoutes);
+app.use('/api', documentsRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.
