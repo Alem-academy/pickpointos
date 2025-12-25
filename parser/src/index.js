@@ -89,7 +89,13 @@ app.get('/health', (req, res) => {
 });
 
 // Parser Endpoint
+// Parser Endpoint (DISABLED TEMPORARILY)
 app.post('/parse', async (req, res) => {
+    res.status(503).json({
+        error: 'Parser service is temporarily disabled.',
+        message: 'Please use the application interface to manage data.'
+    });
+    /*
     try {
         const sheetId = req.body.sheetId || process.env.GOOGLE_SHEET_ID;
         if (!sheetId) {
@@ -111,6 +117,7 @@ app.post('/parse', async (req, res) => {
             details: error.message
         });
     }
+    */
 });
 
 // Mount Routes
