@@ -40,7 +40,10 @@ export GOOGLE_APPLICATION_CREDENTIALS="/path/to/key.json"
 ```
 3. Run proxy:
 ```bash
-./cloud-sql-proxy gen-lang-client-0534671855:europe-west1:pvz-analytics-db --port 5432
+If connecting locally, ensure you are using the public TCP link from Railway (found in Connect -> Public Networking).
+```bash
+psql postgres://...
+```
 ```
 4. Connect locally:
 ```bash

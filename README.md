@@ -15,32 +15,31 @@ Last Updated: 2025-12-25 (Force Rebuild)
 
 ## Execution Plan (4 Streams)
 
-### Stream A: Infrastructure & Security (Google Cloud)
--   **Database:** Cloud SQL PostgreSQL (`employees`, `pvz_points`, `financial_transactions`).
--   **Storage:** Cloud Storage (`hr-documents-secure` bucket with lifecycle policies).
--   **Auth:** Identity Platform (Email/Password, Google Workspace) with RBAC (`hr`, `rf`, `admin`).
+### Stream A: Infrastructure & Security (Railway)
+-   **Database:** Railway Managed PostgreSQL (`employees`, `pvz_points`, `financial_transactions`).
+-   **Storage:** Cloud Storage (documents bucket).
+-   **Auth:** JWT-based authentication with RBAC (`hr`, `rf`, `admin`).
 
 ### Stream B: HR Module (Web Application)
 -   **Hiring & Onboarding:** Candidate forms, photo uploads, HR Kanban board.
--   **Document Management:** PDF generation, EDO integration (E-Signature).
--   **Personnel Records:** Digital dossier, seniority motivation, termination workflow.
+-   **Document Management:** PDF generation.
+-   **Personnel Records:** Digital dossier, seniority motivation.
 
 ### Stream C: Finance Module (Data Engineering)
 -   **Data Ingestion:** WB Parser (Node.js), mapping, validation.
 -   **Google Sheets Sync:** Triggers for expense processing.
--   **Calculation Engine:** SQL procedures for P&L (Gross/Net Profit).
--   **Payroll:** Auto-calculation based on shifts and rates.
+-   **Calculation Engine:** P&L (Gross/Net Profit).
+-   **Payroll:** Auto-calculation based on shifts.
 
 ### Stream D: Visualization (Frontend Dashboard)
--   **Operational:** Hiring funnel, "at risk" employees, cash gap alerts.
--   **Financial:** P&L pivot tables, PVZ ratings, loss analytics.
+-   **Operational:** Hiring funnel, turnover.
+-   **Financial:** P&L pivot tables, PVZ ratings.
 
 ## Technical Architecture
--   **Frontend:** React 18, TypeScript, Tailwind CSS, Shadcn UI, Recharts.
--   **Backend:** Google Cloud Functions (2nd Gen) - Node.js.
--   **Database:** Cloud SQL (Managed PostgreSQL).
--   **File Storage:** Cloud Storage.
--   **DevOps:** GitHub Actions.
+-   **Frontend:** React 18, TypeScript, Tailwind CSS, Shadcn UI.
+-   **Backend:** Node.js (Express) on Railway.
+-   **Database:** Railway Managed PostgreSQL + Redis.
+-   **DevOps:** Railway (CI/CD).
 
 ## Success Metrics
 -   **Paperless Office:** 0% paper documents for hiring.

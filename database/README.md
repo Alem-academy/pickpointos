@@ -1,60 +1,38 @@
-# Database Setup Guide
-
+# Database Setup Guide (Railway)
 ## Connection Information
-- **Instance**: `gen-lang-client-0534671855:europe-west1:pvz-analytics-db`
-- **Region**: `europe-west1`
-- **Database**: `postgres` (default)
+- **Provider**: Railway Managed PostgreSQL
+- **Connection**: Uses standard PostgreSQL connection string (`DATABASE_URL`).
 
 ## Setup Steps
+### 1. Get Credentials
+1.  Go to your Railway Project Dashboard.
+2.  Click on the **PostgreSQL** service card.
+3.  Go to the **Connect** tab.
+4.  Copy the **PostgreSQL Connection URL** (e.g., `postgresql://postgres:password@round-house.railway.internal:5432/railway`).
 
-### 1. Install Cloud SQL Proxy
+### 2. Configure Local Environment
+Create or update your `.env` file in the project root:
+
 ```bash
-brew install cloud-sql-proxy
+# Backend Database Connection
+DATABASE_URL="postgresql://postgres:password@round-house.railway.internal:5432/railway"
+
+# Redis Connection (if using Railway Redis)
+REDIS_URL="redis://default:password@round-house.railway.internal:6379"
 ```
 
-### 2. Start Cloud SQL Proxy
+### 3. Run Schema & Seeds (Locally)
+If you have the `psql` client installed locally, you can initialize the remote database:
+
 ```bash
-cloud-sql-proxy gen-lang-client-0534671855:europe-west1:pvz-analytics-db \
-  --port 5432
+psql $DATABASE_URL -f database/schema.sql
+psql $DATABASE_URL -f database/seed.sql
 ```
 
-### 3. Connect to Database
-In a new terminal:
-```bash
-psql "host=127.0.0.1 port=5432 dbname=postgres user=postgres password=Gonduras1@"
-```
-
-### 4. Run Schema
-```sql
-\i database/schema.sql
-```
-
-### 5. Run Seed Data
-```sql
-\i database/seed.sql
-```
+**Note**: For `psql` to work, use the **Public Networking** URL from Railway (Connect -> Public Networking).
 
 ## Verify Setup
 ```sql
--- Check tables
-\dt
-
--- Count employees
+-- Check employees table
 SELECT COUNT(*) FROM employees;
-
--- Count PVZ points
-SELECT COUNT(*) FROM pvz_points;
-
--- Check financial transactions
-SELECT pvz_id, type, SUM(amount) as total 
-FROM financial_transactions 
-GROUP BY pvz_id, type;
-```
-
-## Service Account Authentication (Alternative)
-If using service account:
-```bash
-gcloud auth activate-service-account \
-  p224662539791-iv185p@gcp-sa-cloud-sql.iam.gserviceaccount.com \
-  --key-file=path/to/key.json
 ```
