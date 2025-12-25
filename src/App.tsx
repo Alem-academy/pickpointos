@@ -40,12 +40,8 @@ function App() {
               <Route path="/hr/timesheet" element={<Timesheet />} />
               <Route path="/hr/discipline" element={<Discipline />} />
 
-              {/* Operations Routes */}
-              <Route path="operations/schedule" element={<SchedulePage />} />
-              <Route path="operations/timesheets" element={<Timesheet />} /> {/* Fixed path */}
+              {/* Advanced Operations & Finance (HR/Admin only) */}
               <Route path="operations/new-pvz" element={<NewPvzPage />} />
-
-              <Route path="finance/expenses" element={<ExpensesPage />} />
               <Route path="finance/rent" element={<RentPage />} />
               <Route path="finance/pnl" element={<PnLPage />} />
 
@@ -53,6 +49,13 @@ function App() {
               <Route path="analytics/dashboard" element={<AnalyticsDashboard />} />
 
               <Route path="/" element={<Navigate to="/hr/applications" replace />} />
+            </Route>
+
+            {/* Shared Operations & Finance (HR, RF, Admin) */}
+            <Route element={<ProtectedRoute allowedRoles={['hr', 'rf', 'admin']} />}>
+              <Route path="operations/schedule" element={<SchedulePage />} />
+              <Route path="operations/timesheets" element={<Timesheet />} />
+              <Route path="finance/expenses" element={<ExpensesPage />} />
             </Route>
 
             {/* RF Routes */}
