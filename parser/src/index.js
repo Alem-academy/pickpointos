@@ -63,7 +63,25 @@ app.use((req, res, next) => {
 // Serve static files from the React app
 // Assuming parser/src/index.js -> parser/src -> parser -> root -> dist
 const distPath = path.join(__dirname, '../../dist');
+console.log(`📂 Static files path: ${distPath}`);
+
+// Verify dist exists
+import fs from 'fs';
+if (!fs.existsSync(distPath)) {
+    console.error(`❌ CRITICAL: 'dist' folder not found at ${distPath}`);
+    console.error(`   __dirname: ${__dirname}`);
+    console.error(`   cwd: ${process.cwd()}`);
+} else {
+    console.log(`✅ 'dist' folder found.`);
+}
+
 app.use(express.static(distPath));
+
+// Explicit 404 for missing assets to avoid falling back to index.html
+app.use('/assets', (req, res) => {
+    console.warn(`⚠️ Asset not found: ${req.url}`);
+    res.status(404).send('Asset not found');
+});
 
 // Health check
 app.get('/health', (req, res) => {
@@ -105,8 +123,16 @@ app.use('/analytics', analyticsRoutes);
 
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.
+// The "catchall" handler: for any request that doesn't
+// match one above, send back React's index.html file.
 app.get('*', (req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
+    const indexPath = path.join(distPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        console.error(`❌ Critical: index.html not found at ${indexPath}`);
+        res.status(500).send('Application build not found (index.html missing)');
+    }
 });
 
 app.listen(port, () => {
