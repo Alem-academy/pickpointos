@@ -20,7 +20,7 @@ export default function PnLPage() {
         queryFn: api.getPvzList,
     });
 
-    import { useEffect } from 'react';
+
 
     // Auto-select first PVZ when list loads
     useEffect(() => {
