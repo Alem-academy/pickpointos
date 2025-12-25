@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { api, type PVZ } from '@/services/api';
 import { usePnL } from '@/hooks/use-queries';
 import { Calculator, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
@@ -20,10 +20,14 @@ export default function PnLPage() {
         queryFn: api.getPvzList,
     });
 
+    import { useEffect } from 'react';
+
     // Auto-select first PVZ when list loads
-    if (!selectedPvzId && pvzList && pvzList.length > 0) {
-        setSelectedPvzId(pvzList[0].id);
-    }
+    useEffect(() => {
+        if (!selectedPvzId && pvzList && pvzList.length > 0) {
+            setSelectedPvzId(pvzList[0].id);
+        }
+    }, [pvzList, selectedPvzId]);
 
     // Use React Query for PnL data
     const dateStr = format(currentDate, 'yyyy-MM-dd');
