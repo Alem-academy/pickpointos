@@ -28,7 +28,26 @@ const __dirname = path.dirname(__filename);
 runMigrations().catch(console.error);
 
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: (origin, callback) => {
+        const allowedOrigins = [
+            process.env.CORS_ORIGIN,
+            'http://localhost:5173',
+            'http://localhost:8080'
+        ].filter(Boolean);
+
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+
+        // Check if origin is allowed or if we are in "wildcard" mode (only if credentials not strict, but here we want to be permissive for dev)
+        // If CORS_ORIGIN is '*', we must reflect the origin to allow credentials
+        if (process.env.CORS_ORIGIN === '*' || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            // For debugging: log blocked origin
+            console.warn(`Blocked by CORS: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 }));
 app.use(express.json());
