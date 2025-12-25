@@ -138,6 +138,12 @@ router.patch('/employees/:id/status', async (req, res) => {
             sql += `, fired_at = COALESCE(fired_at, NOW())`;
         }
 
+        // Handle checklist updates if provided
+        if (req.body.onboarding_checklist) {
+            sql += `, onboarding_checklist = $${paramIdx++}`;
+            params.push(req.body.onboarding_checklist);
+        }
+
         sql += ` WHERE id = $2 RETURNING *`;
 
         const result = await query(sql, params);

@@ -36,7 +36,11 @@ const STATUS_COLORS = {
     fired: 'text-slate-600 bg-slate-50 border-slate-200',
 } as const;
 
-type Tab = 'general' | 'history' | 'documents' | 'discipline';
+type Tab = 'general' | 'documents' | 'history' | 'discipline';
+
+// ...
+
+
 
 export default function EmployeeProfile() {
     const { id } = useParams<{ id: string }>();
@@ -197,68 +201,60 @@ export default function EmployeeProfile() {
             {/* Tab Content */}
             <div className="max-w-4xl">
                 {activeTab === 'general' && (
-                    <div className="grid gap-6 md:grid-cols-2">
-                        <div className="rounded-2xl border bg-card p-6 shadow-sm">
-                            <h3 className="mb-4 font-bold text-lg">Место работы</h3>
-                            <div className="space-y-4">
-                                <div className="flex items-start gap-3">
-                                    <div className="rounded-lg bg-blue-50 p-2 text-blue-600">
-                                        <MapPin className="h-5 w-5" />
-                                    </div>
+                    <div className="space-y-6">
+                        {/* Onboarding Section - Visible only if not active */}
+                        {employee.status !== 'active' && (
+                            <OnboardingTabContent
+                                employee={employee}
+                                onUpdate={() => {
+                                    api.getEmployee(employee.id).then(setEmployee);
+                                }}
+                            />
+                        )}
+
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <div className="rounded-2xl border bg-card p-6 shadow-sm">
+                                <div className="mb-4 flex items-center gap-2">
+                                    <MapPin className="h-5 w-5 text-blue-600" />
+                                    <h3 className="font-bold text-lg">Место работы</h3>
+                                </div>
+                                <div className="space-y-4">
                                     <div>
                                         <p className="text-sm text-muted-foreground">Основной ПВЗ</p>
-                                        <p className="font-bold">{employee.main_pvz_name || 'Не назначен'}</p>
-                                        {employee.main_pvz_name && (
-                                            <p className="text-xs text-muted-foreground mt-1">
-                                                {/* Address would be here if we fetched it */}
-                                                Адрес точки
-                                            </p>
-                                        )}
+                                        <p className="font-bold text-lg">{employee.main_pvz_name || 'Не назначен'}</p>
                                     </div>
-                                </div>
-                                {employee.base_rate && (
-                                    <div className="flex items-start gap-3">
-                                        <div className="rounded-lg bg-green-50 p-2 text-green-600">
-                                            <Briefcase className="h-5 w-5" />
-                                        </div>
+                                    {employee.base_rate && (
                                         <div>
                                             <p className="text-sm text-muted-foreground">Ставка</p>
                                             <p className="font-bold">{employee.base_rate} ₸ / смена</p>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
-                        </div>
 
-                        <div className="rounded-2xl border bg-card p-6 shadow-sm">
-                            <h3 className="mb-4 font-bold text-lg">Даты</h3>
-                            <div className="space-y-4">
-                                <div className="flex items-start gap-3">
-                                    <div className="rounded-lg bg-purple-50 p-2 text-purple-600">
-                                        <Calendar className="h-5 w-5" />
-                                    </div>
+                            <div className="rounded-2xl border bg-card p-6 shadow-sm">
+                                <div className="mb-4 flex items-center gap-2">
+                                    <Calendar className="h-5 w-5 text-purple-600" />
+                                    <h3 className="font-bold text-lg">Даты</h3>
+                                </div>
+                                <div className="space-y-4">
                                     <div>
                                         <p className="text-sm text-muted-foreground">Дата найма</p>
-                                        <p className="font-bold">
+                                        <p className="font-bold text-lg">
                                             {employee.hired_at
                                                 ? new Date(employee.hired_at).toLocaleDateString('ru-RU')
                                                 : '—'}
                                         </p>
                                     </div>
-                                </div>
-                                {employee.probation_until && (
-                                    <div className="flex items-start gap-3">
-                                        <div className="rounded-lg bg-orange-50 p-2 text-orange-600">
-                                            <Calendar className="h-5 w-5" />
-                                        </div>
+                                    {employee.probation_until && (
                                         <div>
-                                            <p className="text-sm text-muted-foreground">Испытательный срок до</p>
-                                            <p className="font-bold">
-                                                {new Date(employee.probation_until).toLocaleDateString('ru-RU')}
+                                            <p className="text-sm text-muted-foreground">Испытательный срок</p>
+                                            <p className="font-bold text-orange-600">
+                                                до {new Date(employee.probation_until).toLocaleDateString('ru-RU')}
                                             </p>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -302,6 +298,114 @@ export default function EmployeeProfile() {
                     onConfirm={handleTermination}
                 />
             )}
+        </div>
+    );
+}
+
+const CHECKLIST_ITEMS = [
+    { id: 'docs_uploaded', label: 'Документы загружены (УДЛ, Справки)' },
+    { id: 'contract_signed', label: 'Трудовой договор подписан' },
+    { id: 'telegram_added', label: 'Добавлен в рабочий чат Telegram' },
+    { id: 'safety_briefing', label: 'Проведен инструктаж по ТБ' },
+    { id: 'uniform_issued', label: 'Выдана форма (жилетка, бейдж)' },
+    { id: 'crm_access', label: 'Доступ в CRM выдан' }
+];
+
+function OnboardingTabContent({ employee, onUpdate }: { employee: Employee, onUpdate: () => void }) {
+    const checklist = employee.onboarding_checklist || {};
+    const [isUpdating, setIsUpdating] = useState(false);
+
+    const toggleItem = async (itemId: string) => {
+        const newValue = !checklist[itemId];
+        const newChecklist = { ...checklist, [itemId]: newValue };
+
+        try {
+            await api.updateEmployee(employee.id, {
+                status: employee.status, // Required by backend
+                onboarding_checklist: newChecklist
+            } as any);
+            onUpdate();
+        } catch (err) {
+            console.error(err);
+            alert('Ошибка обновления чек-листа');
+        }
+    };
+
+    const handleActivate = async () => {
+        if (!confirm('Активировать сотрудника? Это даст ему доступ к системе.')) return;
+        setIsUpdating(true);
+        try {
+            await api.updateEmployeeStatus(employee.id, 'active');
+            onUpdate();
+        } catch (err) {
+            console.error(err);
+            alert('Ошибка активации');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const progress = CHECKLIST_ITEMS.filter(i => checklist[i.id]).length;
+    const total = CHECKLIST_ITEMS.length;
+    const isComplete = progress === total;
+
+    return (
+        <div className="grid gap-6 md:grid-cols-3">
+            <div className="md:col-span-2 space-y-6">
+                <div className="rounded-2xl border bg-card p-6 shadow-sm">
+                    <div className="mb-6 flex items-center justify-between">
+                        <div>
+                            <h3 className="font-bold text-lg">Чек-лист пребординга</h3>
+                            <p className="text-sm text-muted-foreground">Выполните все пункты перед активацией</p>
+                        </div>
+                        <div className="text-right">
+                            <span className="text-2xl font-black text-slate-900">{progress}/{total}</span>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        {CHECKLIST_ITEMS.map(item => (
+                            <label key={item.id} className="flex items-center gap-4 rounded-xl border p-4 transition-colors hover:bg-slate-50 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={!!checklist[item.id]}
+                                    onChange={() => toggleItem(item.id)}
+                                    className="h-6 w-6 rounded-md border-slate-300 text-black focus:ring-black"
+                                />
+                                <span className={cn("font-medium", checklist[item.id] ? "text-slate-900" : "text-slate-500")}>
+                                    {item.label}
+                                </span>
+                            </label>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            <div className="space-y-6">
+                <div className="rounded-2xl border bg-slate-50 p-6">
+                    <h3 className="mb-4 font-bold text-lg">Действия</h3>
+
+                    {employee.status === 'active' ? (
+                        <div className="rounded-xl bg-green-100 p-4 text-green-800 font-bold text-center">
+                            Сотрудник активен
+                        </div>
+                    ) : (
+                        <button
+                            onClick={handleActivate}
+                            disabled={!isComplete || isUpdating}
+                            className="w-full rounded-xl bg-black py-4 font-bold text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 transition-all"
+                        >
+                            {isUpdating ? 'Активация...' : 'АКТИВИРОВАТЬ СОТРУДНИКА'}
+                        </button>
+                    )}
+
+                    {!isComplete && employee.status !== 'active' && (
+                        <p className="mt-3 text-xs text-center text-muted-foreground">
+                            Заполните чек-лист полностью для активации
+                        </p>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }

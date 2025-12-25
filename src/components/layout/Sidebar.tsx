@@ -68,9 +68,17 @@ export function Sidebar() {
             { to: "/analytics/dashboard", icon: BarChart3, label: "Аналитика" },
         ];
 
-        if (role === 'admin') return [...hrLinks, ...opsLinks, ...rfLinks];
+        const financierLinks: SidebarLink[] = [
+            { to: "/finance/pnl", icon: BarChart3, label: "P&L Отчет" },
+            { to: "/finance/expenses", icon: Receipt, label: "Расходы" },
+            { to: "/finance/rent", icon: Building2, label: "Аренда" },
+            { to: "/analytics/dashboard", icon: BarChart3, label: "Аналитика" },
+        ];
+
+        if (role === 'admin') return [...hrLinks, ...opsLinks, ...rfLinks, ...financierLinks]; // Added all for admin
         if (role === 'hr') return hrLinks;
         if (role === 'rf') return rfLinks;
+        if (role === 'financier') return financierLinks;
         return []; // Guest/Unknown
     };
 

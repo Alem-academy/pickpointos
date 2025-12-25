@@ -62,14 +62,18 @@ export default function Login() {
                 case 'admin': email = 'admin@pvz.kz'; break;
                 case 'hr': email = 'aigul.kasymova@pvz.kz'; break;
                 case 'rf': email = 'aidar.bekbolatov@pvz.kz'; break;
-                case 'finance': email = 'admin@pvz.kz'; break;
+                case 'finance': email = 'finance@pvz.kz'; break;
             }
 
-            if (role === 'finance') email = 'admin@pvz.kz';
+
 
             await login({ email, password: 'password123' });
 
-            const target = location.state?.from?.pathname || (role === 'rf' ? '/rf' : '/hr');
+            const target = location.state?.from?.pathname || (
+                role === 'rf' ? '/rf' :
+                    role === 'finance' ? '/finance/pnl' :
+                        '/hr'
+            );
             navigate(target, { replace: true });
         } catch (error: any) {
             console.error("Login failed", error);

@@ -24,7 +24,12 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
 
     if (allowedRoles && !allowedRoles.includes(user.role as Role)) {
         // Redirect to their appropriate dashboard if they try to access wrong area
-        const target = user.role === 'hr' ? '/hr' : '/rf';
+        let target = '/login';
+        if (user.role === 'hr') target = '/hr';
+        else if (user.role === 'rf') target = '/rf';
+        else if (user.role === 'financier') target = '/finance/pnl';
+        else if (user.role === 'admin') target = '/hr'; // Admin defaults to HR for now
+
         return <Navigate to={target} replace />;
     }
 

@@ -107,7 +107,13 @@ export default function Applications() {
                                     <ApplicationCard
                                         key={employee.id}
                                         employee={employee}
-                                        onClick={() => setSelectedCandidate(employee)}
+                                        onClick={() => {
+                                            if (employee.status === 'signing') {
+                                                window.location.href = `/hr/employees/${employee.id}`;
+                                            } else {
+                                                setSelectedCandidate(employee);
+                                            }
+                                        }}
                                     />
                                 ))}
                             </div>

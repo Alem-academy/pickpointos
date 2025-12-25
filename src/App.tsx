@@ -40,19 +40,20 @@ function App() {
               <Route path="/hr/timesheet" element={<Timesheet />} />
               <Route path="/hr/discipline" element={<Discipline />} />
 
-              {/* Advanced Operations & Finance (HR/Admin only) */}
-              <Route path="operations/new-pvz" element={<NewPvzPage />} />
-              <Route path="finance/rent" element={<RentPage />} />
-              <Route path="finance/pnl" element={<PnLPage />} />
-
-              <Route path="analytics" element={<AnalyticsDashboard />} /> {/* Fixed path to match sidebar if needed, or redirect */}
-              <Route path="analytics/dashboard" element={<AnalyticsDashboard />} />
+              {/* Advanced Operations & Finance (HR/Admin/Financier) */}
+              <Route element={<ProtectedRoute allowedRoles={['hr', 'admin', 'financier']} />}>
+                <Route path="operations/new-pvz" element={<NewPvzPage />} />
+                <Route path="finance/rent" element={<RentPage />} />
+                <Route path="finance/pnl" element={<PnLPage />} />
+                <Route path="analytics" element={<AnalyticsDashboard />} />
+                <Route path="analytics/dashboard" element={<AnalyticsDashboard />} />
+              </Route>
 
               <Route path="/" element={<Navigate to="/hr/applications" replace />} />
             </Route>
 
-            {/* Shared Operations & Finance (HR, RF, Admin) */}
-            <Route element={<ProtectedRoute allowedRoles={['hr', 'rf', 'admin']} />}>
+            {/* Shared Operations & Finance (HR, RF, Admin, Financier) */}
+            <Route element={<ProtectedRoute allowedRoles={['hr', 'rf', 'admin', 'financier']} />}>
               <Route path="operations/schedule" element={<SchedulePage />} />
               <Route path="operations/timesheets" element={<Timesheet />} />
               <Route path="finance/expenses" element={<ExpensesPage />} />

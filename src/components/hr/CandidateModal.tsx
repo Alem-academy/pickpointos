@@ -21,9 +21,18 @@ export function CandidateModal({ candidate, onClose, onApprove, onReject }: Cand
                         <h2 className="text-2xl font-bold">{candidate.full_name}</h2>
                         <span className="text-slate-500">Заявка на должность: {candidate.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ'}</span>
                     </div>
-                    <button onClick={onClose} className="rounded-full bg-slate-100 p-2 text-slate-500 hover:bg-slate-200">
-                        <X className="h-6 w-6" />
-                    </button>
+                    <div className="flex gap-2">
+                        <a
+                            href={`/hr/employees/${candidate.id}`}
+                            className="flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200 transition-colors"
+                        >
+                            <User className="h-4 w-4" />
+                            В профиль
+                        </a>
+                        <button onClick={onClose} className="rounded-full bg-slate-100 p-2 text-slate-500 hover:bg-slate-200">
+                            <X className="h-6 w-6" />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="p-8">

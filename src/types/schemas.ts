@@ -12,6 +12,7 @@ export const EmployeeSchema = z.object({
     phone: z.string().nullable().optional(),
     email: z.string().email().nullable().optional(),
     password_hash: z.string().optional(),
+    onboarding_checklist: z.record(z.string(), z.boolean()).optional().default({}),
 });
 
 export type Employee = z.infer<typeof EmployeeSchema>;

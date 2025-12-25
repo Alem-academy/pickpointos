@@ -198,8 +198,8 @@ router.get('/rf-stats', async (req, res) => {
 
         res.json({
             pvz,
-            todaysShifts: shiftsRes.rows,
-            monthlyExpenses: parseFloat(expensesRes.rows[0].total)
+            todayShift: shiftsRes.rows,
+            monthlyApprovedExpenses: parseFloat(expensesRes.rows[0].total)
         });
 
     } catch (err) {

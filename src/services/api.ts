@@ -69,6 +69,7 @@ export interface Employee {
     hired_at: string | null;
     created_at: string;
     iban?: string; // KZ IBAN
+    onboarding_checklist?: Record<string, boolean>;
 }
 
 export interface Shift {
@@ -141,6 +142,21 @@ export const api = {
 
     async getDocuments(employeeId: string): Promise<Document[]> {
         const res = await axiosInstance.get(`/employees/${employeeId}/documents`);
+        return res.data;
+    },
+
+
+    async updateEmployee(id: string, data: Partial<Employee>): Promise<Employee> {
+        // Backend handles checklist via the same status endpoint or we need a new one.
+        // The current backend implementation added logic to 'PATCH /employees/:id/status' 
+        // effectively treating it as a general patch or specific one.
+        // Wait, I edited 'hr.js' at 'PATCH /employees/:id/status'.
+        // Let's use that endpoint but maybe rename it in frontend or just reuse it.
+        // Ideally, we should have a generic PATCH /employees/:id.
+        // But for now, I'll use the existing route since I modified it to handle checklist.
+        // Wait, did I modify the route path in hr.js? No, I modified the handler for '/employees/:id/status'.
+        // So I must call that endpoint.
+        const res = await axiosInstance.patch(`/employees/${id}/status`, data);
         return res.data;
     },
 
