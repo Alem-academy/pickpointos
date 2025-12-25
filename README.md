@@ -2,6 +2,7 @@
 
 ## Context & Objective
 This project aims to create a corporate ERP system for managing a network of Wildberries Pickup Points (PVZ) in Kazakhstan. The system replaces disparate Excel files and a costly Retool MVP with a hybrid architecture solution.
+Last Updated: 2025-12-25 (Force Rebuild)
 
 **Fundamental Principle:** Hybrid Architecture.
 - **HR Block:** Full-fledged Web Application (High security, file handling).
