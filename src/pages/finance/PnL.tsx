@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { api, type PVZ } from '@/services/api';
 import { usePnL } from '@/hooks/use-queries';
 import { Calculator, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
