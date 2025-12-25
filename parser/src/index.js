@@ -12,7 +12,7 @@ import documentsRoutes from './routes/documents.js';
 import analyticsRoutes from './routes/analytics.js';
 import authRoutes from './routes/auth.js';
 
-dotenv.config({ path: '../.env' });
+// dotenv configured in ./config/env.js
 
 const app = express();
 const port = process.env.PORT || 8080;
