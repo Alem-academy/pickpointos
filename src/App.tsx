@@ -13,6 +13,7 @@ import SchedulePage from '@/pages/operations/Schedule';
 import NewPvzPage from "@/pages/operations/NewPvz";
 import ExpensesPage from '@/pages/finance/Expenses';
 import PnLPage from '@/pages/finance/PnL';
+import FinanceDashboard from "@/pages/finance/FinanceDashboard";
 import AnalyticsDashboard from "@/pages/analytics/Dashboard";
 import Applications from "@/pages/hr/Applications";
 import EmployeeProfile from "@/pages/hr/EmployeeProfile";
@@ -29,7 +30,7 @@ function IndexRedirect() {
 
   if (user.role === 'hr') return <Navigate to="/hr/applications" replace />;
   if (user.role === 'rf') return <Navigate to="/rf" replace />;
-  if (user.role === 'financier') return <Navigate to="/finance/pnl" replace />;
+  if (user.role === 'financier') return <Navigate to="/finance" replace />;
   if (user.role === 'admin') return <Navigate to="/hr/applications" replace />;
 
   return <Navigate to="/login" replace />;
@@ -59,6 +60,8 @@ function App() {
                 <Route path="operations/new-pvz" element={<NewPvzPage />} />
                 <Route path="finance/rent" element={<RentPage />} />
                 <Route path="finance/pnl" element={<PnLPage />} />
+                <Route path="finance" element={<FinanceDashboard />} />
+                <Route path="finance/dashboard" element={<FinanceDashboard />} />
                 <Route path="analytics" element={<AnalyticsDashboard />} />
                 <Route path="analytics/dashboard" element={<AnalyticsDashboard />} />
               </Route>

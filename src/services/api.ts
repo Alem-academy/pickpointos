@@ -10,7 +10,7 @@ export interface PVZ {
     is_active: boolean;
 }
 
-export type EmployeeRole = 'admin' | 'hr' | 'rf' | 'employee';
+export type EmployeeRole = 'admin' | 'hr' | 'rf' | 'employee' | 'financier';
 export type EmployeeStatus = 'new' | 'review' | 'revision' | 'signing' | 'active' | 'fired';
 
 export interface Document {
@@ -86,6 +86,9 @@ export interface PnLReport {
     opex: number;
     payroll: number;
     netProfit: number;
+    breakdown?: {
+        opex: Array<{ category: string; amount: number }>;
+    };
 }
 
 // API Methods Wrapper (keeping backward compatibility with "api.method" style)

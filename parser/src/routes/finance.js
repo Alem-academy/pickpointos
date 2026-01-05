@@ -316,11 +316,39 @@ router.get('/pnl', async (req, res) => {
         const payroll = parseFloat(payrollRes.rows[0].total);
         const netProfit = revenue - opex - payroll;
 
+        // Fetch OpEx Breakdown by Category
+        let breakdownSql = `
+            SELECT 
+                COALESCE(description, 'Прочее') as category, 
+                SUM(amount) as amount
+            FROM financial_transactions
+            WHERE type = 'expense' 
+              AND transaction_date >= $1 
+              AND transaction_date <= $2
+        `;
+        const breakdownParams = [startOfMonth, endOfMonth];
+
+        if (pvzId) {
+            breakdownSql += ` AND pvz_id = $3`;
+            breakdownParams.push(pvzId);
+        }
+
+        breakdownSql += ` GROUP BY description ORDER BY amount DESC`;
+
+        const breakdownRes = await query(breakdownSql, breakdownParams);
+        const opexBreakdown = breakdownRes.rows.map(r => ({
+            category: r.category,
+            amount: Math.abs(parseFloat(r.amount))
+        }));
+
         res.json({
             revenue,
             opex,
             payroll,
-            netProfit
+            netProfit,
+            breakdown: {
+                opex: opexBreakdown
+            }
         });
 
     } catch (err) {

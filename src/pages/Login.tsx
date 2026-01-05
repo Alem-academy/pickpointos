@@ -8,14 +8,14 @@ import { SigexService } from "@/services/sigex";
 import { NCALayerClient } from 'ncalayer-js-client';
 
 interface RoleButtonProps {
-    role: 'admin' | 'hr' | 'rf' | 'finance';
+    role: 'admin' | 'hr' | 'rf' | 'financier';
     icon: any;
     label: string;
     desc: string;
     // Removed colorClass for conservative design
     isLoading: boolean;
     selectedRole: string | null;
-    onClick: (role: 'admin' | 'hr' | 'rf' | 'finance') => void;
+    onClick: (role: 'admin' | 'hr' | 'rf' | 'financier') => void;
 }
 
 const RoleButton = ({ role, icon: Icon, label, desc, isLoading, selectedRole, onClick }: RoleButtonProps) => (
@@ -51,9 +51,9 @@ export default function Login() {
     const location = useLocation();
     const { login } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
-    const [selectedRole, setSelectedRole] = useState<'admin' | 'hr' | 'rf' | 'finance' | null>(null);
+    const [selectedRole, setSelectedRole] = useState<'admin' | 'hr' | 'rf' | 'financier' | null>(null);
 
-    const handleLogin = async (role: 'admin' | 'hr' | 'rf' | 'finance') => {
+    const handleLogin = async (role: 'admin' | 'hr' | 'rf' | 'financier') => {
         setSelectedRole(role);
         setIsLoading(true);
         try {
@@ -62,16 +62,14 @@ export default function Login() {
                 case 'admin': email = 'admin@pvz.kz'; break;
                 case 'hr': email = 'aigul.kasymova@pvz.kz'; break;
                 case 'rf': email = 'aidar.bekbolatov@pvz.kz'; break;
-                case 'finance': email = 'finance@pvz.kz'; break;
+                case 'financier': email = 'finance@pvz.kz'; break;
             }
-
-
 
             await login({ email, password: 'password123' });
 
             const target = location.state?.from?.pathname || (
                 role === 'rf' ? '/rf' :
-                    role === 'finance' ? '/finance/pnl' :
+                    role === 'financier' ? '/finance' :
                         '/hr'
             );
             navigate(target, { replace: true });
@@ -151,7 +149,7 @@ export default function Login() {
                         onClick={handleLogin}
                     />
                     <RoleButton
-                        role="finance"
+                        role="financier"
                         icon={Wallet}
                         label="Финансист"
                         desc="Отчеты и P&L"

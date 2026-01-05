@@ -69,6 +69,7 @@ export function Sidebar() {
         ];
 
         const financierLinks: SidebarLink[] = [
+            { to: "/finance", icon: LayoutDashboard, label: "Дашборд", end: true },
             { to: "/finance/pnl", icon: BarChart3, label: "P&L Отчет" },
             { to: "/finance/expenses", icon: Receipt, label: "Расходы" },
             { to: "/finance/rent", icon: Building2, label: "Аренда" },
