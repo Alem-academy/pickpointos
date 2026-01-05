@@ -8,7 +8,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend
 } from 'recharts';
 import {
-    TrendingUp, TrendingDown, DollarSign, Wallet,
+    TrendingUp, DollarSign, Wallet,
     ArrowUpRight, ArrowDownRight, CreditCard, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -35,7 +35,7 @@ export default function FinanceDashboard() {
         { name: 'Прибыль', amount: report?.netProfit || 0 },
     ];
 
-    const pieData = report?.breakdown?.opex.map((item, index) => ({
+    const pieData = report?.breakdown?.opex.map((item: { category: string; amount: number }, index: number) => ({
         name: item.category,
         value: item.amount,
         color: COLORS[index % COLORS.length]
@@ -82,31 +82,31 @@ export default function FinanceDashboard() {
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                         <KpiCard
                             title="Выручка"
-                            value={report?.revenue}
+                            value={report?.revenue ?? 0}
                             icon={TrendingUp}
                             color="text-emerald-600"
                             bg="bg-emerald-50"
                         />
                         <KpiCard
                             title="Операционные расходы"
-                            value={report?.opex}
+                            value={report?.opex ?? 0}
                             icon={DollarSign}
                             color="text-orange-600"
                             bg="bg-orange-50"
                         />
                         <KpiCard
                             title="Фонд оплаты труда"
-                            value={report?.payroll}
+                            value={report?.payroll ?? 0}
                             icon={Wallet}
                             color="text-blue-600"
                             bg="bg-blue-50"
                         />
                         <KpiCard
                             title="Чистая Прибыль"
-                            value={report?.netProfit}
-                            icon={report?.netProfit >= 0 ? ArrowUpRight : ArrowDownRight}
-                            color={report?.netProfit >= 0 ? "text-emerald-600" : "text-red-600"}
-                            bg={report?.netProfit >= 0 ? "bg-emerald-100" : "bg-red-50"}
+                            value={report?.netProfit ?? 0}
+                            icon={(report?.netProfit ?? 0) >= 0 ? ArrowUpRight : ArrowDownRight}
+                            color={(report?.netProfit ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}
+                            bg={(report?.netProfit ?? 0) >= 0 ? "bg-emerald-100" : "bg-red-50"}
                             isMain
                         />
                     </div>
@@ -153,7 +153,7 @@ export default function FinanceDashboard() {
                                                 paddingAngle={5}
                                                 dataKey="value"
                                             >
-                                                {pieData.map((entry, index) => (
+                                                {pieData.map((entry: { name: string; value: number; color: string }, index: number) => (
                                                     <Cell key={`cell-${index}`} fill={entry.color} />
                                                 ))}
                                             </Pie>

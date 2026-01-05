@@ -68,6 +68,12 @@ export const PnLReportSchema = z.object({
     opex: z.number(),
     payroll: z.number(),
     netProfit: z.number(),
+    breakdown: z.object({
+        opex: z.array(z.object({
+            category: z.string(),
+            amount: z.number()
+        }))
+    }).optional(),
 });
 
 export type PnLReport = z.infer<typeof PnLReportSchema>;
