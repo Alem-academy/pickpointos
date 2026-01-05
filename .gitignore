@@ -40,3 +40,8 @@ cloud-sql-proxy
 !web/package.json
 !web/tsconfig.json
 !web/components.json
+
+# Environment Variables
+.env
+.env.*
+!.env.example
