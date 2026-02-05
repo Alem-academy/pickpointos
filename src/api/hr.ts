@@ -57,6 +57,18 @@ export const hrApi = {
         return res.data;
     },
 
+    async uploadDocument(employeeId: string, type: string, file: File): Promise<Document> {
+        const formData = new FormData();
+        formData.append('employeeId', employeeId);
+        formData.append('type', type);
+        formData.append('file', file);
+
+        const res = await axiosInstance.post('/documents/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return res.data;
+    },
+
     async signDocument(id: string): Promise<Document> {
         const res = await axiosInstance.post(`/documents/${id}/sign`);
         return res.data;

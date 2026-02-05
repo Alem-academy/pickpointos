@@ -1,7 +1,9 @@
 import './config/env.js';
 import express from 'express';
-import dotenv from 'dotenv';
+// import dotenv from 'dotenv'; // Configured in ./config/env.js already
 import cors from 'cors';
+import morgan from 'morgan';
+import { Logger } from './lib/logger.js';
 import { parseSheet } from './services/parser.service.js';
 
 // Import Routes
@@ -25,7 +27,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Run migrations (will log errors but not crash to allow server to start, or we could await)
-runMigrations().catch(console.error);
+runMigrations().catch(err => Logger.error('Migration failed', err));
 
 app.use(cors({
     origin: (origin, callback) => {
@@ -38,15 +40,11 @@ app.use(cors({
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
 
-        // Check if origin is allowed or if we are in "wildcard" mode (only if credentials not strict, but here we want to be permissive for dev)
-        // If CORS_ORIGIN is '*', we must reflect the origin to allow credentials
         // Check if origin is allowed or if we are in "wildcard" mode
-        // If CORS_ORIGIN is '*' OR undefined (default permissive), we reflect the origin
         if (!process.env.CORS_ORIGIN || process.env.CORS_ORIGIN === '*' || allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
-            // For debugging: log blocked origin
-            console.warn(`Blocked by CORS: ${origin}`);
+            Logger.warn(`Blocked by CORS: ${origin}`);
             callback(new Error('Not allowed by CORS'));
         }
     },
@@ -54,32 +52,38 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Request Logger
-app.use((req, res, next) => {
-    console.log(`[${req.method}] ${req.url}`);
-    next();
-});
+// Morgan Middleware for HTTP Request Logging
+const morganMiddleware = morgan(
+    ':remote-addr - :method :url :status :res[content-length] - :response-time ms',
+    {
+        stream: {
+            // Configure Morgan to use our custom logger with the http severity
+            write: (message) => Logger.http(message.trim()),
+        },
+    }
+);
+app.use(morganMiddleware);
 
 // Serve static files from the React app
 // Assuming parser/src/index.js -> parser/src -> parser -> root -> dist
 const distPath = path.join(__dirname, '../../dist');
-console.log(`📂 Static files path: ${distPath}`);
+Logger.info(`📂 Static files path: ${distPath}`);
 
 // Verify dist exists
 import fs from 'fs';
 if (!fs.existsSync(distPath)) {
-    console.error(`❌ CRITICAL: 'dist' folder not found at ${distPath}`);
-    console.error(`   __dirname: ${__dirname}`);
-    console.error(`   cwd: ${process.cwd()}`);
+    Logger.error(`❌ CRITICAL: 'dist' folder not found at ${distPath}`);
+    Logger.error(`   __dirname: ${__dirname}`);
+    Logger.error(`   cwd: ${process.cwd()}`);
 } else {
-    console.log(`✅ 'dist' folder found.`);
+    Logger.info(`✅ 'dist' folder found.`);
 }
 
 app.use(express.static(distPath));
 
 // Explicit 404 for missing assets to avoid falling back to index.html
 app.use('/assets', (req, res) => {
-    console.warn(`⚠️ Asset not found: ${req.url}`);
+    Logger.warn(`⚠️ Asset not found: ${req.url}`);
     res.status(404).send('Asset not found');
 });
 
@@ -95,29 +99,6 @@ app.post('/parse', async (req, res) => {
         error: 'Parser service is temporarily disabled.',
         message: 'Please use the application interface to manage data.'
     });
-    /*
-    try {
-        const sheetId = req.body.sheetId || process.env.GOOGLE_SHEET_ID;
-        if (!sheetId) {
-            return res.status(400).json({ error: 'Sheet ID is required' });
-        }
-
-        console.log(`🚀 Starting parse for sheet: ${sheetId}`);
-
-        const result = await parseSheet(sheetId);
-
-        res.status(200).json({
-            message: 'Parsing completed successfully',
-            stats: result
-        });
-    } catch (error) {
-        console.error('❌ Error during parsing:', error);
-        res.status(500).json({
-            error: 'Internal server error',
-            details: error.message
-        });
-    }
-    */
 });
 
 // Mount Routes
@@ -130,18 +111,16 @@ app.use('/api/analytics', analyticsRoutes);
 
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.
-// The "catchall" handler: for any request that doesn't
-// match one above, send back React's index.html file.
 app.get('*', (req, res) => {
     const indexPath = path.join(distPath, 'index.html');
     if (fs.existsSync(indexPath)) {
         res.sendFile(indexPath);
     } else {
-        console.error(`❌ Critical: index.html not found at ${indexPath}`);
+        Logger.error(`❌ Critical: index.html not found at ${indexPath}`);
         res.status(500).send('Application build not found (index.html missing)');
     }
 });
 
 app.listen(port, () => {
-    console.log(`Server listening on port ${port}`);
+    Logger.info(`Server listening on port ${port}`);
 });

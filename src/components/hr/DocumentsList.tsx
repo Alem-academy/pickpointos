@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { api, type Document } from '@/services/api';
-import { FileText, Loader2, PenTool, CheckCircle, Plus } from 'lucide-react';
+import { FileText, Loader2, PenTool, CheckCircle, Plus, Upload, Eye } from 'lucide-react';
 import { SigexSignModal } from '../SigexSignModal';
 
 interface DocumentsListProps {
@@ -12,9 +12,14 @@ interface DocumentsListProps {
 export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps) {
     const [documents, setDocuments] = useState<Document[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isGenerating, setIsGenerating] = useState<string | null>(null); // 'contract' | 'order_hiring' | null
+    const [isGenerating, setIsGenerating] = useState<string | null>(null); // 'contract' | 'order' | null
+    const [isUploading, setIsUploading] = useState(false);
     const [previewContent, setPreviewContent] = useState<string | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [signingDoc, setSigningDoc] = useState<Document | null>(null);
+
+    // File upload ref
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const loadDocuments = useCallback(async () => {
         try {
@@ -45,6 +50,30 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
         }
     };
 
+    const handleUploadClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Reset input
+        if (fileInputRef.current) fileInputRef.current.value = '';
+
+        setIsUploading(true);
+        try {
+            // Assume uploading generic 'other' doc for now, or 'id_scan' if explicit button
+            await api.uploadDocument(employeeId, 'id_scan', file);
+            await loadDocuments();
+        } catch (err) {
+            console.error('Upload failed:', err);
+            alert('Ошибка загрузки файла');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     const handleSignClick = (doc: Document) => {
         setSigningDoc(doc);
     };
@@ -54,6 +83,16 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
         if (onStatusChange) onStatusChange();
     };
 
+    const handlePreview = (doc: Document) => {
+        if (doc.scan_url) {
+            if (doc.scan_url.endsWith('.pdf')) {
+                window.open(doc.scan_url, '_blank');
+            } else {
+                setPreviewUrl(doc.scan_url);
+            }
+        }
+    };
+
     if (isLoading) return <div className="py-4 text-center text-muted-foreground">Загрузка документов...</div>;
 
     return (
@@ -61,6 +100,22 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
             <div className="flex items-center justify-between">
                 <h3 className="font-semibold">Документы сотрудника</h3>
                 <div className="flex gap-2">
+                    <button
+                        onClick={handleUploadClick}
+                        disabled={isUploading}
+                        className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                        {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                        Загрузить скан
+                    </button>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept="application/pdf,image/*"
+                        onChange={handleFileChange}
+                    />
+
                     <button
                         onClick={() => handleGenerate('contract')}
                         disabled={!!isGenerating}
@@ -97,7 +152,8 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                         <p className="font-medium">
                                             {doc.type === 'contract' ? 'Трудовой договор' :
                                                 doc.type === 'order' ? 'Приказ о приеме' :
-                                                    'Документ'}
+                                                    doc.type === 'id_scan' ? 'Скан удостоверения' :
+                                                        'Документ'}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
                                             Создан {new Date(doc.created_at).toLocaleDateString()} •
@@ -108,7 +164,15 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                             </div>
 
                             <div className="flex gap-2">
-                                {/* Preview button removed until we have GET /documents/:id/content endpoint */}
+                                {doc.scan_url && (
+                                    <button
+                                        onClick={() => handlePreview(doc)}
+                                        className="flex items-center gap-1 rounded bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-200"
+                                    >
+                                        <Eye className="h-4 w-4" />
+                                        Просмотр
+                                    </button>
+                                )}
 
                                 {doc.status === 'draft' && (
                                     <button
@@ -171,6 +235,12 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {previewUrl && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" onClick={() => setPreviewUrl(null)}>
+                    <img src={previewUrl} alt="Preview" className="max-h-[90vh] max-w-full rounded shadow-2xl" />
                 </div>
             )}
 

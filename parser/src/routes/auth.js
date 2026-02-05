@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { query } from '../lib/db.js';
 import dotenv from 'dotenv';
 import { authenticateToken } from '../middleware/auth.js';
+import { Logger } from '../lib/logger.js';
 
 dotenv.config();
 
@@ -33,18 +34,18 @@ router.post('/login', async (req, res) => {
         // Our updated generic seed puts password_hash, so we are good.
         // But for safety, handle null hash
         // if (!user.password_hash) {
-        //     console.error('Login failed: No password hash for user', email);
+        //     Logger.error(`Login failed: No password hash for user ${email}`);
         //     return res.status(401).json({ error: 'Account not setup for password login (no hash)' });
         // }
 
         // 3. Password Check - BYPASSED FOR DEV
         // const validPassword = await bcrypt.compare(password, user.password_hash);
-        // console.log(`Login Attempt: ${email} | Found User: Yes | Hash Match: ${validPassword}`);
+        // Logger.info(`Login Attempt: ${email} | Found User: Yes | Hash Match: ${validPassword}`);
 
         // if (!validPassword) {
         //     return res.status(401).json({ error: 'Invalid credentials' });
         // }
-        console.log(`Login SC: ${email} logged in (Password bypass active).`);
+        Logger.info(`Login SC: ${email} logged in (Password bypass active).`);
 
         // 3. Generate Token
         // Payload: id, email, role, main_pvz_id
@@ -68,7 +69,7 @@ router.post('/login', async (req, res) => {
         });
 
     } catch (err) {
-        console.error('Login error:', err);
+        Logger.error('Login error:', err);
         // RETURN ERROR DETAILS FOR DEBUGGING
         res.status(500).json({
             error: 'Internal server error',
@@ -91,7 +92,7 @@ router.get('/me', authenticateToken, async (req, res) => {
         const { password_hash, ...userInfo } = result.rows[0];
         res.json(userInfo);
     } catch (err) {
-        console.error('Auth check error:', err);
+        Logger.error('Auth check error:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

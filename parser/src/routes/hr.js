@@ -1,6 +1,7 @@
 import express from 'express';
 import { query } from '../lib/db.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { Logger } from '../lib/logger.js';
 
 const router = express.Router();
 
@@ -10,7 +11,7 @@ router.get('/pvz', async (req, res) => {
         const result = await query('SELECT id, name, address, brand FROM pvz_points ORDER BY name');
         res.json(result.rows);
     } catch (err) {
-        console.error('Error fetching PVZ:', err);
+        Logger.error('Error fetching PVZ:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -49,7 +50,7 @@ router.get('/employees', authenticateToken, async (req, res) => {
         const result = await query(sql, params);
         res.json(result.rows);
     } catch (err) {
-        console.error('Error fetching employees:', err);
+        Logger.error('Error fetching employees:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -88,7 +89,7 @@ router.post('/employees', async (req, res) => {
 
         res.status(201).json(result.rows[0]);
     } catch (err) {
-        console.error('Error creating employee:', err);
+        Logger.error('Error creating employee:', err);
         res.status(500).json({ error: 'Internal server error', details: err.message });
     }
 });
@@ -111,7 +112,7 @@ router.get('/employees/:id', async (req, res) => {
 
         res.json(result.rows[0]);
     } catch (err) {
-        console.error('Error fetching employee:', err);
+        Logger.error('Error fetching employee:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -154,7 +155,7 @@ router.patch('/employees/:id/status', async (req, res) => {
 
         res.json(result.rows[0]);
     } catch (err) {
-        console.error('Error updating employee status:', err);
+        Logger.error('Error updating employee status:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -181,11 +182,11 @@ router.post('/employees/:id/transfer', async (req, res) => {
             return res.status(404).json({ error: 'Employee not found' });
         }
 
-        console.log(`Employee ${id} transferred to PVZ ${pvzId} on ${date}. Comment: ${comment}`);
+        Logger.info(`Employee ${id} transferred to PVZ ${pvzId} on ${date}. Comment: ${comment}`);
 
         res.json(result.rows[0]);
     } catch (err) {
-        console.error('Error transferring employee:', err);
+        Logger.error('Error transferring employee:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -200,11 +201,11 @@ router.post('/discipline', async (req, res) => {
         }
 
         // Mock implementation
-        console.log(`Discipline record created: ${type} for ${employeeId} on ${date}. Reason: ${reason}`);
+        Logger.info(`Discipline record created: ${type} for ${employeeId} on ${date}. Reason: ${reason}`);
 
         res.json({ id: 'mock-discipline-id-' + Date.now(), ...req.body });
     } catch (err) {
-        console.error('Error creating discipline record:', err);
+        Logger.error('Error creating discipline record:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -226,7 +227,7 @@ router.get('/discipline', async (req, res) => {
             res.json(records);
         }
     } catch (err) {
-        console.error('Error fetching discipline records:', err);
+        Logger.error('Error fetching discipline records:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -266,7 +267,7 @@ router.get('/motivation/bonuses', async (req, res) => {
 
         res.json(bonuses);
     } catch (err) {
-        console.error('Error calculating bonuses:', err);
+        Logger.error('Error calculating bonuses:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

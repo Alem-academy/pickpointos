@@ -1,90 +1,49 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/components/layout/AuthContext";
-import { LayoutDashboard, Users, Loader2, ShieldCheck, Wallet, FileKey, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Loader2, FileKey, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { SigexService } from "@/services/sigex";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 // @ts-ignore
 import { NCALayerClient } from 'ncalayer-js-client';
-
-interface RoleButtonProps {
-    role: 'admin' | 'hr' | 'rf' | 'financier';
-    icon: any;
-    label: string;
-    desc: string;
-    // Removed colorClass for conservative design
-    isLoading: boolean;
-    selectedRole: string | null;
-    onClick: (role: 'admin' | 'hr' | 'rf' | 'financier') => void;
-}
-
-const RoleButton = ({ role, icon: Icon, label, desc, isLoading, selectedRole, onClick }: RoleButtonProps) => (
-    <button
-        onClick={() => onClick(role)}
-        disabled={isLoading}
-        className={cn(
-            "group relative flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-3 text-left transition-all hover:border-slate-400 hover:bg-slate-50",
-            isLoading && "opacity-50 cursor-not-allowed",
-            selectedRole === role ? "border-slate-900 ring-1 ring-slate-900" : ""
-        )}
-    >
-        <div className={cn(
-            "rounded-lg p-2.5 bg-slate-100 text-slate-700 transition-colors group-hover:bg-white group-hover:text-slate-900",
-            selectedRole === role && "bg-slate-900 text-white group-hover:bg-slate-900 group-hover:text-white"
-        )}>
-            <Icon className="h-5 w-5" />
-        </div>
-        <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-sm text-slate-900">{label}</h3>
-            <p className="text-xs text-slate-500 truncate">{desc}</p>
-        </div>
-        {isLoading && selectedRole === role ? (
-            <Loader2 className="h-4 w-4 animate-spin text-slate-900" />
-        ) : (
-            <ChevronRight className="h-4 w-4 text-slate-300 transition-transform group-hover:translate-x-1" />
-        )}
-    </button>
-);
 
 export default function Login() {
     const navigate = useNavigate();
     const location = useLocation();
     const { login } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
-    const [selectedRole, setSelectedRole] = useState<'admin' | 'hr' | 'rf' | 'financier' | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
 
-    const handleLogin = async (role: 'admin' | 'hr' | 'rf' | 'financier') => {
-        setSelectedRole(role);
+    // Form state
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState<string | null>(null);
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
         setIsLoading(true);
+
         try {
-            let email = '';
-            switch (role) {
-                case 'admin': email = 'admin@pvz.kz'; break;
-                case 'hr': email = 'aigul.kasymova@pvz.kz'; break;
-                case 'rf': email = 'aidar.bekbolatov@pvz.kz'; break;
-                case 'financier': email = 'finance@pvz.kz'; break;
-            }
+            await login({ email, password });
 
-            await login({ email, password: 'password123' });
-
-            const target = location.state?.from?.pathname || (
-                role === 'rf' ? '/rf' :
-                    role === 'financier' ? '/finance' :
-                        '/hr'
-            );
+            // Redirect based on role is handled by the protected route usually,
+            // but here we might want to default to dashboard if no state.
+            const target = location.state?.from?.pathname || '/';
             navigate(target, { replace: true });
         } catch (error: any) {
             console.error("Login failed", error);
-            const errorMessage = error.response?.data?.error || error.message || "Неизвестная ошибка";
-            alert(`Ошибка входа: ${errorMessage}`);
+            const errorMessage = error.response?.data?.error || error.message || "Неверный email или пароль";
+            setError(errorMessage);
         } finally {
             setIsLoading(false);
-            setSelectedRole(null);
         }
     };
 
     const handleEdsLogin = async () => {
         setIsLoading(true);
+        setError(null);
         try {
             const { nonce } = await SigexService.getAuthNonce();
             const ncalayer = new NCALayerClient();
@@ -95,23 +54,25 @@ export default function Login() {
                 signature = await ncalayer.createCmsSignature(nonce);
             } catch (e) {
                 console.error("NCALayer signing failed", e);
-                alert("Ошибка подписи. Проверьте запуск NCALayer.");
+                setError("Ошибка подписи. Проверьте запуск NCALayer.");
                 setIsLoading(false);
                 return;
             }
 
             if (!signature) {
-                alert("Подпись не получена.");
+                setError("Подпись не получена.");
                 setIsLoading(false);
                 return;
             }
 
             await SigexService.authenticate(signature);
+            // EDS login might need a special flow or token from backend
+            // utilizing existing mock for now but user should be aware
             await login({ email: 'eds_user@example.com', password: 'password123' });
             navigate('/hr', { replace: true });
         } catch (error) {
             console.error("EDS Login failed", error);
-            alert("Ошибка входа по ЭЦП");
+            setError("Ошибка входа по ЭЦП");
         } finally {
             setIsLoading(false);
         }
@@ -119,78 +80,97 @@ export default function Login() {
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-8">
-            <div className="w-full max-w-lg space-y-6 rounded-2xl bg-white p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
+            <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
                 <div className="text-center space-y-2">
                     <h1 className="text-3xl font-black tracking-tight text-slate-900">
                         PVZ OS <span className="text-slate-300 font-medium text-lg ml-1">v2.0</span>
                     </h1>
                     <p className="text-sm font-medium text-slate-500">
-                        Выберите роль для входа в систему
+                        Вход в систему управления
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <RoleButton
-                        role="hr"
-                        icon={Users}
-                        label="HR Менеджер"
-                        desc="Кадры и найм" // Shortened description
-                        isLoading={isLoading}
-                        selectedRole={selectedRole}
-                        onClick={handleLogin}
-                    />
-                    <RoleButton
-                        role="rf"
-                        icon={LayoutDashboard}
-                        label="Управляющий"
-                        desc="Точки и смены"
-                        isLoading={isLoading}
-                        selectedRole={selectedRole}
-                        onClick={handleLogin}
-                    />
-                    <RoleButton
-                        role="financier"
-                        icon={Wallet}
-                        label="Финансист"
-                        desc="Отчеты и P&L"
-                        isLoading={isLoading}
-                        selectedRole={selectedRole}
-                        onClick={handleLogin}
-                    />
-                    <RoleButton
-                        role="admin"
-                        icon={ShieldCheck}
-                        label="Админ"
-                        desc="Все доступы"
-                        isLoading={isLoading}
-                        selectedRole={selectedRole}
-                        onClick={handleLogin}
-                    />
-                </div>
+                <form onSubmit={handleLogin} className="space-y-4">
+                    <div className="space-y-2">
+                        <div className="relative">
+                            <Mail className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+                            <Input
+                                type="email"
+                                placeholder="name@company.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="pl-10"
+                                required
+                                disabled={isLoading}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <div className="relative">
+                            <Lock className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+                            <Input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Пароль"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="pl-10 pr-10"
+                                required
+                                disabled={isLoading}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 focus:outline-none"
+                                tabIndex={-1}
+                            >
+                                {showPassword ? (
+                                    <EyeOff className="h-5 w-5" />
+                                ) : (
+                                    <Eye className="h-5 w-5" />
+                                )}
+                            </button>
+                        </div>
+                    </div>
+
+                    {error && (
+                        <div className="rounded-md bg-red-50 p-3 text-sm text-red-500 border border-red-100">
+                            {error}
+                        </div>
+                    )}
+
+                    <Button
+                        type="submit"
+                        className="w-full bg-slate-900 hover:bg-slate-800"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Войти
+                    </Button>
+                </form>
 
                 <div className="relative py-2">
                     <div className="absolute inset-0 flex items-center">
                         <span className="w-full border-t border-slate-100" />
                     </div>
                     <div className="relative flex justify-center text-[10px] uppercase tracking-wider">
-                        <span className="bg-white px-2 text-slate-400 font-bold">Альтернатива</span>
+                        <span className="bg-white px-2 text-slate-400 font-bold">Или</span>
                     </div>
                 </div>
 
-                <button
+                <Button
+                    variant="outline"
                     onClick={handleEdsLogin}
                     disabled={isLoading}
-                    className={cn(
-                        "group flex w-full items-center justify-center gap-2 rounded-xl border border-blue-600 bg-blue-600 p-3 text-white transition-all hover:bg-blue-700 hover:shadow-md hover:shadow-blue-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                    )}
+                    className="w-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 hover:text-blue-800"
                 >
                     {isLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
-                        <FileKey className="h-4 w-4" />
+                        <FileKey className="mr-2 h-4 w-4" />
                     )}
-                    <span className="font-bold text-sm">Войти с ЭЦП</span>
-                </button>
+                    Войти с ЭЦП
+                </Button>
 
                 <p className="text-center text-xs font-medium text-slate-300 pt-2">
                     &copy; 2025 Alem Lab. Protected System.

@@ -1,18 +1,79 @@
 import express from 'express';
+import multer from 'multer';
 import { query } from '../lib/db.js';
 import { CONTRACT_TEMPLATE, HIRING_ORDER_TEMPLATE, fillTemplate } from '../services/templates.js';
+import { storageService } from '../services/storage.service.js';
 
 const router = express.Router();
+const upload = multer({ storage: multer.memoryStorage() });
 
 // GET /employees/:id/documents - List documents for employee
 router.get('/employees/:id/documents', async (req, res) => {
     try {
         const { id } = req.params;
         const result = await query('SELECT * FROM documents WHERE employee_id = $1 ORDER BY created_at DESC', [id]);
-        res.json(result.rows);
+
+        // Enhance documents with signed URLs if they are stored in S3
+        const documents = await Promise.all(result.rows.map(async (doc) => {
+            if (doc.scan_url && !doc.scan_url.startsWith('http')) {
+                // It's an S3 key
+                try {
+                    const url = await storageService.getFileUrl(doc.scan_url);
+                    return { ...doc, scan_url: url };
+                } catch (e) {
+                    console.error(`Failed to sign URL for doc ${doc.id}:`, e);
+                    return doc;
+                }
+            }
+            return doc;
+        }));
+
+        res.json(documents);
     } catch (err) {
         console.error('Error fetching documents:', err);
         res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// POST /documents/upload - Upload a new document scan
+router.post('/documents/upload', upload.single('file'), async (req, res) => {
+    try {
+        const { employeeId, type } = req.body;
+        const file = req.file;
+
+        if (!file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        if (!employeeId || !type) {
+            return res.status(400).json({ error: 'Employee ID and Type are required' });
+        }
+
+        // Generate a clean filename/key
+        // e.g. documents/emp_123/scan_contract_1700000000.pdf
+        const ext = file.originalname.split('.').pop();
+        const key = `documents/${employeeId}/scan_${type}_${Date.now()}.${ext}`;
+
+        // Upload to S3
+        await storageService.uploadFile(file.buffer, file.mimetype, key);
+
+        // Record in DB
+        const result = await query(`
+            INSERT INTO documents (employee_id, type, status, scan_url, created_at)
+            VALUES ($1, $2, 'signed', $3, NOW())
+            RETURNING *
+        `, [employeeId, type, key]);
+
+        // If it was a signed contract/scan upload, activate the employee
+        if (type === 'contract' || type === 'id_scan') {
+            // Optional: Auto-activate or move to next stage
+        }
+
+        res.status(201).json(result.rows[0]);
+
+    } catch (err) {
+        console.error('Upload failed:', err);
+        res.status(500).json({ error: 'Upload failed', details: err.message });
     }
 });
 
