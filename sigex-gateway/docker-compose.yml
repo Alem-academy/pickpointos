@@ -1,0 +1,9 @@
+services:
+  sigex-gateway:
+    build: .
+    container_name: sigex-gateway
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    restart: always
