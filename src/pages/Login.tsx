@@ -114,44 +114,38 @@ export default function Login() {
             // 1. Get nonce
             const { nonce } = await SigexService.getAuthNonce();
 
-            // 2. Register document to hold the nonce
-            const regRes = await SigexService.registerDocument({
-                title: 'Авторизация в системе PickPoint',
-                description: 'Вход по ЭЦП через eGov Mobile',
-            });
-            const documentId = regRes.documentId;
-
-            // 3. Upload nonce as document data
-            const blob = new Blob([nonce], { type: 'text/plain' });
-            await SigexService.addDocumentData(documentId, blob);
-
-            // 4. Register QR
-            const qrRes = await SigexService.registerQrSigning(documentId, 'Авторизация в платформе');
+            // 2. Register QR without a document
+            const qrRes = await SigexService.registerQrSigning('Авторизация в платформе');
             setQrCode(qrRes.qrCode);
             setEGovLinks({ mobile: qrRes.eGovMobileLaunchLink, business: qrRes.eGovBusinessLaunchLink });
+
+            // 3. Send nonce data to the QR signing session
+            // Convert to Base64 to match standard CMS requirement
+            const base64Nonce = btoa(unescape(encodeURIComponent(nonce)));
+            await SigexService.sendQrData(qrRes.operationId, base64Nonce);
+
             setQrStep('qr');
 
-            // 5. Poll for completion
+            // 4. Poll for completion
             let isPolling = true;
             const checkStatus = async () => {
                 if (!isPolling) return;
 
                 try {
-                    const statusRes = await SigexService.checkQrStatus(documentId, qrRes.operationId);
+                    const statusRes = await SigexService.checkQrStatus(qrRes.operationId);
 
                     if (statusRes.status === 'done') {
                         isPolling = false;
                         setQrStep('success');
 
-                        // Get document to extract signature
-                        const docDetails = await SigexService.getDocument(documentId);
-                        if (!docDetails.signatures || docDetails.signatures.length === 0) {
-                            throw new Error("Не найдена подпись в документе");
+                        if (!statusRes.signatures || statusRes.signatures.length === 0) {
+                            throw new Error("Не найдена подпись в ответе eGov QR");
                         }
-                        const signature = docDetails.signatures[0].signature;
+
+                        const signature = statusRes.signatures[0];
                         if (!signature) throw new Error("Подпись пуста");
 
-                        // Authenticate
+                        // Authenticate using the signature we just got
                         await SigexService.authenticate(nonce, signature);
 
                         // Mock login for MVP
@@ -162,7 +156,7 @@ export default function Login() {
                         setEdsError("Авторизация отменена в приложении.");
                         setQrStep('idle');
                     } else {
-                        // Poll again
+                        // Poll again later (data, meta, new status)
                         setTimeout(checkStatus, 3500);
                     }
                 } catch (err: any) {

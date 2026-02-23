@@ -92,26 +92,37 @@ export class SigexService {
     /**
      * Register a new eGov QR signing procedure
      */
-    static async registerQrSigning(documentId: string, description: string = 'Подписание документа'): Promise<{
+    static async registerQrSigning(description: string = 'Подписание документа'): Promise<{
         operationId: string;
         qrCode: string;
         eGovMobileLaunchLink: string;
         eGovBusinessLaunchLink: string;
     }> {
-        return this.request(`/api/${documentId}/egovQr`, {
+        return this.request(`/api/sign/egovQr`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ description })
+            body: JSON.stringify({ description, signMethod: 'CMS_SIGN_ONLY' })
+        });
+    }
+
+    /**
+     * Send data to eGov QR signing operation
+     */
+    static async sendQrData(operationId: string, data: string): Promise<any> {
+        return this.request(`/api/sign/egovQr/${operationId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data, signMethod: 'CMS_SIGN_ONLY' })
         });
     }
 
     /**
      * Check status of eGov QR signing operation
      */
-    static async checkQrStatus(documentId: string, operationId: string): Promise<{
+    static async checkQrStatus(operationId: string): Promise<{
         status: 'new' | 'meta' | 'data' | 'done' | 'canceled' | 'fail';
-        signId?: number;
+        signatures?: string[];
     }> {
-        return this.request(`/api/${documentId}/egovOperation/${operationId}`);
+        return this.request(`/api/sign/egovQr/${operationId}`);
     }
 }
