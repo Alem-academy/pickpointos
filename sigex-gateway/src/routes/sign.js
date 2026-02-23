@@ -59,8 +59,10 @@ router.get('/document/:id', async (req, res) => {
 router.post('/document/:id/data', async (req, res) => {
     try {
         // Stream the data from req directly to SIGEX, we don't buffer it to avoid memory issues
-        // Need to use req pipe or just pass the raw body
-        const response = await axios.post(`${SIGEX_API_URL}/${req.params.id}/data`, req, {
+        // Pass '?dataRetained=true' so SIGEX keeps the payload in temporary storage.
+        // This is strictly required for eGov Mobile QR flow to be able to download and display the document.
+        const queryString = req.url.includes('?') ? '&dataRetained=true' : '?dataRetained=true';
+        const response = await axios.post(`${SIGEX_API_URL}/${req.params.id}/data${queryString}`, req, {
             headers: {
                 'Content-Type': req.headers['content-type'] || 'application/octet-stream',
             },
