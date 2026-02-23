@@ -83,9 +83,9 @@ export class SigexService {
     }
 
     /**
-     * Generate a PDF on the gateway from an HTML string and register it in SIGEX automatically
+     * Generate a PDF on the gateway natively and register it in SIGEX automatically
      */
-    static async generateAndRegisterPdf(data: { htmlContent: string, title?: string, description?: string }): Promise<{ documentId: string, success: boolean }> {
+    static async generateAndRegisterPdf(data: { documentData: any, title?: string, description?: string, isContract?: boolean }): Promise<{ documentId: string, success: boolean }> {
         return this.request<{ documentId: string, success: boolean }>('/api/sign/document/generate-and-register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

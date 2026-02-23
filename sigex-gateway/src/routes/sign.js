@@ -1,7 +1,6 @@
 import express from 'express';
 import axios from 'axios';
-import html_to_pdf from 'html-pdf-node';
-
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 const router = express.Router();
 const SIGEX_API_URL = process.env.SIGEX_API_URL || 'https://sigex.kz/api';
 
@@ -24,25 +23,46 @@ router.post('/document', async (req, res) => {
 });
 
 /**
- * Generate a strict PDF from HTML and register it to SIGEX
+ * Generate a strict PDF natively using pdf-lib and register it to SIGEX
  * This solves the eGov Mobile "Archive not found" or "Infinite Loading" issue
- * caused by client-side Blobs or malformed payloads.
+ * caused by client-side Blobs or malformed payloads without blowing up VPS memory.
  */
 router.post('/document/generate-and-register', async (req, res) => {
     try {
-        const { htmlContent, title, description, isContract } = req.body;
+        const { documentData, title, description, isContract } = req.body;
 
-        if (!htmlContent) {
-            return res.status(400).json({ error: 'htmlContent is required' });
+        if (!documentData) {
+            return res.status(400).json({ error: 'documentData object is required' });
         }
 
-        // 1. Generate PDF on the server using headless Chrome (Puppeteer via html-pdf-node)
-        const file = { content: htmlContent };
-        const options = {
-            format: 'A4',
-            margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
-        };
-        const pdfBuffer = await html_to_pdf.generatePdf(file, options);
+        // 1. Generate PDF natively on the backend via pdf-lib
+        const pdfDoc = await PDFDocument.create();
+        const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+        const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+        const page = pdfDoc.addPage([595.28, 841.89]); // A4 Size
+        const { width, height } = page.getSize();
+
+        if (isContract) {
+            // For simplicity in native pdf-lib without complex HTML layout: 
+            // We render a standard header and loop through key-value data
+            page.drawText('EMPLOYMENT CONTRACT / ТРУДОВОЙ ДОГОВОР', { x: 50, y: height - 50, size: 16, font: fontBold });
+
+            let yOffset = height - 100;
+            for (const [key, value] of Object.entries(documentData)) {
+                page.drawText(`${key}: ${value}`, { x: 50, y: yOffset, size: 12, font });
+                yOffset -= 20;
+            }
+        } else {
+            // Standard Auth Document Format
+            page.drawText('PickPoint OS - Authorization Document', { x: 50, y: height - 50, size: 18, font: fontBold });
+            page.drawText('You are logging into the system.', { x: 50, y: height - 80, size: 12, font });
+            page.drawText(`Nonce: ${documentData.nonce}`, { x: 50, y: height - 120, size: 14, font: fontBold, color: rgb(0, 0, 0.5) });
+            page.drawText(`Date: ${new Date().toLocaleString()}`, { x: 50, y: height - 140, size: 10, font });
+        }
+
+        const pdfBytes = await pdfDoc.save();
+        const pdfBuffer = Buffer.from(pdfBytes);
 
         // 2. Register Document with SIGEX, forcing archival so eGov Mobile can download it
         const registerPayload = {

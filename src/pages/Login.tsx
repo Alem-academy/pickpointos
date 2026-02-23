@@ -114,25 +114,15 @@ export default function Login() {
             // 1. Get nonce
             const { nonce } = await SigexService.getAuthNonce();
 
-            // 2. Generate a visually pleasing HTML authorization document
-            // We use a clean inline style block
-            const authDocumentHtml = `
-            <div style="font-family: sans-serif; padding: 40px; text-align: center;">
-                <h2>Открытие сессии в PickPoint OS</h2>
-                <p>Вы запрашиваете доступ к панели управления.</p>
-                <div style="margin: 20px 0; padding: 15px; background: #f1f5f9; border-radius: 8px;">
-                    <strong>Код безопасности сессии:</strong><br/>
-                    <span style="font-size: 24px; letter-spacing: 2px;">${nonce}</span>
-                </div>
-                <p style="color: #64748b; font-size: 12px;">Время запроса: ${new Date().toLocaleString()}</p>
-            </div>
-            `;
-
-            // 3. Generate PDF and Register Document in SIGEX directly via Gateway Backend
+            // 2. Generate PDF and Register Document in SIGEX directly via Gateway Backend
+            // We pass structured JSON so the backend can generate a native PDF footprint (saving RAM)
             const { documentId } = await SigexService.generateAndRegisterPdf({
-                htmlContent: authDocumentHtml,
+                documentData: {
+                    nonce: nonce
+                },
                 title: 'Авторизация в PickPoint OS',
-                description: 'Документ для подтверждения входа через eGov Mobile'
+                description: 'Документ для подтверждения входа через eGov Mobile',
+                isContract: false
             });
 
             // 5. Register QR signing tied to this document

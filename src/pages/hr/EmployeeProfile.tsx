@@ -17,7 +17,6 @@ import {
 import { cn } from "@/lib/utils";
 import { TransferModal } from "@/components/hr/TransferModal";
 import { TerminationModal } from "@/components/hr/TerminationModal";
-import { generateEmploymentContractHtml, type EmploymentContractData } from "@/components/hr/templates";
 import { SigexService } from "@/services/sigex";
 import { SigexSignModal } from "@/components/SigexSignModal";
 
@@ -356,32 +355,24 @@ function OnboardingTabContent({ employee, onUpdate }: { employee: Employee, onUp
     const handleGenerateContract = async () => {
         setIsGeneratingContract(true);
         try {
-            // 1. Prepare data
-            const data: EmploymentContractData = {
-                fullName: employee.full_name,
-                iin: employee.iin,
-                position: employee.role === 'rf' ? 'Регионального менеджера' : 'Менеджера ПВЗ',
-                salary: employee.base_rate ? employee.base_rate.toString() : '_____',
-                contractNumber: `${new Date().getMonth() + 1}-${new Date().getFullYear()}/${employee.id.substring(0, 4)}`,
-            };
-
-            // 2. Generate HTML
-            const htmlContent = generateEmploymentContractHtml(data);
-            const blob = new Blob([htmlContent], { type: 'text/html; charset=utf-8' });
-
-            // 3. Register in SIGEX
-            const regRes = await SigexService.registerDocument({
+            // Send strictly data to the Node.js backend to generate the PDF via pdf-lib
+            // This prevents OOM errors from Puppeteer on a 1GB cheap VPS
+            const regRes = await SigexService.generateAndRegisterPdf({
+                documentData: {
+                    fullName: employee.full_name,
+                    iin: employee.iin,
+                    position: employee.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ',
+                    salary: employee.base_rate ? `${employee.base_rate} KZT/shift` : 'TBD',
+                    contractNumber: `02-2026/${employee.id}`
+                },
                 title: `Трудовой договор: ${employee.full_name}`,
-                description: 'Типовой трудовой договор PickPoint OS',
-                settings: {
-                    forceArchive: true, // Required for eGov Mobile to correctly download and display the document
-                    tempStorageAfterRegistration: 24
-                }
+                description: 'Кадровый документ PickPoint',
+                isContract: true
             });
             const sDocId = regRes.documentId;
 
-            // 4. Upload data to SIGEX
-            await SigexService.addDocumentData(sDocId, blob);
+            // The gateway endpoint now fully registers and uploads the document.
+            // Hence, we don't need to manually upload a blob from the frontend anymore.
 
             // 5. Open Modal
             setSigexDocId(sDocId);
