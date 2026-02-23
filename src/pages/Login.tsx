@@ -136,6 +136,10 @@ export default function Login() {
             const registerRes = await SigexService.registerDocument({
                 title: 'Авторизация в PickPoint OS',
                 description: 'Документ для подтверждения входа через eGov Mobile',
+                settings: {
+                    forceArchive: true, // Required for eGov Mobile to correctly download and display the document
+                    tempStorageAfterRegistration: 24
+                }
             });
             const documentId = registerRes.documentId;
 

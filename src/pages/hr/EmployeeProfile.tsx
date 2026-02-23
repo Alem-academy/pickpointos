@@ -373,6 +373,10 @@ function OnboardingTabContent({ employee, onUpdate }: { employee: Employee, onUp
             const regRes = await SigexService.registerDocument({
                 title: `Трудовой договор: ${employee.full_name}`,
                 description: 'Типовой трудовой договор PickPoint OS',
+                settings: {
+                    forceArchive: true, // Required for eGov Mobile to correctly download and display the document
+                    tempStorageAfterRegistration: 24
+                }
             });
             const sDocId = regRes.documentId;
 
