@@ -10,6 +10,13 @@ RUN npm install
 COPY . .
 
 # 3. Build Frontend
+# Pass VITE variables as build arguments so Vite can bake them into the JS bundle
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
+ARG VITE_SIGEX_GATEWAY_URL
+ENV VITE_SIGEX_GATEWAY_URL=$VITE_SIGEX_GATEWAY_URL
+
 # This creates /app/dist
 RUN npm run build
 
