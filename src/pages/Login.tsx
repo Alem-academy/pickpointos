@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/components/layout/AuthContext";
-import { Loader2, FileKey, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Loader2, Eye, EyeOff, Lock, Mail, Smartphone, Monitor, CheckCircle, ArrowLeft } from "lucide-react";
 import { SigexService } from "@/services/sigex";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,10 +15,19 @@ export default function Login() {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
+    // Auth Method Switcher
+    const [authMethod, setAuthMethod] = useState<'password' | 'eds'>('password');
+    const [edsError, setEdsError] = useState<string | null>(null);
+
     // Form state
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
+
+    // QR State
+    const [qrStep, setQrStep] = useState<'idle' | 'init' | 'qr' | 'success'>('idle');
+    const [qrCode, setQrCode] = useState<string | null>(null);
+    const [eGovLinks, setEGovLinks] = useState<{ mobile: string; business: string } | null>(null);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -28,8 +37,6 @@ export default function Login() {
         try {
             await login({ email, password });
 
-            // Redirect based on role is handled by the protected route usually,
-            // but here we might want to default to dashboard if no state.
             const target = location.state?.from?.pathname || '/';
             navigate(target, { replace: true });
         } catch (error: any) {
@@ -41,42 +48,138 @@ export default function Login() {
         }
     };
 
-    const handleEdsLogin = async () => {
+    const handleEdsLoginDesktop = async () => {
+        setEdsError(null);
         setIsLoading(true);
-        setError(null);
+
         try {
             const { nonce } = await SigexService.getAuthNonce();
+
             const ncalayer = new NCALayerClient();
-            await ncalayer.connect();
+            try {
+                await ncalayer.connect();
+            } catch (err) {
+                setEdsError("Не удалось подключиться к NCALayer. Убедитесь, что программа запущена на вашем компьютере.");
+                setIsLoading(false);
+                return;
+            }
+
+            // Convert nonce to Base64 for NCALayer
+            const base64Nonce = btoa(unescape(encodeURIComponent(nonce)));
 
             let signature;
             try {
-                signature = await ncalayer.createCmsSignature(nonce);
-            } catch (e) {
-                console.error("NCALayer signing failed", e);
-                setError("Ошибка подписи. Проверьте запуск NCALayer.");
+                signature = await ncalayer.basicsSignCMS(
+                    NCALayerClient.basicsStorageAll,
+                    base64Nonce,
+                    NCALayerClient.basicsCMSParamsDetached,
+                    NCALayerClient.basicsSignerAuth
+                );
+            } catch (e: any) {
+                if (e.canceledByUser) {
+                    setEdsError("Вход отменен пользователем.");
+                } else {
+                    setEdsError("Ошибка при подписании ключом ЭЦП.");
+                }
                 setIsLoading(false);
                 return;
             }
 
             if (!signature) {
-                setError("Подпись не получена.");
+                setEdsError("Подпись не получена.");
                 setIsLoading(false);
                 return;
             }
 
+            // Send base64 signature back to Sigex Gateway for auth
             await SigexService.authenticate(nonce, signature);
-            // EDS login might need a special flow or token from backend
-            // utilizing existing mock for now but user should be aware
+
+            // Temporary Mock for MVP
             await login({ email: 'eds_user@example.com', password: 'password123' });
             navigate('/hr', { replace: true });
-        } catch (error) {
-            console.error("EDS Login failed", error);
-            setError("Ошибка входа по ЭЦП");
+
+        } catch (error: any) {
+            console.error("EDS Login failed:", error);
+            setEdsError(error.message || "Ошибка авторизации через SIGEX.");
         } finally {
             setIsLoading(false);
         }
     };
+
+    const handleEGovMobileLogin = async () => {
+        setEdsError(null);
+        setQrStep('init');
+
+        try {
+            // 1. Get nonce
+            const { nonce } = await SigexService.getAuthNonce();
+
+            // 2. Register document to hold the nonce
+            const regRes = await SigexService.registerDocument({
+                title: 'Авторизация в системе PickPoint',
+                description: 'Вход по ЭЦП через eGov Mobile',
+            });
+            const documentId = regRes.documentId;
+
+            // 3. Upload nonce as document data
+            const blob = new Blob([nonce], { type: 'text/plain' });
+            await SigexService.addDocumentData(documentId, blob);
+
+            // 4. Register QR
+            const qrRes = await SigexService.registerQrSigning(documentId, 'Авторизация в платформе');
+            setQrCode(qrRes.qrCode);
+            setEGovLinks({ mobile: qrRes.eGovMobileLaunchLink, business: qrRes.eGovBusinessLaunchLink });
+            setQrStep('qr');
+
+            // 5. Poll for completion
+            let isPolling = true;
+            const checkStatus = async () => {
+                if (!isPolling) return;
+
+                try {
+                    const statusRes = await SigexService.checkQrStatus(documentId, qrRes.operationId);
+
+                    if (statusRes.status === 'done') {
+                        isPolling = false;
+                        setQrStep('success');
+
+                        // Get document to extract signature
+                        const docDetails = await SigexService.getDocument(documentId);
+                        if (!docDetails.signatures || docDetails.signatures.length === 0) {
+                            throw new Error("Не найдена подпись в документе");
+                        }
+                        const signature = docDetails.signatures[0].signature;
+                        if (!signature) throw new Error("Подпись пуста");
+
+                        // Authenticate
+                        await SigexService.authenticate(nonce, signature);
+
+                        // Mock login for MVP
+                        await login({ email: 'eds_user@example.com', password: 'password123' });
+                        navigate('/hr', { replace: true });
+                    } else if (statusRes.status === 'canceled' || statusRes.status === 'fail') {
+                        isPolling = false;
+                        setEdsError("Авторизация отменена в приложении.");
+                        setQrStep('idle');
+                    } else {
+                        // Poll again
+                        setTimeout(checkStatus, 3500);
+                    }
+                } catch (err: any) {
+                    console.error("Polling error:", err);
+                    setTimeout(checkStatus, 3500); // Retry on network errors
+                }
+            };
+
+            setTimeout(checkStatus, 3500);
+
+        } catch (error: any) {
+            console.error('eGov QR Auth Error:', error);
+            setEdsError(error.message || "Ошибка eGov Mobile авторизации");
+            setQrStep('idle');
+        }
+    };
+
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-8">
@@ -86,93 +189,177 @@ export default function Login() {
                         PVZ OS <span className="text-slate-300 font-medium text-lg ml-1">v2.0</span>
                     </h1>
                     <p className="text-sm font-medium text-slate-500">
-                        Вход в систему управления
+                        {qrStep !== 'idle' ? "Авторизация eGov Mobile" : "Вход в систему управления"}
                     </p>
                 </div>
 
-                <form onSubmit={handleLogin} className="space-y-4">
-                    <div className="space-y-2">
-                        <div className="relative">
-                            <Mail className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
-                            <Input
-                                type="email"
-                                placeholder="name@company.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="pl-10"
-                                required
-                                disabled={isLoading}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <div className="relative">
-                            <Lock className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
-                            <Input
-                                type={showPassword ? "text" : "password"}
-                                placeholder="Пароль"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="pl-10 pr-10"
-                                required
-                                disabled={isLoading}
-                            />
+                {qrStep === 'idle' ? (
+                    <>
+                        <div className="flex rounded-lg bg-slate-100 p-1 mt-4">
                             <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 focus:outline-none"
-                                tabIndex={-1}
+                                onClick={() => setAuthMethod('password')}
+                                className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${authMethod === 'password' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
                             >
-                                {showPassword ? (
-                                    <EyeOff className="h-5 w-5" />
-                                ) : (
-                                    <Eye className="h-5 w-5" />
-                                )}
+                                По почте
+                            </button>
+                            <button
+                                onClick={() => setAuthMethod('eds')}
+                                className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${authMethod === 'eds' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                По ЭЦП
                             </button>
                         </div>
+
+                        {authMethod === 'password' ? (
+                            <form onSubmit={handleLogin} className="space-y-4 pt-2">
+                                <div className="space-y-2">
+                                    <div className="relative">
+                                        <Mail className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+                                        <Input
+                                            type="email"
+                                            placeholder="name@company.com"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            className="pl-10"
+                                            required
+                                            disabled={isLoading}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <div className="relative">
+                                        <Lock className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+                                        <Input
+                                            type={showPassword ? "text" : "password"}
+                                            placeholder="Пароль"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            className="pl-10 pr-10"
+                                            required
+                                            disabled={isLoading}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 focus:outline-none"
+                                            tabIndex={-1}
+                                        >
+                                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {error && (
+                                    <div className="rounded-md bg-red-50 p-3 text-sm text-red-500 border border-red-100">
+                                        {error}
+                                    </div>
+                                )}
+
+                                <Button
+                                    type="submit"
+                                    className="w-full bg-slate-900 hover:bg-slate-800"
+                                    disabled={isLoading}
+                                >
+                                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                    Войти в панель
+                                </Button>
+                            </form>
+                        ) : (
+                            <div className="space-y-6 pt-2 animate-in fade-in duration-300">
+                                {edsError && (
+                                    <div className="rounded-md bg-red-50 p-3 text-sm text-red-500 border border-red-100 text-center">
+                                        {edsError}
+                                    </div>
+                                )}
+
+                                <div className="space-y-4">
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleEdsLoginDesktop}
+                                        disabled={isLoading}
+                                        className="w-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 hover:text-blue-800 py-6"
+                                    >
+                                        {isLoading ? (
+                                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                        ) : (
+                                            <Monitor className="mr-2 h-5 w-5" />
+                                        )}
+                                        Войти через NCALayer (ПК)
+                                    </Button>
+
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleEGovMobileLogin}
+                                        disabled={isLoading}
+                                        className="w-full border-slate-200 text-slate-700 hover:bg-slate-50 py-6"
+                                    >
+                                        <Smartphone className="mr-2 h-5 w-5" />
+                                        Войти через eGov Mobile
+                                    </Button>
+                                </div>
+
+                                <div className="text-center">
+                                    <p className="text-xs text-slate-500">
+                                        Для входа с ПК убедитесь, что приложение NCALayer запущено.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </>
+                ) : (
+                    <div className="min-h-[300px] flex flex-col items-center justify-center text-center animate-in fade-in zoom-in duration-300">
+                        {qrStep === 'init' && (
+                            <div className="space-y-4">
+                                <Loader2 className="h-10 w-10 animate-spin text-slate-400 mx-auto" />
+                                <p className="text-slate-500 font-medium text-sm">Подготовка сессии...</p>
+                            </div>
+                        )}
+
+                        {qrStep === 'qr' && qrCode && (
+                            <div className="space-y-6 w-full">
+                                <div className="mx-auto w-fit rounded-xl border border-slate-200 p-4 bg-white shadow-sm">
+                                    <img
+                                        src={`data:image/png;base64,${qrCode}`}
+                                        alt="eGov QR Code"
+                                        className="h-48 w-48 object-contain"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <p className="font-semibold text-slate-800 text-lg">Код для входа</p>
+                                    <p className="text-sm text-slate-500 px-4">
+                                        Откройте приложение <strong>eGov Mobile</strong> или <strong>eGov Business</strong> и отсканируйте код
+                                    </p>
+                                </div>
+
+                                <div className="flex gap-2 justify-center text-xs pt-2">
+                                    <a href={eGovLinks?.mobile} className="text-blue-600 hover:underline font-medium px-4 py-2 bg-blue-50 rounded-lg hidden sm:block">
+                                        Открыть приложение
+                                    </a>
+                                </div>
+
+                                <Button variant="ghost" className="mt-4 text-slate-500 w-full" onClick={() => {
+                                    setQrStep('idle');
+                                }}>
+                                    <ArrowLeft className="mr-2 h-4 w-4" />
+                                    Вернуться назад
+                                </Button>
+                            </div>
+                        )}
+
+                        {qrStep === 'success' && (
+                            <div className="space-y-4">
+                                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                                    <CheckCircle className="h-10 w-10" />
+                                </div>
+                                <h4 className="text-xl font-bold text-emerald-700">Успешно!</h4>
+                                <p className="text-slate-500">Входим в систему...</p>
+                            </div>
+                        )}
                     </div>
+                )}
 
-                    {error && (
-                        <div className="rounded-md bg-red-50 p-3 text-sm text-red-500 border border-red-100">
-                            {error}
-                        </div>
-                    )}
-
-                    <Button
-                        type="submit"
-                        className="w-full bg-slate-900 hover:bg-slate-800"
-                        disabled={isLoading}
-                    >
-                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Войти
-                    </Button>
-                </form>
-
-                <div className="relative py-2">
-                    <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t border-slate-100" />
-                    </div>
-                    <div className="relative flex justify-center text-[10px] uppercase tracking-wider">
-                        <span className="bg-white px-2 text-slate-400 font-bold">Или</span>
-                    </div>
-                </div>
-
-                <Button
-                    variant="outline"
-                    onClick={handleEdsLogin}
-                    disabled={isLoading}
-                    className="w-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300 hover:text-blue-800"
-                >
-                    {isLoading ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                        <FileKey className="mr-2 h-4 w-4" />
-                    )}
-                    Войти с ЭЦП
-                </Button>
-
-                <p className="text-center text-xs font-medium text-slate-300 pt-2">
+                <p className="text-center text-xs font-medium text-slate-300 pt-2 border-t border-slate-100">
                     &copy; 2025 Alem Lab. Protected System.
                 </p>
             </div>

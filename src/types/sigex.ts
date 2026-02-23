@@ -59,6 +59,7 @@ export interface SigexSignature {
     until: number;
     signId: number;
     signType: 'cms' | 'xml';
+    signature?: string; // The actual base64 encoded signature
     tsp?: any;
     ocsp?: any;
 }
