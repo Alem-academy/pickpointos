@@ -6,11 +6,14 @@ import type {
     SigexDocumentResponse
 } from '../types/sigex';
 
-const SIGEX_API_URL = 'https://sigex.kz';
+// Load gateway URL from environment variables, fallback for local dev.
+// Example: VITE_SIGEX_GATEWAY_URL="https://sigex.yourdomain.kz:8080"
+const SIGEX_GATEWAY_URL = import.meta.env.VITE_SIGEX_GATEWAY_URL || 'http://localhost:8080';
 
 export class SigexService {
     private static async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-        const url = `${SIGEX_API_URL}${endpoint}`;
+        // Now pointing to our own gateway instead of directly to sigex.kz
+        const url = `${SIGEX_GATEWAY_URL}${endpoint}`;
         const response = await fetch(url, options);
 
         if (!response.ok) {
@@ -25,8 +28,8 @@ export class SigexService {
      * Step 1: Get a random nonce for authentication
      */
     static async getAuthNonce(): Promise<SigexAuthResponse> {
-        return this.request<SigexAuthResponse>('/api/auth', {
-            method: 'POST',
+        return this.request<SigexAuthResponse>('/api/auth/nonce', {
+            method: 'GET',
             headers: { 'Content-Type': 'application/json' }
         });
     }
@@ -35,16 +38,11 @@ export class SigexService {
      * Step 2: Authenticate using the signed nonce
      * @param signature Base64 encoded signature of the nonce
      */
-    static async authenticate(signature: string): Promise<{ session: string }> {
-        // Note: The actual response structure for auth success might vary, 
-        // usually it sets a cookie or returns a token. 
-        // Based on doc: "POST /api/auth - аутентификация"
-        // If it sets a cookie, we might need 'credentials: include' in fetch.
-        // For now, assuming it returns JSON.
-        return this.request('/api/auth', {
+    static async authenticate(nonce: string, signature: string): Promise<any> {
+        return this.request('/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ signature })
+            body: JSON.stringify({ nonce, signature })
         });
     }
 
@@ -52,7 +50,7 @@ export class SigexService {
      * Register a new document
      */
     static async registerDocument(data: SigexRegisterDocumentRequest): Promise<SigexRegisterDocumentResponse> {
-        return this.request<SigexRegisterDocumentResponse>('/api', {
+        return this.request<SigexRegisterDocumentResponse>('/api/sign/document', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -63,11 +61,11 @@ export class SigexService {
      * Upload the document file to fix hashes
      */
     static async addDocumentData(documentId: string, file: File | Blob): Promise<SigexFixHashResponse> {
-        return this.request<SigexFixHashResponse>(`/api/${documentId}/data`, {
+        // In the future add this to the gateway if needed, for now proxying logic is sufficient
+        return this.request<SigexFixHashResponse>(`/api/sign/document/${documentId}/data`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/octet-stream',
-                // Content-Length is automatically set by browser for File/Blob
             },
             body: file
         });
@@ -77,14 +75,14 @@ export class SigexService {
      * Get document details
      */
     static async getDocument(documentId: string): Promise<SigexDocumentResponse> {
-        return this.request<SigexDocumentResponse>(`/api/${documentId}`);
+        return this.request<SigexDocumentResponse>(`/api/sign/document/${documentId}`);
     }
 
     /**
      * Add a signature to an existing document
      */
     static async addSignature(documentId: string, signature: string, signType: 'cms' | 'xml' = 'cms'): Promise<{ signId: number }> {
-        return this.request<{ signId: number }>(`/api/${documentId}`, {
+        return this.request<{ signId: number }>(`/api/sign/document/${documentId}/sign`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ signature, signType })

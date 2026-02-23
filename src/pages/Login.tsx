@@ -65,7 +65,7 @@ export default function Login() {
                 return;
             }
 
-            await SigexService.authenticate(signature);
+            await SigexService.authenticate(nonce, signature);
             // EDS login might need a special flow or token from backend
             // utilizing existing mock for now but user should be aware
             await login({ email: 'eds_user@example.com', password: 'password123' });
