@@ -47,6 +47,17 @@ export class SigexService {
     }
 
     /**
+     * Authenticate using a registered document that contains the nonce
+     */
+    static async authenticateDocument(nonce: string, signature: string, documentId: string): Promise<any> {
+        return this.request('/api/auth/login/document', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nonce, signature, documentId })
+        });
+    }
+
+    /**
      * Register a new document
      */
     static async registerDocument(data: SigexRegisterDocumentRequest): Promise<SigexRegisterDocumentResponse> {
@@ -90,7 +101,7 @@ export class SigexService {
     }
 
     /**
-     * Register a new eGov QR signing procedure
+     * Register a new eGov QR signing procedure (Raw String/Nonce)
      */
     static async registerQrSigning(description: string = 'Подписание документа'): Promise<{
         operationId: string;
@@ -101,7 +112,23 @@ export class SigexService {
         return this.request(`/api/sign/egovQr`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ description, signMethod: 'CMS_SIGN_ONLY' })
+            body: JSON.stringify({ description, signMethod: 'CMS_SIGN_ONLY' }) // CMS_SIGN_ONLY is required for raw strings
+        });
+    }
+
+    /**
+     * Register a new eGov QR signing procedure connected to a registered document
+     */
+    static async registerQrSigningWithDocument(documentId: string, description: string = 'Подписание документа'): Promise<{
+        operationId: string;
+        qrCode: string;
+        eGovMobileLaunchLink: string;
+        eGovBusinessLaunchLink: string;
+    }> {
+        return this.request(`/api/sign/egovQr`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ documentId, description }) // No CMS_SIGN_ONLY because it's a document payload
         });
     }
 

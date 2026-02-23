@@ -114,19 +114,64 @@ export default function Login() {
             // 1. Get nonce
             const { nonce } = await SigexService.getAuthNonce();
 
-            // 2. Register QR without a document
-            const qrRes = await SigexService.registerQrSigning('Авторизация в платформе');
+            // 2. Generate a visually pleasing HTML authorization document
+            const authDocumentHtml = `
+            <!DOCTYPE html>
+            <html lang="ru">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Авторизация в системе PickPoint OS</title>
+                <style>
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #333; max-width: 600px; margin: 0 auto; line-height: 1.6; }
+                    .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 20px; }
+                    .header h1 { color: #0f172a; margin: 0; font-size: 24px; }
+                    .content { background: #f8fafc; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; }
+                    .token-box { background: #fff; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 14px; word-break: break-all; border: 1px dashed #cbd5e1; margin-top: 15px; color: #64748b; }
+                    .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #94a3b8; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>Запрос на авторизацию</h1>
+                    <p>PickPoint OS - Панель управления</p>
+                </div>
+                <div class="content">
+                    <p><strong>Действие:</strong> Вход в систему по ЭЦП</p>
+                    <p><strong>Дата и время:</strong> ${new Date().toLocaleString('ru-RU')}</p>
+                    <p>Подписывая данный документ, вы подтверждаете вход в вашу учетную запись в защищенной системе PickPoint OS.</p>
+                    
+                    <div class="token-box">
+                        <strong>Уникальный идентификатор сессии (Nonce):</strong><br/>
+                        ${nonce}
+                    </div>
+                </div>
+                <div class="footer">
+                    &copy; ${new Date().getFullYear()} Alem Lab. Автоматически сгенерированный документ.
+                </div>
+            </body>
+            </html>
+            `;
+
+            // 3. Register the HTML document in SIGEX
+            const regRes = await SigexService.registerDocument({
+                title: 'Авторизация в системе PickPoint OS',
+                description: 'Документ авторизации пользователя для входа в панель управления.',
+            });
+            const documentId = regRes.documentId;
+
+            // 4. Upload the HTML document content to SIGEX
+            const htmlBlob = new Blob([authDocumentHtml], { type: 'text/html; charset=utf-8' });
+            await SigexService.addDocumentData(documentId, htmlBlob);
+
+            // 5. Register QR signing tied to this document
+            const qrRes = await SigexService.registerQrSigningWithDocument(documentId, 'Авторизация в платформе PickPoint OS');
             setQrCode(qrRes.qrCode);
             setEGovLinks({ mobile: qrRes.eGovMobileLaunchLink, business: qrRes.eGovBusinessLaunchLink });
 
-            // 3. Send nonce data to the QR signing session
-            // Convert to Base64 to match standard CMS requirement
-            const base64Nonce = btoa(unescape(encodeURIComponent(nonce)));
-            await SigexService.sendQrData(qrRes.operationId, base64Nonce);
-
             setQrStep('qr');
 
-            // 4. Poll for completion
+            // 6. Poll for completion
             let isPolling = true;
             const checkStatus = async () => {
                 if (!isPolling) return;
@@ -145,8 +190,8 @@ export default function Login() {
                         const signature = statusRes.signatures[0];
                         if (!signature) throw new Error("Подпись пуста");
 
-                        // Authenticate using the signature we just got
-                        await SigexService.authenticate(nonce, signature);
+                        // 7. Authenticate using the signature AND the document ID (document-based auth)
+                        await SigexService.authenticateDocument(nonce, signature, documentId);
 
                         // Mock login for MVP
                         await login({ email: 'eds_user@example.com', password: 'password123' });
