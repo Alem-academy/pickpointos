@@ -312,27 +312,40 @@ export default function Login() {
 
                         {qrStep === 'qr' && qrCode && (
                             <div className="space-y-6 w-full">
-                                <div className="mx-auto w-fit rounded-xl border border-slate-200 p-4 bg-white shadow-sm">
+                                <div className="hidden sm:block mx-auto w-fit rounded-xl border border-slate-200 p-4 bg-white shadow-sm">
                                     <img
                                         src={`data:image/png;base64,${qrCode}`}
                                         alt="eGov QR Code"
                                         className="h-48 w-48 object-contain"
                                     />
                                 </div>
+
                                 <div className="space-y-2">
-                                    <p className="font-semibold text-slate-800 text-lg">Код для входа</p>
-                                    <p className="text-sm text-slate-500 px-4">
+                                    <p className="font-semibold text-slate-800 text-lg hidden sm:block">Код для входа</p>
+                                    <p className="font-semibold text-slate-800 text-lg sm:hidden">Подписание в eGov Mobile</p>
+
+                                    <p className="text-sm text-slate-500 px-4 hidden sm:block">
                                         Откройте приложение <strong>eGov Mobile</strong> или <strong>eGov Business</strong> и отсканируйте код
+                                    </p>
+                                    <p className="text-sm text-slate-500 px-4 sm:hidden">
+                                        Нажмите на кнопку ниже, чтобы перейти в приложение для подписания
                                     </p>
                                 </div>
 
-                                <div className="flex gap-2 justify-center text-xs pt-2">
-                                    <a href={eGovLinks?.mobile} className="text-blue-600 hover:underline font-medium px-4 py-2 bg-blue-50 rounded-lg hidden sm:block">
-                                        Открыть приложение
+                                <div className="flex flex-col gap-3 px-4 pt-2">
+                                    <a
+                                        href={eGovLinks?.mobile}
+                                        className="sm:hidden flex items-center justify-center w-full bg-[#1A1A1A] hover:bg-black text-white font-medium px-4 py-3.5 rounded-xl transition-colors shadow-sm"
+                                    >
+                                        <Smartphone className="mr-2 h-5 w-5 opacity-80" />
+                                        Открыть eGov Mobile
+                                    </a>
+                                    <a href={eGovLinks?.mobile} className="text-blue-600 hover:text-blue-700 hover:bg-blue-100 font-medium px-4 py-2 bg-blue-50 rounded-lg hidden sm:block transition-colors">
+                                        Как подписать?
                                     </a>
                                 </div>
 
-                                <Button variant="ghost" className="mt-4 text-slate-500 w-full" onClick={() => {
+                                <Button variant="ghost" className="mt-2 text-slate-500 w-full hover:bg-slate-100" onClick={() => {
                                     setQrStep('idle');
                                 }}>
                                     <ArrowLeft className="mr-2 h-4 w-4" />
