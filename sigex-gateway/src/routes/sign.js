@@ -1,5 +1,6 @@
 import express from 'express';
 import axios from 'axios';
+import html_to_pdf from 'html-pdf-node';
 
 const router = express.Router();
 const SIGEX_API_URL = process.env.SIGEX_API_URL || 'https://sigex.kz/api';
@@ -19,6 +20,60 @@ router.post('/document', async (req, res) => {
     } catch (error) {
         console.error('Error registering document in SIGEX:', error.response?.data || error.message);
         res.status(error.response?.status || 500).json(error.response?.data || { error: 'Failed to register document' });
+    }
+});
+
+/**
+ * Generate a strict PDF from HTML and register it to SIGEX
+ * This solves the eGov Mobile "Archive not found" or "Infinite Loading" issue
+ * caused by client-side Blobs or malformed payloads.
+ */
+router.post('/document/generate-and-register', async (req, res) => {
+    try {
+        const { htmlContent, title, description, isContract } = req.body;
+
+        if (!htmlContent) {
+            return res.status(400).json({ error: 'htmlContent is required' });
+        }
+
+        // 1. Generate PDF on the server using headless Chrome (Puppeteer via html-pdf-node)
+        const file = { content: htmlContent };
+        const options = {
+            format: 'A4',
+            margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
+        };
+        const pdfBuffer = await html_to_pdf.generatePdf(file, options);
+
+        // 2. Register Document with SIGEX, forcing archival so eGov Mobile can download it
+        const registerPayload = {
+            title: title || 'Авторизация в системе',
+            description: description || 'Сгенерированный системой документ',
+            settings: {
+                forceArchive: true, // Crucial for eGov Mobile App compatibility
+                tempStorageAfterRegistration: 24, // Keep for 24 hours
+            }
+        };
+
+        const regResponse = await axios.post(`${SIGEX_API_URL}`, registerPayload, {
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const documentId = regResponse.data.documentId;
+        if (!documentId) throw new Error('Failed to get documentId from SIGEX registration');
+
+        // 3. Upload the generated PDF bytes to the registered SIGEX document
+        await axios.post(`${SIGEX_API_URL}/${documentId}/data?dataRetained=true`, pdfBuffer, {
+            headers: { 'Content-Type': 'application/pdf' },
+            maxBodyLength: Infinity,
+            maxContentLength: Infinity
+        });
+
+        // 4. Return the document ID so the frontend can start the eGov QR process
+        res.json({ documentId: documentId, success: true });
+
+    } catch (error) {
+        console.error('Error generating and registering PDF:', error.response?.data || error.message);
+        res.status(error.response?.status || 500).json(error.response?.data || { error: 'Failed to generate and register document' });
     }
 });
 

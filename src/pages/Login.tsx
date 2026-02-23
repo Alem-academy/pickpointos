@@ -5,7 +5,6 @@ import { Loader2, Eye, EyeOff, Lock, Mail, Smartphone, Monitor, CheckCircle, Arr
 import { SigexService } from "@/services/sigex";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { generatePdfFromHtml } from '@/utils/pdfGenerator';
 // @ts-ignore
 import { NCALayerClient } from 'ncalayer-js-client';
 
@@ -129,22 +128,12 @@ export default function Login() {
             </div>
             `;
 
-            // Convert HTML to PDF File
-            const pdfFile = await generatePdfFromHtml(authDocumentHtml, 'auth_session.pdf');
-
-            // 3. Register a Document in SIGEX specifically for this login session
-            const registerRes = await SigexService.registerDocument({
+            // 3. Generate PDF and Register Document in SIGEX directly via Gateway Backend
+            const { documentId } = await SigexService.generateAndRegisterPdf({
+                htmlContent: authDocumentHtml,
                 title: 'Авторизация в PickPoint OS',
-                description: 'Документ для подтверждения входа через eGov Mobile',
-                settings: {
-                    forceArchive: true, // Required for eGov Mobile to correctly download and display the document
-                    tempStorageAfterRegistration: 24
-                }
+                description: 'Документ для подтверждения входа через eGov Mobile'
             });
-            const documentId = registerRes.documentId;
-
-            // 4. Send the PDF data to the registered SIGEX Document
-            await SigexService.addDocumentData(documentId, pdfFile);
 
             // 5. Register QR signing tied to this document
             const qrRes = await SigexService.registerQrSigningWithDocument(documentId, 'Авторизация в платформе PickPoint OS');

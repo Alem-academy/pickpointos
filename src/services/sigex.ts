@@ -69,7 +69,7 @@ export class SigexService {
     }
 
     /**
-     * Upload the document file to fix hashes
+     * Upload the document file to fix hashes (Legacy/Direct)
      */
     static async addDocumentData(documentId: string, file: File | Blob): Promise<SigexFixHashResponse> {
         // In the future add this to the gateway if needed, for now proxying logic is sufficient
@@ -79,6 +79,17 @@ export class SigexService {
                 'Content-Type': 'application/octet-stream',
             },
             body: file
+        });
+    }
+
+    /**
+     * Generate a PDF on the gateway from an HTML string and register it in SIGEX automatically
+     */
+    static async generateAndRegisterPdf(data: { htmlContent: string, title?: string, description?: string }): Promise<{ documentId: string, success: boolean }> {
+        return this.request<{ documentId: string, success: boolean }>('/api/sign/document/generate-and-register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
         });
     }
 
