@@ -5,10 +5,9 @@ import { Loader2, Eye, EyeOff, Lock, Mail, Smartphone, Monitor, CheckCircle, Arr
 import { SigexService } from "@/services/sigex";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { AuthLayout } from '@/components/AuthLayout';
-import { api } from '@/services/api';
 import { generatePdfFromHtml } from '@/utils/pdfGenerator';
-import NCALayerClient from 'ncalayer-js-client';
+// @ts-ignore
+import { NCALayerClient } from 'ncalayer-js-client';
 
 export default function Login() {
     const navigate = useNavigate();
