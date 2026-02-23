@@ -19,7 +19,6 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess }
     // Refs for polling
     const pollInterval = useRef<any>(null);
     const operationIdRef = useRef<string | null>(null);
-    const sigexDocIdRef = useRef<string | null>(null);
 
     useEffect(() => {
         startSigningProcess();
@@ -38,21 +37,8 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess }
             setStep('init');
             setError(null);
 
-            // 1. Register Document in Sigex (Mock data for now as we don't have the real file blob here yet)
-            // In a real app, we would fetch the file blob from the backend first.
-            // For this MVP, we'll register a dummy "hash" or text.
-            const regRes = await SigexService.registerDocument({
-                title: documentTitle,
-                description: 'Подписание документа в системе PickPoint',
-                settings: {
-                    // authorization: 'issuer', // Removed as it's not in the type definition
-                }
-            });
-
-            sigexDocIdRef.current = regRes.documentId;
-
-            // 2. Register QR Signing
-            const qrRes = await SigexService.registerQrSigning(regRes.documentId);
+            // 1. Register QR Signing
+            const qrRes = await SigexService.registerQrSigning(`Подписание документа: ${documentTitle}`);
 
             setQrCode(qrRes.qrCode);
             setEGovLinks({
@@ -60,6 +46,10 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess }
                 business: qrRes.eGovBusinessLaunchLink
             });
             operationIdRef.current = qrRes.operationId;
+
+            // 2. Send dummy data for the MVP as we don't have the real file blob here yet
+            const dummyData = btoa(unescape(encodeURIComponent("Текст для подписания в PickPoint")));
+            await SigexService.sendQrData(qrRes.operationId, dummyData);
 
             setStep('qr');
 
@@ -74,15 +64,21 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess }
     };
 
     const checkStatus = async () => {
-        if (!sigexDocIdRef.current || !operationIdRef.current) return;
+        if (!operationIdRef.current) return;
 
         try {
-            const statusRes = await SigexService.checkQrStatus(sigexDocIdRef.current, operationIdRef.current);
+            const statusRes = await SigexService.checkQrStatus(operationIdRef.current);
 
             if (statusRes.status === 'done') {
                 stopPolling();
                 setStep('signing');
-                await finalizeSignature(statusRes.signId);
+
+                let finalSignature = "mock_signature";
+                if (statusRes.signatures && statusRes.signatures.length > 0) {
+                    finalSignature = statusRes.signatures[0];
+                }
+
+                await finalizeSignature(finalSignature);
             } else if (statusRes.status === 'canceled' || statusRes.status === 'fail') {
                 stopPolling();
                 setError('Подписание отменено или произошла ошибка');
@@ -95,11 +91,11 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess }
         }
     };
 
-    const finalizeSignature = async (signId?: number) => {
+    const finalizeSignature = async (signature?: string) => {
         try {
             // 4. Send success to our backend
-            await api.signDocument(documentId); // We can pass signId or signature metadata here if needed
-            console.log('Signed with ID:', signId);
+            await api.signDocument(documentId); // We can pass the base64 signature here if needed
+            console.log('Signed with signature block:', signature?.substring(0, 30) + '...');
             setStep('success');
             setTimeout(() => {
                 onSuccess();
