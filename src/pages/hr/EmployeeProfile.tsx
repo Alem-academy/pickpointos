@@ -17,6 +17,9 @@ import {
 import { cn } from "@/lib/utils";
 import { TransferModal } from "@/components/hr/TransferModal";
 import { TerminationModal } from "@/components/hr/TerminationModal";
+import { generateEmploymentContractHtml, type EmploymentContractData } from "@/components/hr/templates";
+import { SigexService } from "@/services/sigex";
+import { SigexSignModal } from "@/components/SigexSignModal";
 
 const STATUS_LABELS = {
     new: 'Новый',
@@ -315,6 +318,11 @@ function OnboardingTabContent({ employee, onUpdate }: { employee: Employee, onUp
     const checklist = employee.onboarding_checklist || {};
     const [isUpdating, setIsUpdating] = useState(false);
 
+    // Contract Signing State
+    const [isGeneratingContract, setIsGeneratingContract] = useState(false);
+    const [contractDocId, setContractDocId] = useState<string | null>(null); // from api.createDocument
+    const [sigexDocId, setSigexDocId] = useState<string | null>(null);
+
     const toggleItem = async (itemId: string) => {
         const newValue = !checklist[itemId];
         const newChecklist = { ...checklist, [itemId]: newValue };
@@ -345,6 +353,53 @@ function OnboardingTabContent({ employee, onUpdate }: { employee: Employee, onUp
         }
     };
 
+    const handleGenerateContract = async () => {
+        setIsGeneratingContract(true);
+        try {
+            // 1. Prepare data
+            const data: EmploymentContractData = {
+                fullName: employee.full_name,
+                iin: employee.iin,
+                position: employee.role === 'rf' ? 'Регионального менеджера' : 'Менеджера ПВЗ',
+                salary: employee.base_rate ? employee.base_rate.toString() : '_____',
+                contractNumber: `${new Date().getMonth() + 1}-${new Date().getFullYear()}/${employee.id.substring(0, 4)}`,
+            };
+
+            // 2. Generate HTML
+            const htmlContent = generateEmploymentContractHtml(data);
+            const blob = new Blob([htmlContent], { type: 'text/html; charset=utf-8' });
+
+            // 3. Register in SIGEX
+            const regRes = await SigexService.registerDocument({
+                title: `Трудовой договор: ${employee.full_name}`,
+                description: 'Типовой трудовой договор PickPoint OS',
+            });
+            const sDocId = regRes.documentId;
+
+            // 4. Upload data to SIGEX
+            await SigexService.addDocumentData(sDocId, blob);
+
+            // 5. Open Modal
+            setSigexDocId(sDocId);
+            setContractDocId('mock_db_doc_id'); // We'd formally save this to DB first, but skipping for MVP
+        } catch (err) {
+            console.error(err);
+            alert('Ошибка при генерации договора');
+        } finally {
+            setIsGeneratingContract(false);
+        }
+    };
+
+    const handleContractSigned = async () => {
+        setSigexDocId(null);
+        setContractDocId(null);
+        // Automatically check the item
+        if (!checklist['contract_signed']) {
+            await toggleItem('contract_signed');
+        }
+        alert('Трудовой договор успешно подписан!');
+    };
+
     const progress = CHECKLIST_ITEMS.filter(i => checklist[i.id]).length;
     const total = CHECKLIST_ITEMS.length;
     const isComplete = progress === total;
@@ -372,9 +427,20 @@ function OnboardingTabContent({ employee, onUpdate }: { employee: Employee, onUp
                                     onChange={() => toggleItem(item.id)}
                                     className="h-6 w-6 rounded-md border-slate-300 text-black focus:ring-black"
                                 />
-                                <span className={cn("font-medium", checklist[item.id] ? "text-slate-900" : "text-slate-500")}>
-                                    {item.label}
-                                </span>
+                                <div className="flex-1">
+                                    <span className={cn("font-medium", checklist[item.id] ? "text-slate-900" : "text-slate-500")}>
+                                        {item.label}
+                                    </span>
+                                </div>
+                                {item.id === 'contract_signed' && !checklist['contract_signed'] && (
+                                    <button
+                                        onClick={(e) => { e.preventDefault(); handleGenerateContract(); }}
+                                        disabled={isGeneratingContract}
+                                        className="rounded-lg bg-black px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-50"
+                                    >
+                                        {isGeneratingContract ? 'Генерация...' : 'Оформить'}
+                                    </button>
+                                )}
                             </label>
                         ))}
                     </div>
@@ -406,6 +472,16 @@ function OnboardingTabContent({ employee, onUpdate }: { employee: Employee, onUp
                     )}
                 </div>
             </div>
+            {/* Sigex Modal */}
+            {sigexDocId && contractDocId && (
+                <SigexSignModal
+                    documentId={contractDocId}
+                    documentTitle={`Трудовой договор: ${employee.full_name}`}
+                    preRegisteredDocumentId={sigexDocId}
+                    onClose={() => setSigexDocId(null)}
+                    onSuccess={handleContractSigned}
+                />
+            )}
         </div>
     );
 }

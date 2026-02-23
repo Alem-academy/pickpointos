@@ -8,9 +8,10 @@ interface SigexSignModalProps {
     documentTitle: string;
     onClose: () => void;
     onSuccess: () => void;
+    preRegisteredDocumentId?: string; // If provided, uses this exact SIGEX document
 }
 
-export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess }: SigexSignModalProps) {
+export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, preRegisteredDocumentId }: SigexSignModalProps) {
     const [step, setStep] = useState<'init' | 'qr' | 'signing' | 'success' | 'error'>('init');
     const [qrCode, setQrCode] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -38,7 +39,19 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess }
             setError(null);
 
             // 1. Register QR Signing
-            const qrRes = await SigexService.registerQrSigning(`Подписание документа: ${documentTitle}`);
+            let qrRes;
+
+            if (preRegisteredDocumentId) {
+                // If we already generated actual HTML/PDF document in SIGEX, use its ID directly
+                qrRes = await SigexService.registerQrSigningWithDocument(preRegisteredDocumentId, `Подписание: ${documentTitle}`);
+            } else {
+                // Fallback for MVP: Raw string signing
+                qrRes = await SigexService.registerQrSigning(`Подписание документа: ${documentTitle}`);
+
+                // 2. Send dummy data for the MVP as we don't have the real file blob here yet
+                const dummyData = btoa(unescape(encodeURIComponent("Текст для подписания в PickPoint")));
+                await SigexService.sendQrData(qrRes.operationId, dummyData);
+            }
 
             setQrCode(qrRes.qrCode);
             setEGovLinks({
@@ -46,10 +59,6 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess }
                 business: qrRes.eGovBusinessLaunchLink
             });
             operationIdRef.current = qrRes.operationId;
-
-            // 2. Send dummy data for the MVP as we don't have the real file blob here yet
-            const dummyData = btoa(unescape(encodeURIComponent("Текст для подписания в PickPoint")));
-            await SigexService.sendQrData(qrRes.operationId, dummyData);
 
             setStep('qr');
 
