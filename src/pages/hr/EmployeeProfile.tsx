@@ -17,8 +17,6 @@ import {
 import { cn } from "@/lib/utils";
 import { TransferModal } from "@/components/hr/TransferModal";
 import { TerminationModal } from "@/components/hr/TerminationModal";
-import { SigexService } from "@/services/sigex";
-import { SigexSignModal } from "@/components/SigexSignModal";
 
 const STATUS_LABELS = {
     new: 'Новый',
@@ -319,8 +317,6 @@ function OnboardingTabContent({ employee, onUpdate }: { employee: Employee, onUp
 
     // Contract Signing State
     const [isGeneratingContract, setIsGeneratingContract] = useState(false);
-    const [contractDocId, setContractDocId] = useState<string | null>(null); // from api.createDocument
-    const [sigexDocId, setSigexDocId] = useState<string | null>(null);
 
     const toggleItem = async (itemId: string) => {
         const newValue = !checklist[itemId];
@@ -352,52 +348,19 @@ function OnboardingTabContent({ employee, onUpdate }: { employee: Employee, onUp
         }
     };
 
-    const handleGenerateContract = async () => {
+    const [inviteLink, setInviteLink] = useState<string | null>(null);
+
+    const handleGenerateInvite = async () => {
         setIsGeneratingContract(true);
         try {
-            // Send strictly data to the Node.js backend to generate the PDF via pdf-lib
-            // This prevents OOM errors from Puppeteer on a 1GB cheap VPS
-            const { data: pdfBase64 } = await SigexService.generatePdf({
-                documentData: {
-                    fullName: employee.full_name,
-                    iin: employee.iin,
-                    position: employee.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ',
-                    salary: employee.base_rate ? `${employee.base_rate} KZT/shift` : 'TBD',
-                    contractNumber: `02-2026/${employee.id}`
-                },
-                title: `Трудовой договор: ${employee.full_name}`,
-                description: 'Кадровый документ PickPoint',
-                isContract: true
-            });
-
-            // The gateway endpoint now fully registers and uploads the document.
-            // Actually, we skip document registration and send the base64 directly to eGov QR!
-            const qrRes = await SigexService.registerQrSigning(`Оформление: ${employee.full_name}`, {
-                documentNameRu: `Трудовой договор: ${employee.full_name}`,
-                signMethod: 'CMS_WITH_DATA'
-            });
-            await SigexService.sendQrData(qrRes.operationId, pdfBase64, 'CMS_WITH_DATA');
-
-            // 5. Open Modal
-            setSigexDocId(qrRes.operationId); // Reusing the state to hold operation ID for the modal
-
-            setContractDocId('mock_db_doc_id'); // We'd formally save this to DB first, but skipping for MVP
+            const res = await api.generateInviteLink(employee.id);
+            setInviteLink(res.url);
         } catch (err) {
             console.error(err);
-            alert('Ошибка при генерации договора');
+            alert('Ошибка при генерации ссылки-приглашения');
         } finally {
             setIsGeneratingContract(false);
         }
-    };
-
-    const handleContractSigned = async () => {
-        setSigexDocId(null);
-        setContractDocId(null);
-        // Automatically check the item
-        if (!checklist['contract_signed']) {
-            await toggleItem('contract_signed');
-        }
-        alert('Трудовой договор успешно подписан!');
     };
 
     const progress = CHECKLIST_ITEMS.filter(i => checklist[i.id]).length;
@@ -433,13 +396,30 @@ function OnboardingTabContent({ employee, onUpdate }: { employee: Employee, onUp
                                     </span>
                                 </div>
                                 {item.id === 'contract_signed' && !checklist['contract_signed'] && (
-                                    <button
-                                        onClick={(e) => { e.preventDefault(); handleGenerateContract(); }}
-                                        disabled={isGeneratingContract}
-                                        className="rounded-lg bg-black px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-50"
-                                    >
-                                        {isGeneratingContract ? 'Генерация...' : 'Оформить'}
-                                    </button>
+                                    <div className="flex flex-col items-end gap-2 w-full max-w-sm mt-2 sm:mt-0">
+                                        {!inviteLink ? (
+                                            <button
+                                                onClick={(e) => { e.preventDefault(); handleGenerateInvite(); }}
+                                                disabled={isGeneratingContract}
+                                                className="rounded-lg bg-black px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-50"
+                                            >
+                                                {isGeneratingContract ? 'Генерация...' : 'Сгенерировать ссылку'}
+                                            </button>
+                                        ) : (
+                                            <div className="flex items-center gap-2 p-2 bg-blue-50 border border-blue-100 rounded text-xs w-full justify-between">
+                                                <span className="truncate text-blue-700 font-mono mr-2">{inviteLink}</span>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        navigator.clipboard.writeText(inviteLink).then(() => alert('Ссылка скопирована!'));
+                                                    }}
+                                                    className="px-2 py-1 bg-blue-600 hover:bg-blue-700 transition-colors text-white rounded font-medium shadow-sm"
+                                                >
+                                                    Копировать
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 )}
                             </label>
                         ))}
@@ -472,16 +452,6 @@ function OnboardingTabContent({ employee, onUpdate }: { employee: Employee, onUp
                     )}
                 </div>
             </div>
-            {/* Sigex Modal */}
-            {sigexDocId && contractDocId && (
-                <SigexSignModal
-                    documentId={contractDocId}
-                    documentTitle={`Трудовой договор: ${employee.full_name}`}
-                    preRegisteredDocumentId={sigexDocId}
-                    onClose={() => setSigexDocId(null)}
-                    onSuccess={handleContractSigned}
-                />
-            )}
         </div>
     );
 }

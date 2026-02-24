@@ -97,6 +97,7 @@ import { hrApi } from '../api/hr';
 import { financeApi } from '../api/finance';
 import { operationsApi } from '../api/operations';
 import { analyticsApi } from '../api/analytics';
+import { inviteApi } from '../api/invite';
 
 // Re-export axios instance
 export default axiosInstance;
@@ -107,6 +108,7 @@ export const api = {
     ...financeApi,
     ...operationsApi,
     ...analyticsApi,
+    ...inviteApi,
 };
 
 // Axios Instance (default export for auth service)

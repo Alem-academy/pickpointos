@@ -22,6 +22,27 @@ export const hrApi = {
         return res.data;
     },
 
+    async generateInviteLink(employeeId: string): Promise<{ token: string, url: string }> {
+        // Try real backend
+        try {
+            const res = await axiosInstance.post(`/employees/${employeeId}/invite`);
+            return res.data;
+        } catch (e: any) {
+            console.log("Real backend failed, mocking invite link generation...");
+            const token = crypto.randomUUID();
+            const url = `${window.location.origin}/invite/${token}`;
+
+            // We need to fetch the employee details to store them in the mock invite
+            const empRes = await axiosInstance.get(`/employees/${employeeId}`);
+
+            const invites = JSON.parse(localStorage.getItem('mock_invites') || '{}');
+            invites[token] = empRes.data;
+            localStorage.setItem('mock_invites', JSON.stringify(invites));
+
+            return { token, url };
+        }
+    },
+
     async getDocuments(employeeId: string): Promise<Document[]> {
         const res = await axiosInstance.get(`/employees/${employeeId}/documents`);
         return res.data;

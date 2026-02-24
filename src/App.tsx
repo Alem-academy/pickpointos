@@ -4,6 +4,7 @@ import { AuthProvider } from "@/components/layout/AuthContext";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { Layout } from "@/components/layout/Layout";
 import Login from "@/pages/Login";
+import InvitePage from "@/pages/InvitePage";
 import HRDashboard from "@/pages/hr/Dashboard";
 import NewEmployeePage from "@/pages/hr/NewEmployee";
 import RFDashboard from "@/pages/rf/Dashboard";
@@ -43,6 +44,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/invite/:token" element={<InvitePage />} />
 
           <Route element={<Layout />}>
             {/* HR Routes */}
