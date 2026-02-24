@@ -372,8 +372,11 @@ function OnboardingTabContent({ employee, onUpdate }: { employee: Employee, onUp
 
             // The gateway endpoint now fully registers and uploads the document.
             // Actually, we skip document registration and send the base64 directly to eGov QR!
-            const qrRes = await SigexService.registerQrSigning(`Трудовой договор: ${employee.full_name}`);
-            await SigexService.sendQrData(qrRes.operationId, pdfBase64);
+            const qrRes = await SigexService.registerQrSigning(`Оформление: ${employee.full_name}`, {
+                documentNameRu: `Трудовой договор: ${employee.full_name}`,
+                signMethod: 'CMS_WITH_DATA'
+            });
+            await SigexService.sendQrData(qrRes.operationId, pdfBase64, 'CMS_WITH_DATA');
 
             // 5. Open Modal
             setSigexDocId(qrRes.operationId); // Reusing the state to hold operation ID for the modal

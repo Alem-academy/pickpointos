@@ -115,7 +115,9 @@ export default function Login() {
             const { nonce } = await SigexService.getAuthNonce();
 
             // 2. Register a naked QR signing session
-            const qrRes = await SigexService.registerQrSigning('Авторизация в платформе PickPoint OS');
+            const qrRes = await SigexService.registerQrSigning('Авторизация на PickPoint OS', {
+                documentNameRu: 'Блок случайных данных для аутентификации'
+            });
             setQrCode(qrRes.qrCode);
             setEGovLinks({ mobile: qrRes.eGovMobileLaunchLink, business: qrRes.eGovBusinessLaunchLink });
 

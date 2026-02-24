@@ -112,18 +112,37 @@ export class SigexService {
     }
 
     /**
-     * Register a new eGov QR signing procedure (Raw String/Nonce)
+     * Register a new eGov QR signing procedure (Raw String/Nonce or Base64 PDF)
      */
-    static async registerQrSigning(description: string = 'Подписание документа'): Promise<{
+    static async registerQrSigning(
+        description: string = 'Подписание документа',
+        options?: { documentNameRu?: string, signMethod?: 'CMS_SIGN_ONLY' | 'CMS_WITH_DATA' }
+    ): Promise<{
         operationId: string;
         qrCode: string;
         eGovMobileLaunchLink: string;
         eGovBusinessLaunchLink: string;
     }> {
+        const body: any = {
+            description,
+            signMethod: options?.signMethod || 'CMS_SIGN_ONLY'
+        };
+
+        if (options?.documentNameRu) {
+            body.documentsToSign = [
+                {
+                    id: 1,
+                    nameRu: options.documentNameRu,
+                    nameKz: options.documentNameRu,
+                    nameEn: options.documentNameRu
+                }
+            ];
+        }
+
         return this.request(`/api/sign/egovQr`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ description, signMethod: 'CMS_SIGN_ONLY' }) // CMS_SIGN_ONLY is required for raw strings
+            body: JSON.stringify(body)
         });
     }
 
@@ -146,11 +165,11 @@ export class SigexService {
     /**
      * Send data to eGov QR signing operation
      */
-    static async sendQrData(operationId: string, data: string): Promise<any> {
+    static async sendQrData(operationId: string, data: string, signMethod: 'CMS_SIGN_ONLY' | 'CMS_WITH_DATA' = 'CMS_SIGN_ONLY'): Promise<any> {
         return this.request(`/api/sign/egovQr/${operationId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data, signMethod: 'CMS_SIGN_ONLY' })
+            body: JSON.stringify({ documentId: 1, data, signMethod })
         });
     }
 
