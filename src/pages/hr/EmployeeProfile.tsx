@@ -357,7 +357,7 @@ function OnboardingTabContent({ employee, onUpdate }: { employee: Employee, onUp
         try {
             // Send strictly data to the Node.js backend to generate the PDF via pdf-lib
             // This prevents OOM errors from Puppeteer on a 1GB cheap VPS
-            const regRes = await SigexService.generateAndRegisterPdf({
+            const { data: pdfBase64 } = await SigexService.generatePdf({
                 documentData: {
                     fullName: employee.full_name,
                     iin: employee.iin,
@@ -369,13 +369,15 @@ function OnboardingTabContent({ employee, onUpdate }: { employee: Employee, onUp
                 description: 'Кадровый документ PickPoint',
                 isContract: true
             });
-            const sDocId = regRes.documentId;
 
             // The gateway endpoint now fully registers and uploads the document.
-            // Hence, we don't need to manually upload a blob from the frontend anymore.
+            // Actually, we skip document registration and send the base64 directly to eGov QR!
+            const qrRes = await SigexService.registerQrSigning(`Трудовой договор: ${employee.full_name}`);
+            await SigexService.sendQrData(qrRes.operationId, pdfBase64);
 
             // 5. Open Modal
-            setSigexDocId(sDocId);
+            setSigexDocId(qrRes.operationId); // Reusing the state to hold operation ID for the modal
+
             setContractDocId('mock_db_doc_id'); // We'd formally save this to DB first, but skipping for MVP
         } catch (err) {
             console.error(err);

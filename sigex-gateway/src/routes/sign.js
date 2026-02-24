@@ -26,11 +26,10 @@ router.post('/document', async (req, res) => {
 });
 
 /**
- * Generate a strict PDF natively using pdf-lib and register it to SIGEX
- * This solves the eGov Mobile "Archive not found" or "Infinite Loading" issue
- * caused by client-side Blobs or malformed payloads without blowing up VPS memory.
+ * Generate a strict PDF natively using pdf-lib based on user templates.
+ * Returns the base64 encoded PDF back to the client so it can pass it to eGov Qr directly.
  */
-router.post('/document/generate-and-register', async (req, res) => {
+router.post('/document/generate', async (req, res) => {
     try {
         const { documentData, title, description, isContract } = req.body;
 
@@ -80,36 +79,14 @@ router.post('/document/generate-and-register', async (req, res) => {
         const pdfBytes = await pdfDoc.save();
         const pdfBuffer = Buffer.from(pdfBytes);
 
-        // 2. Register Document with SIGEX, forcing archival so eGov Mobile can download it
-        const registerPayload = {
-            title: title || 'Авторизация в системе',
-            description: description || 'Сгенерированный системой документ',
-            settings: {
-                forceArchive: true, // Crucial for eGov Mobile App compatibility
-                tempStorageAfterRegistration: 24, // Keep for 24 hours
-            }
-        };
+        const base64Pdf = await pdfDoc.saveAsBase64();
 
-        const regResponse = await axios.post(`${SIGEX_API_URL}`, registerPayload, {
-            headers: { 'Content-Type': 'application/json' }
-        });
-
-        const documentId = regResponse.data.documentId;
-        if (!documentId) throw new Error('Failed to get documentId from SIGEX registration');
-
-        // 3. Upload the generated PDF bytes to the registered SIGEX document
-        await axios.post(`${SIGEX_API_URL}/${documentId}/data?dataRetained=true`, pdfBuffer, {
-            headers: { 'Content-Type': 'application/pdf' },
-            maxBodyLength: Infinity,
-            maxContentLength: Infinity
-        });
-
-        // 4. Return the document ID so the frontend can start the eGov QR process
-        res.json({ documentId: documentId, success: true });
+        // Return the rendered PDF encoded as base64 to the frontend
+        res.json({ data: base64Pdf, success: true });
 
     } catch (error) {
-        console.error('Error generating and registering PDF:', error.response?.data || error.message);
-        res.status(error.response?.status || 500).json(error.response?.data || { error: 'Failed to generate and register document' });
+        console.error('Error generating PDF:', error.message);
+        res.status(500).json({ error: 'Failed to generate document' });
     }
 });
 

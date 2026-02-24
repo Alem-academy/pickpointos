@@ -114,9 +114,8 @@ export default function Login() {
             // 1. Get nonce
             const { nonce } = await SigexService.getAuthNonce();
 
-            // 2. Generate PDF and Register Document in SIGEX directly via Gateway Backend
-            // We pass structured JSON so the backend can generate a native PDF footprint (saving RAM)
-            const { documentId } = await SigexService.generateAndRegisterPdf({
+            // 2. Generate PDF visually on the backend and get base64 string
+            const { data: pdfBase64 } = await SigexService.generatePdf({
                 documentData: {
                     nonce: nonce
                 },
@@ -125,14 +124,17 @@ export default function Login() {
                 isContract: false
             });
 
-            // 5. Register QR signing tied to this document
-            const qrRes = await SigexService.registerQrSigningWithDocument(documentId, 'Авторизация в платформе PickPoint OS');
+            // 3. Register a naked QR signing session
+            const qrRes = await SigexService.registerQrSigning('Авторизация в платформе PickPoint OS');
             setQrCode(qrRes.qrCode);
             setEGovLinks({ mobile: qrRes.eGovMobileLaunchLink, business: qrRes.eGovBusinessLaunchLink });
 
+            // 4. Send the visual PDF data directly to the eGov QR session
+            await SigexService.sendQrData(qrRes.operationId, pdfBase64);
+
             setQrStep('qr');
 
-            // 6. Poll for completion
+            // 5. Poll for completion
             let isPolling = true;
             const checkStatus = async () => {
                 if (!isPolling) return;
@@ -151,8 +153,8 @@ export default function Login() {
                         const signature = statusRes.signatures[0];
                         if (!signature) throw new Error("Подпись пуста");
 
-                        // 7. Authenticate using the signature AND the document ID (document-based auth)
-                        await SigexService.authenticateDocument(nonce, signature, documentId);
+                        // 6. Authenticate using the signature of the nonce
+                        await SigexService.authenticate(nonce, signature);
 
                         // Mock login for MVP
                         await login({ email: 'eds_user@example.com', password: 'password123' });
