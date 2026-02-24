@@ -114,23 +114,14 @@ export default function Login() {
             // 1. Get nonce
             const { nonce } = await SigexService.getAuthNonce();
 
-            // 2. Generate PDF visually on the backend and get base64 string
-            const { data: pdfBase64 } = await SigexService.generatePdf({
-                documentData: {
-                    nonce: nonce
-                },
-                title: 'Авторизация в PickPoint OS',
-                description: 'Документ для подтверждения входа через eGov Mobile',
-                isContract: false
-            });
-
-            // 3. Register a naked QR signing session
+            // 2. Register a naked QR signing session
             const qrRes = await SigexService.registerQrSigning('Авторизация в платформе PickPoint OS');
             setQrCode(qrRes.qrCode);
             setEGovLinks({ mobile: qrRes.eGovMobileLaunchLink, business: qrRes.eGovBusinessLaunchLink });
 
-            // 4. Send the visual PDF data directly to the eGov QR session
-            await SigexService.sendQrData(qrRes.operationId, pdfBase64);
+            // 3. Send the raw string nonce data directly to the eGov QR session for pure string signing
+            const base64Nonce = btoa(unescape(encodeURIComponent(nonce)));
+            await SigexService.sendQrData(qrRes.operationId, base64Nonce);
 
             setQrStep('qr');
 

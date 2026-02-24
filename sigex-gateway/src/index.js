@@ -13,7 +13,7 @@ const SIGEX_API_URL = process.env.SIGEX_API_URL || 'https://sigex.kz/api';
 
 app.use(helmet());
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 app.use(morgan('dev'));
 
 import authRoutes from './routes/auth.js';
