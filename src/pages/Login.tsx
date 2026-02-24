@@ -146,12 +146,31 @@ export default function Login() {
                         const signature = statusRes.signatures[0];
                         if (!signature) throw new Error("Подпись пуста");
 
-                        // 6. Authenticate using the signature of the nonce
-                        await SigexService.authenticate(nonce, signature);
+                        try {
+                            // 6. Authenticate using the signature of the nonce
+                            const authData = await SigexService.authenticate(nonce, signature);
 
-                        // Mock login for MVP
-                        await login({ email: 'eds_user@example.com', password: 'password123' });
-                        navigate('/hr', { replace: true });
+                            console.log("Успешная ЭЦП авторизация, данные:", authData);
+                            const certInfo = authData?.certInfo || authData; // Depending on if it's external or built-in validation
+                            const iin = certInfo?.subjectInfo?.iin || certInfo?.iin || 'Неизвестен';
+                            console.log("Вход выполнен пользователем с ИИН:", iin);
+
+                            // Здесь мы определяем кто вошел по ИИН и отправляем на нужный дашборд
+                            let mockEmail = 'eds_user@example.com';
+                            let targetRoute = '/hr';
+
+                            // Пример маппинга настоящих ИИН к ролям в системе (MVP):
+                            // if (iin === '123456789012') { mockEmail = 'financier_user@example.com'; targetRoute = '/finance'; }
+                            // else if (iin === '098765432109') { mockEmail = 'rf_user@example.com'; targetRoute = '/rf'; }
+
+                            // Mock login for MVP
+                            await login({ email: mockEmail, password: 'password123' });
+                            navigate(targetRoute, { replace: true });
+                        } catch (authErr: any) {
+                            console.error("Auth error post-QR:", authErr);
+                            setEdsError(authErr.message || "Ошибка проверки ЭЦП после подписания");
+                            setQrStep('idle');
+                        }
                     } else if (statusRes.status === 'canceled' || statusRes.status === 'fail') {
                         isPolling = false;
                         setEdsError("Авторизация отменена в приложении.");
