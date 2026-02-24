@@ -1,9 +1,12 @@
 import express from 'express';
 import axios from 'axios';
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, rgb } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
+import fs from 'fs';
+import path from 'path';
+
 const router = express.Router();
 const SIGEX_API_URL = process.env.SIGEX_API_URL || 'https://sigex.kz/api';
-
 /**
  * Register a new document for signing
  */
@@ -35,30 +38,43 @@ router.post('/document/generate-and-register', async (req, res) => {
             return res.status(400).json({ error: 'documentData object is required' });
         }
 
-        // 1. Generate PDF natively on the backend via pdf-lib
-        const pdfDoc = await PDFDocument.create();
-        const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-        const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+        // 1. Generate PDF natively on the backend via pdf-lib using user templates
+        let pdfDoc;
+        if (isContract) {
+            const templatePath = path.resolve(process.cwd(), 'templates/contract_pvz.pdf');
+            const templateBytes = fs.readFileSync(templatePath);
+            pdfDoc = await PDFDocument.load(templateBytes);
+        } else {
+            const templatePath = path.resolve(process.cwd(), 'templates/auth_sheet.pdf');
+            const templateBytes = fs.readFileSync(templatePath);
+            pdfDoc = await PDFDocument.load(templateBytes);
+        }
 
-        const page = pdfDoc.addPage([595.28, 841.89]); // A4 Size
+        // Register fontkit to allow custom TTF fonts for Cyrillic support
+        pdfDoc.registerFontkit(fontkit);
+
+        // Load the custom Times New Roman font to draw Russian texts without throwing WinAnsiEncoding errors
+        const fontPath = path.resolve(process.cwd(), 'fonts/TimesNewRoman.ttf');
+        const fontBytes = fs.readFileSync(fontPath);
+        const customFont = await pdfDoc.embedFont(fontBytes);
+
+        // Get the first page of the loaded template
+        const pages = pdfDoc.getPages();
+        const page = pages[0];
         const { width, height } = page.getSize();
 
+        // Draw the dynamic variables onto the template
         if (isContract) {
-            // For simplicity in native pdf-lib without complex HTML layout: 
-            // We render a standard header and loop through key-value data
-            page.drawText('EMPLOYMENT CONTRACT / ТРУДОВОЙ ДОГОВОР', { x: 50, y: height - 50, size: 16, font: fontBold });
-
-            let yOffset = height - 100;
+            let yOffset = 250; // Draw somewhere mid-bottom
             for (const [key, value] of Object.entries(documentData)) {
-                page.drawText(`${key}: ${value}`, { x: 50, y: yOffset, size: 12, font });
+                page.drawText(`${key}: ${value}`, { x: 60, y: yOffset, size: 12, font: customFont });
                 yOffset -= 20;
             }
         } else {
-            // Standard Auth Document Format
-            page.drawText('PickPoint OS - Authorization Document', { x: 50, y: height - 50, size: 18, font: fontBold });
-            page.drawText('You are logging into the system.', { x: 50, y: height - 80, size: 12, font });
-            page.drawText(`Nonce: ${documentData.nonce}`, { x: 50, y: height - 120, size: 14, font: fontBold, color: rgb(0, 0, 0.5) });
-            page.drawText(`Date: ${new Date().toLocaleString()}`, { x: 50, y: height - 140, size: 10, font });
+            // Standard Auth Document overlay
+            page.drawText('Вы заходите в систему: PickPoint OS', { x: 60, y: 200, size: 14, font: customFont });
+            page.drawText(`Код безопасности (Nonce): ${documentData.nonce}`, { x: 60, y: 170, size: 16, font: customFont, color: rgb(0, 0, 0.5) });
+            page.drawText(`Время запроса: ${new Date().toLocaleString()}`, { x: 60, y: 140, size: 10, font: customFont });
         }
 
         const pdfBytes = await pdfDoc.save();
