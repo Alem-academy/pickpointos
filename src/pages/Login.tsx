@@ -125,15 +125,12 @@ export default function Login() {
             // 1. Get nonce
             const { nonce } = await SigexService.getAuthNonce();
 
-            // 2. Register a simple QR signing session using the Jasalmaty mock pattern
-            const qrRes = await SigexService.registerQrSigning('Авторизация в PickPoint', {
-                documentNameRu: 'Авторизация в PickPoint',
-                signMethod: 'CMS_SIGN_ONLY'
-            });
-
-            // 3. Send the data to the session explicitly
+            // 2. Register a pure 1-step QR signing session
             const base64Nonce = btoa(unescape(encodeURIComponent(nonce)));
-            await SigexService.sendQrData(qrRes.operationId, base64Nonce, 'CMS_SIGN_ONLY');
+            const qrRes = await SigexService.registerQrSigning('Авторизация в PickPoint', {
+                signMethod: 'CMS_SIGN_ONLY',
+                data: base64Nonce
+            });
 
             setQrCode(qrRes.qrCode);
             setEGovLinks({ mobile: qrRes.eGovMobileLaunchLink, business: qrRes.eGovBusinessLaunchLink });
