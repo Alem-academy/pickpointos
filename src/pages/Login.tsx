@@ -161,7 +161,7 @@ export default function Login() {
 
             // 6. VERY IMPORTANT: Send the QR Data to actually bind the document to the operation
             const base64Nonce = btoa(unescape(encodeURIComponent(nonce)));
-            await SigexService.sendQrData(qrRes.operationId, base64Nonce, 'CMS_WITH_DATA');
+            await SigexService.sendQrData(qrRes.operationId, base64Nonce, 'CMS_WITH_DATA', documentId);
 
             setQrCode(qrRes.qrCode);
             setEGovLinks({ mobile: qrRes.eGovMobileLaunchLink, business: qrRes.eGovBusinessLaunchLink });

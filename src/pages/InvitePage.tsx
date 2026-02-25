@@ -72,7 +72,7 @@ export default function InvitePage() {
             });
 
             // 3. Send PDF to the session
-            await SigexService.sendQrData(qrRes.operationId, pdfBase64, 'CMS_WITH_DATA');
+            await SigexService.sendQrData(qrRes.operationId, pdfBase64, 'CMS_WITH_DATA', 1);
 
             setQrCodeData(qrRes.qrCode);
             setMobileLink(qrRes.eGovMobileLaunchLink);
