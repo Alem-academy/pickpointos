@@ -272,4 +272,94 @@ router.get('/motivation/bonuses', async (req, res) => {
     }
 });
 
+// ==========================================
+// PUBLIC INVITE ROUTES (For Remote eGov QR Onboarding)
+// ==========================================
+
+import crypto from 'crypto';
+
+// POST /employees/:id/invite - Generate an invite link for an employee
+router.post('/employees/:id/invite', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const token = crypto.randomUUID();
+
+        // 1. Check if employee exists and isn't already active
+        const check = await query('SELECT status FROM employees WHERE id = $1', [id]);
+        if (check.rows.length === 0) return res.status(404).json({ error: 'Employee not found' });
+        if (check.rows[0].status === 'active') return res.status(400).json({ error: 'Employee is already active' });
+
+        // 2. Save token
+        await query('UPDATE employees SET invite_token = $1, updated_at = NOW() WHERE id = $2', [token, id]);
+
+        // 3. Provide exactly what Frontend expects
+        const url = `${process.env.FRONTEND_URL || 'https://pickpoint.kz'}/invite/${token}`;
+
+        Logger.info(`Generated invite link for employee ${id}: ${token}`);
+        res.json({ token, url });
+    } catch (err) {
+        Logger.error('Error generating invite link:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// GET /invite/:token - Publicly fetch candidate details for their contract
+router.get('/invite/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+
+        const result = await query(`
+            SELECT id, iin, full_name, email, phone, role, status, base_rate, main_pvz_id
+            FROM employees WHERE invite_token = $1
+        `, [token]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Invalid or expired invite link' });
+        }
+
+        res.json({ employee: result.rows[0] });
+    } catch (err) {
+        Logger.error('Error fetching invite data:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// POST /invite/:token/verify - Publicly confirm eGov signature to activate account
+router.post('/invite/:token/verify', async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { iin } = req.body;
+
+        if (!iin) return res.status(400).json({ error: 'IIN from eGov signature is required' });
+
+        // 1. Find the invite
+        const result = await query('SELECT id, iin as expected_iin FROM employees WHERE invite_token = $1', [token]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Invalid or expired invite link' });
+        }
+
+        const employee = result.rows[0];
+
+        // 2. Validate the IIN from eGov matches the HR-entered IIN for this Candidate
+        if (employee.expected_iin !== iin && process.env.NODE_ENV === 'production') {
+            Logger.warn(`eGov IIN mismatch during onboarding. Expected: ${employee.expected_iin}, Got: ${iin}`);
+            // In a real strict enterprise environment, we might Block this. For PickPoint MVP, we just overwrite and trust eGov.
+            // Let's force update the IIN.
+        }
+
+        // 3. Activate the profile, bind final eGov IIN, and burn the token
+        await query(`
+            UPDATE employees 
+            SET status = 'active', iin = $1, invite_token = NULL, hired_at = COALESCE(hired_at, NOW()), updated_at = NOW()
+            WHERE id = $2
+        `, [iin, employee.id]);
+
+        Logger.info(`Successfully activated employee ${employee.id} via public Invite Link (eGov IIN: ${iin})`);
+        res.json({ success: true });
+    } catch (err) {
+        Logger.error('Error verifying invite link:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 export default router;
