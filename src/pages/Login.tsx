@@ -114,16 +114,17 @@ export default function Login() {
             // 1. Get nonce
             const { nonce } = await SigexService.getAuthNonce();
 
-            // 2. Register a naked QR signing session
+            // 2. Convert string to base64 for signing
+            const base64Nonce = btoa(unescape(encodeURIComponent(nonce)));
+
+            // 3. Register a naked QR signing session and attach the data inline
+            // Note: For CMS_SIGN_ONLY, SIGEX requires data to be attached at registration time.
             const qrRes = await SigexService.registerQrSigning('Авторизация на PickPoint OS', {
-                documentNameRu: 'Блок случайных данных для аутентификации'
+                documentNameRu: 'Блок случайных данных для аутентификации',
+                data: base64Nonce
             });
             setQrCode(qrRes.qrCode);
             setEGovLinks({ mobile: qrRes.eGovMobileLaunchLink, business: qrRes.eGovBusinessLaunchLink });
-
-            // 3. Send the raw string nonce data directly to the eGov QR session for pure string signing
-            const base64Nonce = btoa(unescape(encodeURIComponent(nonce)));
-            await SigexService.sendQrData(qrRes.operationId, base64Nonce);
 
             setQrStep('qr');
 

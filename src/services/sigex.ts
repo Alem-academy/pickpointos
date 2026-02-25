@@ -116,7 +116,7 @@ export class SigexService {
      */
     static async registerQrSigning(
         description: string = 'Подписание документа',
-        options?: { documentNameRu?: string, signMethod?: 'CMS_SIGN_ONLY' | 'CMS_WITH_DATA' }
+        options?: { documentNameRu?: string, signMethod?: 'CMS_SIGN_ONLY' | 'CMS_WITH_DATA', data?: string }
     ): Promise<{
         operationId: string;
         qrCode: string;
@@ -127,6 +127,10 @@ export class SigexService {
             description,
             signMethod: options?.signMethod || 'CMS_SIGN_ONLY'
         };
+
+        if (options?.data) {
+            body.data = options.data;
+        }
 
         if (options?.documentNameRu) {
             body.documentsToSign = [
