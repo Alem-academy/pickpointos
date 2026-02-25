@@ -187,10 +187,15 @@ export class SigexService {
      * Send data to eGov QR signing operation
      */
     static async sendQrData(operationId: string, data: string, signMethod: 'CMS_SIGN_ONLY' | 'CMS_WITH_DATA' = 'CMS_SIGN_ONLY'): Promise<any> {
+        const body: any = { data, signMethod };
+        if (signMethod === 'CMS_WITH_DATA') {
+            body.documentId = 1; // Required for document-bound operations
+        }
+
         return this.request(`/api/sign/egovQr/${operationId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ documentId: 1, data, signMethod })
+            body: JSON.stringify(body)
         });
     }
 
