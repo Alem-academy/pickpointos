@@ -173,7 +173,16 @@ export class SigexService {
         const res = await this.request<any>(`/api/sign/egovQr`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ documentId, description }) // No CMS_SIGN_ONLY because it's a document payload
+            body: JSON.stringify({
+                description,
+                signMethod: 'CMS_WITH_DATA',
+                documentsToSign: [{
+                    id: documentId,
+                    nameRu: description,
+                    nameKz: description,
+                    nameEn: description
+                }]
+            })
         });
 
         const signURL = res.signURL || '';
