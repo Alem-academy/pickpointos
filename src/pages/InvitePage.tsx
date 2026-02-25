@@ -50,49 +50,15 @@ export default function InvitePage() {
         setErrorMsg('');
 
         try {
-            // 1. Generate Contract PDF on backend
-            const { data: pdfBase64 } = await SigexService.generatePdf({
-                documentData: {
-                    fullName: employee.full_name,
-                    iin: employee.iin,
-                    position: employee.role === 'rf' ? 'Региональный менеджер' :
-                        (employee.role === 'hr' ? 'HR Менеджер' : 'Менеджер ПВЗ'),
-                    salary: employee.base_rate ? `${employee.base_rate} KZT/смена` : 'По штатному расписанию',
-                    contractNumber: `ТД-2026/${employee.id?.substring(0, 6) || 'NEW'}`
-                },
-                title: `Трудовой договор: ${employee.full_name}`,
-                description: 'Кадровый документ PickPoint',
-                isContract: true
+            // Generate signing data (base64 of candidate details)
+            const signText = `Подписание трудового договора: ${employee.full_name} (${employee.iin})`;
+            const base64Data = btoa(unescape(encodeURIComponent(signText)));
+
+            // Register simple QR session
+            const qrRes = await SigexService.registerQrSigning(`Оформление: ${employee.full_name}`, {
+                signMethod: 'CMS_SIGN_ONLY',
+                data: base64Data
             });
-
-            // Helper to convert base64 to Blob
-            const base64ToBlob = (base64: string, type = 'application/pdf') => {
-                const binStr = atob(base64);
-                const len = binStr.length;
-                const arr = new Uint8Array(len);
-                for (let i = 0; i < len; i++) {
-                    arr[i] = binStr.charCodeAt(i);
-                }
-                return new Blob([arr], { type });
-            };
-            const pdfBlob = base64ToBlob(pdfBase64);
-
-            // 2. Register Document to SIGEX
-            const docRes = await SigexService.registerDocument({
-                title: `Трудовой договор: ${employee.full_name}`,
-                description: 'Кадровый документ PickPoint',
-                settings: { private: false, forceArchive: true }
-            });
-            const documentId = docRes.documentId;
-
-            // 3. Upload Document bytes
-            await SigexService.addDocumentData(documentId, pdfBlob);
-
-            // 4. Register QR Session tied to the real document
-            const qrRes = await SigexService.registerQrSigningWithDocument(
-                documentId,
-                `Оформление: ${employee.full_name}`
-            );
 
             setQrCodeData(qrRes.qrCode);
             setMobileLink(qrRes.eGovMobileLaunchLink);
