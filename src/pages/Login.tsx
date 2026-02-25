@@ -114,21 +114,45 @@ export default function Login() {
             // 1. Get nonce
             const { nonce } = await SigexService.getAuthNonce();
 
-            // 2. Convert string to base64 for signing
-            const base64Nonce = btoa(unescape(encodeURIComponent(nonce)));
-
-            // 3. Register a naked QR signing session and attach the data inline
-            // Note: For CMS_SIGN_ONLY, SIGEX requires data to be attached at registration time.
-            const qrRes = await SigexService.registerQrSigning('Авторизация на PickPoint OS', {
-                documentNameRu: 'Блок случайных данных для аутентификации',
-                data: base64Nonce
+            // 2. Generate Auth Document PDF natively on the backend
+            const { data: pdfBase64 } = await SigexService.generatePdf({
+                documentData: { nonce },
+                title: 'Авторизация в PickPoint',
+                description: 'Бланк аутентификации пользователя для входа в систему',
+                isContract: false
             });
+
+            // Helper to convert base64 to Blob
+            const base64ToBlob = (base64: string, type = 'application/pdf') => {
+                const binStr = atob(base64);
+                const len = binStr.length;
+                const arr = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    arr[i] = binStr.charCodeAt(i);
+                }
+                return new Blob([arr], { type });
+            };
+            const pdfBlob = base64ToBlob(pdfBase64);
+
+            // 3. Register the Document in SIGEX
+            const docRes = await SigexService.registerDocument({
+                title: 'Авторизация на PickPoint OS',
+                description: 'Процедура входа',
+                settings: { private: false, forceArchive: true }
+            });
+            const documentId = docRes.documentId;
+
+            // 4. Send the physical PDF file completely to SIGEX so eGov Mobile can download it smoothly
+            await SigexService.addDocumentData(documentId, pdfBlob);
+
+            // 5. Register a QR signing session hooked to THIS document
+            const qrRes = await SigexService.registerQrSigningWithDocument(documentId, 'Вход в PickPoint OS');
+
             setQrCode(qrRes.qrCode);
             setEGovLinks({ mobile: qrRes.eGovMobileLaunchLink, business: qrRes.eGovBusinessLaunchLink });
-
             setQrStep('qr');
 
-            // 5. Poll for completion
+            // 6. Poll for completion
             let isPolling = true;
             const checkStatus = async () => {
                 if (!isPolling) return;
@@ -148,8 +172,8 @@ export default function Login() {
                         if (!signature) throw new Error("Подпись пуста");
 
                         try {
-                            // 6. Authenticate using the signature of the nonce
-                            const authData = await SigexService.authenticate(nonce, signature);
+                            // 7. Authenticate using the signature of the document containing the nonce
+                            const authData = await SigexService.authenticateDocument(nonce, signature, documentId);
 
                             console.log("Успешная ЭЦП авторизация, данные:", authData);
                             const certInfo = authData?.certInfo || authData; // Depending on if it's external or built-in validation
