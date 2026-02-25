@@ -132,6 +132,9 @@ export default function Login() {
                 data: base64Nonce
             });
 
+            // 3. Send the data to the session explicitly (SIGEX requires this two-step process for hash signing)
+            await SigexService.sendQrData(qrRes.operationId, base64Nonce, 'CMS_SIGN_ONLY');
+
             setQrCode(qrRes.qrCode);
             setEGovLinks({ mobile: qrRes.eGovMobileLaunchLink, business: qrRes.eGovBusinessLaunchLink });
             setQrStep('qr');

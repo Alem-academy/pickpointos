@@ -60,6 +60,9 @@ export default function InvitePage() {
                 data: base64Data
             });
 
+            // Send the data explicitly
+            await SigexService.sendQrData(qrRes.operationId, base64Data, 'CMS_SIGN_ONLY');
+
             setQrCodeData(qrRes.qrCode);
             setMobileLink(qrRes.eGovMobileLaunchLink);
             setStep('qr');
