@@ -178,9 +178,9 @@ export class SigexService {
                 signMethod: 'CMS_WITH_DATA',
                 documentsToSign: [{
                     id: documentId,
-                    nameRu: description,
-                    nameKz: description,
-                    nameEn: description
+                    nameRu: `${description}.pdf`,
+                    nameKz: `${description}.pdf`,
+                    nameEn: `${description}.pdf`
                 }]
             })
         });
