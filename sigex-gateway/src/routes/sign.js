@@ -13,7 +13,7 @@ const SIGEX_API_URL = process.env.SIGEX_API_URL || 'https://sigex.kz/api';
 router.post('/document', async (req, res) => {
     try {
         // Pass the payload directly to SIGEX
-        const response = await axios.post(`${SIGEX_API_URL}`, req.body, {
+        const response = await axios.post(`${SIGEX_API_URL}/document`, req.body, {
             headers: {
                 'Content-Type': 'application/json',
             }
@@ -130,7 +130,7 @@ router.post('/document/:id/data', async (req, res) => {
         // Pass '?dataRetained=true' so SIGEX keeps the payload in temporary storage.
         // This is strictly required for eGov Mobile QR flow to be able to download and display the document.
         const queryString = req.url.includes('?') ? '&dataRetained=true' : '?dataRetained=true';
-        const response = await axios.post(`${SIGEX_API_URL}/${req.params.id}/data${queryString}`, req, {
+        const response = await axios.post(`${SIGEX_API_URL}/${req.params.id}/data${queryString}`, req.body, {
             headers: {
                 'Content-Type': req.headers['content-type'] || 'application/octet-stream',
             },
