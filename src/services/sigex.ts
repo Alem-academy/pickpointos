@@ -139,11 +139,22 @@ export class SigexService {
             ];
         }
 
-        return this.request(`/api/sign/egovQr`, {
+        const res = await this.request<any>(`/api/sign/egovQr`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
         });
+
+        // Extract operationId from signURL
+        const signURL = res.signURL || '';
+        const operationId = signURL.substring(signURL.lastIndexOf('/') + 1);
+
+        return {
+            operationId,
+            qrCode: res.qrCode,
+            eGovMobileLaunchLink: res.eGovMobileLaunchLink,
+            eGovBusinessLaunchLink: res.eGovBusinessLaunchLink
+        };
     }
 
     /**
@@ -155,11 +166,21 @@ export class SigexService {
         eGovMobileLaunchLink: string;
         eGovBusinessLaunchLink: string;
     }> {
-        return this.request(`/api/sign/egovQr`, {
+        const res = await this.request<any>(`/api/sign/egovQr`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ documentId, description }) // No CMS_SIGN_ONLY because it's a document payload
         });
+
+        const signURL = res.signURL || '';
+        const operationId = signURL.substring(signURL.lastIndexOf('/') + 1);
+
+        return {
+            operationId,
+            qrCode: res.qrCode,
+            eGovMobileLaunchLink: res.eGovMobileLaunchLink,
+            eGovBusinessLaunchLink: res.eGovBusinessLaunchLink
+        };
     }
 
     /**
