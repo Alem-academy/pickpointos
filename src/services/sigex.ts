@@ -132,7 +132,8 @@ export class SigexService {
             body.data = options.data;
         }
 
-        if (options?.documentNameRu) {
+        // Only include documentsToSign if we are explicitly using CMS_WITH_DATA mode
+        if (options?.signMethod === 'CMS_WITH_DATA' && options?.documentNameRu) {
             body.documentsToSign = [
                 {
                     id: 1,
