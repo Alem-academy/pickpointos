@@ -46,11 +46,14 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
                 qrRes = await SigexService.registerQrSigningWithDocument(preRegisteredDocumentId, `Подписание: ${documentTitle}`);
             } else {
                 // Fallback for MVP: Raw string signing
-                qrRes = await SigexService.registerQrSigning(`Подписание документа: ${documentTitle}`);
+                qrRes = await SigexService.registerQrSigning(`Подписание документа: ${documentTitle}`, {
+                    documentNameRu: `Подписание документа: ${documentTitle}`,
+                    signMethod: 'CMS_SIGN_ONLY'
+                });
 
                 // 2. Send dummy data for the MVP as we don't have the real file blob here yet
                 const dummyData = btoa(unescape(encodeURIComponent("Текст для подписания в PickPoint")));
-                await SigexService.sendQrData(qrRes.operationId, dummyData);
+                await SigexService.sendQrData(qrRes.operationId, dummyData, 'CMS_SIGN_ONLY');
             }
 
             setQrCode(qrRes.qrCode);

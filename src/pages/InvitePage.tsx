@@ -54,11 +54,14 @@ export default function InvitePage() {
             const signText = `Подписание трудового договора: ${employee.full_name} (${employee.iin})`;
             const base64Data = btoa(unescape(encodeURIComponent(signText)));
 
-            // Register simple QR session
+            // 2. Register the fake-document CMS_SIGN_ONLY session
             const qrRes = await SigexService.registerQrSigning(`Оформление: ${employee.full_name}`, {
-                signMethod: 'CMS_SIGN_ONLY',
-                data: base64Data
+                documentNameRu: `Оформление: ${employee.full_name}`,
+                signMethod: 'CMS_SIGN_ONLY'
             });
+
+            // 3. Send the hash data explicitly
+            await SigexService.sendQrData(qrRes.operationId, base64Data, 'CMS_SIGN_ONLY');
 
             setQrCodeData(qrRes.qrCode);
             setMobileLink(qrRes.eGovMobileLaunchLink);

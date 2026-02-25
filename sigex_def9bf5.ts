@@ -116,7 +116,7 @@ export class SigexService {
      */
     static async registerQrSigning(
         description: string = 'Подписание документа',
-        options?: { documentNameRu?: string, signMethod?: 'CMS_SIGN_ONLY' | 'CMS_WITH_DATA', data?: string }
+        options?: { documentNameRu?: string, signMethod?: 'CMS_SIGN_ONLY' | 'CMS_WITH_DATA' }
     ): Promise<{
         operationId: string;
         qrCode: string;
@@ -127,10 +127,6 @@ export class SigexService {
             description,
             signMethod: options?.signMethod || 'CMS_SIGN_ONLY'
         };
-
-        if (options?.data) {
-            body.data = options.data;
-        }
 
         if (options?.documentNameRu) {
             body.documentsToSign = [
@@ -143,22 +139,11 @@ export class SigexService {
             ];
         }
 
-        const res = await this.request<any>(`/api/sign/egovQr`, {
+        return this.request(`/api/sign/egovQr`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
         });
-
-        // Extract operationId from signURL
-        const signURL = res.signURL || '';
-        const operationId = signURL.substring(signURL.lastIndexOf('/') + 1);
-
-        return {
-            operationId,
-            qrCode: res.qrCode,
-            eGovMobileLaunchLink: res.eGovMobileLaunchLink,
-            eGovBusinessLaunchLink: res.eGovBusinessLaunchLink
-        };
     }
 
     /**
@@ -170,40 +155,21 @@ export class SigexService {
         eGovMobileLaunchLink: string;
         eGovBusinessLaunchLink: string;
     }> {
-        const res = await this.request<any>(`/api/sign/egovQr`, {
+        return this.request(`/api/sign/egovQr`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                description,
-                signMethod: 'CMS_WITH_DATA',
-                documentsToSign: [{
-                    id: documentId,
-                    nameRu: `${description}.pdf`,
-                    nameKz: `${description}.pdf`,
-                    nameEn: `${description}.pdf`
-                }]
-            })
+            body: JSON.stringify({ documentId, description }) // No CMS_SIGN_ONLY because it's a document payload
         });
-
-        const signURL = res.signURL || '';
-        const operationId = signURL.substring(signURL.lastIndexOf('/') + 1);
-
-        return {
-            operationId,
-            qrCode: res.qrCode,
-            eGovMobileLaunchLink: res.eGovMobileLaunchLink,
-            eGovBusinessLaunchLink: res.eGovBusinessLaunchLink
-        };
     }
 
     /**
      * Send data to eGov QR signing operation
      */
-    static async sendQrData(operationId: string, data: string, signMethod: 'CMS_SIGN_ONLY' | 'CMS_WITH_DATA' = 'CMS_SIGN_ONLY', documentId: number = 1): Promise<any> {
+    static async sendQrData(operationId: string, data: string, signMethod: 'CMS_SIGN_ONLY' | 'CMS_WITH_DATA' = 'CMS_SIGN_ONLY'): Promise<any> {
         return this.request(`/api/sign/egovQr/${operationId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ documentId, data, signMethod })
+            body: JSON.stringify({ documentId: 1, data, signMethod })
         });
     }
 
