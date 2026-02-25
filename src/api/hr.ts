@@ -25,7 +25,10 @@ export const hrApi = {
     async generateInviteLink(employeeId: string): Promise<{ token: string, url: string }> {
         try {
             const res = await axiosInstance.post(`/employees/${employeeId}/invite`);
-            return res.data;
+            return {
+                token: res.data.token,
+                url: `${window.location.origin}/invite/${res.data.token}`
+            };
         } catch (e: any) {
             throw new Error(e.response?.data?.error || "Ошибка генерации ссылки-приглашения");
         }
