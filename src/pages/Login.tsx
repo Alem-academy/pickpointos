@@ -342,14 +342,14 @@ export default function Login() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <p className="font-semibold text-slate-800 text-lg hidden sm:block">Код для входа</p>
+                                    <p className="font-semibold text-slate-800 text-lg hidden sm:block">Вход по eGov QR</p>
                                     <p className="font-semibold text-slate-800 text-lg sm:hidden">Подписание в eGov Mobile</p>
 
                                     <p className="text-sm text-slate-500 px-4 hidden sm:block">
-                                        Откройте приложение <strong>eGov Mobile</strong> или <strong>eGov Business</strong> и отсканируйте код
+                                        Откройте приложение <strong>eGov Mobile</strong> или <strong>eGov Business</strong> на вашем телефоне и отсканируйте этот QR код
                                     </p>
                                     <p className="text-sm text-slate-500 px-4 sm:hidden">
-                                        Нажмите на кнопку ниже, чтобы перейти в приложение для подписания
+                                        Нажмите на кнопку ниже, чтобы запустить приложение и подтвердить вход
                                     </p>
                                 </div>
 
@@ -361,9 +361,10 @@ export default function Login() {
                                         <Smartphone className="mr-2 h-5 w-5 opacity-80" />
                                         Открыть eGov Mobile
                                     </a>
-                                    <a href={eGovLinks?.mobile} className="text-blue-600 hover:text-blue-700 hover:bg-blue-100 font-medium px-4 py-2 bg-blue-50 rounded-lg hidden sm:block transition-colors">
-                                        Как подписать?
-                                    </a>
+
+                                    <p className="text-xs text-slate-400 mt-2 hidden sm:block">
+                                        На телефоне в приложении eGov Mobile нажмите иконку сканера QR на главном экране.
+                                    </p>
                                 </div>
 
                                 <Button variant="ghost" className="mt-2 text-slate-500 w-full hover:bg-slate-100" onClick={() => {
