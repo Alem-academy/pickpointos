@@ -65,14 +65,34 @@ export default function InvitePage() {
                 isContract: true
             });
 
-            // 2. Register QR session mimicking real behavior
-            const qrRes = await SigexService.registerQrSigning(`Оформление: ${employee.full_name}`, {
-                documentNameRu: `Трудовой договор: ${employee.full_name}`,
-                signMethod: 'CMS_WITH_DATA'
-            });
+            // Helper to convert base64 to Blob
+            const base64ToBlob = (base64: string, type = 'application/pdf') => {
+                const binStr = atob(base64);
+                const len = binStr.length;
+                const arr = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    arr[i] = binStr.charCodeAt(i);
+                }
+                return new Blob([arr], { type });
+            };
+            const pdfBlob = base64ToBlob(pdfBase64);
 
-            // 3. Send PDF to the session
-            await SigexService.sendQrData(qrRes.operationId, pdfBase64, 'CMS_WITH_DATA', 1);
+            // 2. Register Document to SIGEX
+            const docRes = await SigexService.registerDocument({
+                title: `Трудовой договор: ${employee.full_name}`,
+                description: 'Кадровый документ PickPoint',
+                settings: { private: false, forceArchive: true }
+            });
+            const documentId = docRes.documentId;
+
+            // 3. Upload Document bytes
+            await SigexService.addDocumentData(documentId, pdfBlob);
+
+            // 4. Register QR Session tied to the real document
+            const qrRes = await SigexService.registerQrSigningWithDocument(
+                documentId,
+                `Оформление: ${employee.full_name}`
+            );
 
             setQrCodeData(qrRes.qrCode);
             setMobileLink(qrRes.eGovMobileLaunchLink);
