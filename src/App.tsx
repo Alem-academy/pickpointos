@@ -22,6 +22,7 @@ import Timesheet from "@/pages/hr/Timesheet";
 import Discipline from "@/pages/hr/Discipline";
 import Employees from "@/pages/hr/Employees";
 import RentPage from "@/pages/finance/Rent";
+import CourierDashboard from "@/pages/courier/Dashboard";
 import { useAuth } from "@/components/layout/AuthContext";
 
 function IndexRedirect() {
@@ -33,6 +34,8 @@ function IndexRedirect() {
   if (user.role === 'rf') return <Navigate to="/rf" replace />;
   if (user.role === 'financier') return <Navigate to="/finance" replace />;
   if (user.role === 'admin') return <Navigate to="/hr/applications" replace />;
+  // Assuming couriers might log in, otherwise this intercepts correctly for testing
+  if (user.role === 'employee' || user.role === 'courier' as any) return <Navigate to="/courier" replace />;
 
   return <Navigate to="/login" replace />;
 }
@@ -83,6 +86,12 @@ function App() {
               <Route path="/rf" element={<RFDashboard />} />
               <Route path="/rf/new-hire" element={<NewHire />} />
               <Route path="/rf/my-point" element={<MyPoint />} />
+            </Route>
+
+            {/* Courier Routes */}
+            {/* Added 'employee' and 'courier' strictly for frontend demonstration */}
+            <Route element={<ProtectedRoute allowedRoles={['employee', 'courier' as any, 'admin']} />}>
+              <Route path="/courier" element={<CourierDashboard />} />
             </Route>
           </Route>
 

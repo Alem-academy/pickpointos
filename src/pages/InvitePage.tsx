@@ -105,7 +105,7 @@ export default function InvitePage() {
 
                 // Get IIN from the document metadata/signature validation.
                 // In a real environment, backend does this. We mock verify it:
-                const signature = statusRes.signatures[0];
+                // const signature = statusRes.signatures[0];
 
                 // Usually we'd parse the CMS block. For MVP, we send to mock verification wrapper
                 // Here we just pass the planned IIN to simulate backend verification.
