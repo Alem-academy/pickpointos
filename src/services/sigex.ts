@@ -202,7 +202,7 @@ export class SigexService {
             ]
         };
 
-        return this.request(`/api/sign/egovQr/${operationId}/data`, {
+        return this.request(`/api/sign/egovQr/${operationId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
