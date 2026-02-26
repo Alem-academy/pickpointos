@@ -160,7 +160,22 @@ router.post('/egovQr', async (req, res) => {
 });
 
 /**
- * Send data to eGov QR signing operation
+ * Send data to eGov QR signing operation (data URL)
+ */
+router.post('/egovQr/:operationId/data', async (req, res) => {
+    try {
+        const response = await axios.post(`${SIGEX_API_URL}/egovQr/${req.params.operationId}/data`, req.body, {
+            headers: { 'Content-Type': 'application/json' }
+        });
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error sending data to eGov QR data URL:', error.response?.data || error.message);
+        res.status(error.response?.status || 500).json(error.response?.data || { error: 'Failed to send data to data URL' });
+    }
+});
+
+/**
+ * Send data to eGov QR signing operation (legacy fallback)
  */
 router.post('/egovQr/:operationId', async (req, res) => {
     try {
