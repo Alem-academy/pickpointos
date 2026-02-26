@@ -107,6 +107,7 @@ export default function InvitePage() {
 
                     // For 'new', 'meta', 'data', SIGEX is still waiting.
                     // Usually this GET request hangs, but if it returns early, we loop again.
+                    await new Promise(r => setTimeout(r, 2000));
                 } catch (err: any) {
                     console.warn(`Status check retry ${i + 1}:`, err);
                     // Usually network dropout or 504 Gateway Timeout since SIGEX hangs for 60s
