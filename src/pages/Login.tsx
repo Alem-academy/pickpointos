@@ -132,70 +132,80 @@ export default function Login() {
             setEGovLinks({ mobile: qrRes.eGovMobileLaunchLink, business: qrRes.eGovBusinessLaunchLink });
             setQrStep('qr');
 
-            // 3. Initiate Long-Polling data upload (AWAITED - THIS HANGS UNTIL SIGNED!)
+            // 3. Send Payload (This returns quickly)
             const base64Nonce = btoa(unescape(encodeURIComponent(nonce)));
 
             let postSuccess = false;
-            for (let i = 0; i < 15; i++) {
+            for (let i = 0; i < 3; i++) {
                 try {
-                    // This request will hang for ~10-30 seconds or until user signs the QR
                     await SigexService.sendQrData(qrRes.operationId, base64Nonce, 'Авторизация в PickPoint');
                     postSuccess = true;
                     break;
                 } catch (err: any) {
-                    // SIGEX sometimes drops the long-polling POST, Jasalmaty retries it
-                    console.warn(`Long-Polling retry ${i + 1}:`, err);
-                    await new Promise(r => setTimeout(r, 2000));
+                    console.warn(`Data POST retry ${i + 1}:`, err);
+                    await new Promise(r => setTimeout(r, 1000));
                 }
             }
 
             if (!postSuccess) {
-                setEdsError("Время ожидания подписания истекло");
+                setEdsError("Ошибка инициализации данных.");
                 setQrStep('idle');
                 return;
             }
 
-            // 4. Verification & Status Check (ONLY AFTER POST RETURNS SUCCESS!)
-            // We now GET the signURL to download the completed signatures
-            try {
-                const statusRes = await SigexService.checkQrStatus(qrRes.operationId);
+            // 4. Verification & Status Check (THIS HANGS / POLLS UP TO 25 TIMES)
+            let isDone = false;
+            for (let i = 0; i < 25; i++) {
+                try {
+                    const statusRes = await SigexService.checkQrStatus(qrRes.operationId);
 
-                if (statusRes.signatures && statusRes.signatures.length > 0) {
-                    setQrStep('success');
+                    if (statusRes.status === 'done') {
+                        isDone = true;
 
-                    const signature = statusRes.signatures[0];
-                    if (!signature) throw new Error("Подпись пуста");
+                        if (statusRes.signatures && statusRes.signatures.length > 0) {
+                            setQrStep('success');
 
-                    try {
-                        // Authenticate using the signature of the string containing the nonce
-                        const authData = await SigexService.authenticate(nonce, signature);
+                            const signature = statusRes.signatures[0];
+                            if (!signature) throw new Error("Подпись пуста");
 
-                        console.log("Успешная ЭЦП авторизация, данные:", authData);
-                        const certInfo = authData?.certInfo || authData;
-                        const iin = certInfo?.subjectInfo?.iin || certInfo?.iin || 'Неизвестен';
-                        console.log("Вход выполнен пользователем с ИИН:", iin);
+                            try {
+                                const authData = await SigexService.authenticate(nonce, signature);
+                                const certInfo = authData?.certInfo || authData;
+                                console.log("Вход выполнен пользователем с ИИН:", certInfo?.subjectInfo?.iin || certInfo?.iin || 'Неизвестен');
 
-                        // Mapping
-                        let mockEmail = 'eds_user@example.com';
-                        let targetRoute = '/hr';
+                                let mockEmail = 'eds_user@example.com';
+                                let targetRoute = '/hr';
 
-                        await login({ email: mockEmail, password: 'password123' });
-                        navigate(targetRoute, { replace: true });
-                    } catch (authErr: any) {
-                        console.error("Auth validation failed:", authErr);
-                        setEdsError(authErr.message || "Ошибка проверки ЭЦП сервером.");
+                                await login({ email: mockEmail, password: 'password123' });
+                                navigate(targetRoute, { replace: true });
+                            } catch (authErr: any) {
+                                console.error("Auth validation failed:", authErr);
+                                setEdsError(authErr.message || "Ошибка проверки ЭЦП сервером.");
+                                setQrStep('idle');
+                            }
+                        } else {
+                            setEdsError("Подписание не завершено (ошибка выгрузки подписи).");
+                            setQrStep('idle');
+                        }
+                        return; // Exit loop
+                    } else if (statusRes.status === 'canceled' || statusRes.status === 'fail') {
+                        isDone = true;
+                        setEdsError("Авторизация отменена в приложении.");
                         setQrStep('idle');
+                        return; // Exit loop
                     }
-                } else if (statusRes.status === 'canceled' || statusRes.status === 'fail') {
-                    setEdsError("Авторизация отменена в приложении.");
-                    setQrStep('idle');
-                } else {
-                    setEdsError("Подписание не завершено (ошибка статуса).");
-                    setQrStep('idle');
+
+                    // For 'new', 'meta', 'data', SIGEX is still waiting.
+                    // Usually this GET request hangs, but if it returns early, we loop again.
+                } catch (err: any) {
+                    console.warn(`Status check retry ${i + 1}:`, err);
+                    // Usually network dropout or 504 Gateway Timeout since SIGEX hangs for 60s
+                    await new Promise(r => setTimeout(r, 1000));
                 }
-            } catch (err: any) {
-                console.error("Status check failed after signing:", err);
-                setEdsError("Ошибка при получении готовой подписи");
+            }
+
+            if (!isDone) {
+                setEdsError("Время ожидания подписания истекло");
                 setQrStep('idle');
             }
 

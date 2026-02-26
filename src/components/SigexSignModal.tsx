@@ -63,42 +63,60 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
 
             setStep('qr');
 
-            // 3. Wait for Signature (Long-Polling upload)
+            // 3. Send Payload (This returns quickly)
             let postSuccess = false;
-            for (let i = 0; i < 15; i++) {
+            for (let i = 0; i < 3; i++) {
                 try {
                     await SigexService.sendQrData(qrRes.operationId, qrRes.operationId, 'Подписание документа');
                     postSuccess = true;
                     break;
                 } catch (err: any) {
-                    console.warn(`Long-Polling retry ${i + 1}:`, err);
-                    await new Promise(r => setTimeout(r, 2000));
+                    console.warn(`Data POST retry ${i + 1}:`, err);
+                    await new Promise(r => setTimeout(r, 1000));
                 }
             }
 
             if (!postSuccess) {
-                setError('Время ожидания подписания истекло');
+                setError('Ошибка инициализации данных.');
                 setStep('error');
                 return;
             }
 
-            // 4. Verification & Status Check
-            try {
-                const statusRes = await SigexService.checkQrStatus(qrRes.operationId);
+            // 4. Verification & Status Check (THIS HANGS / POLLS UP TO 25 TIMES)
+            let isDone = false;
+            for (let i = 0; i < 25; i++) {
+                try {
+                    const statusRes = await SigexService.checkQrStatus(qrRes.operationId);
 
-                if (statusRes.signatures && statusRes.signatures.length > 0) {
-                    setStep('signing');
-                    await finalizeSignature(statusRes.signatures[0]);
-                } else if (statusRes.status === 'canceled' || statusRes.status === 'fail') {
-                    setError('Подписание отменено или произошла ошибка');
-                    setStep('error');
-                } else {
-                    setError('Подписание не завершено (ошибка статуса).');
-                    setStep('error');
+                    if (statusRes.status === 'done') {
+                        isDone = true;
+
+                        if (statusRes.signatures && statusRes.signatures.length > 0) {
+                            setStep('signing');
+                            await finalizeSignature(statusRes.signatures[0]);
+                        } else {
+                            setError('Подписание не завершено (ошибка выгрузки подписи).');
+                            setStep('error');
+                        }
+                        return; // Exit loop
+                    } else if (statusRes.status === 'canceled' || statusRes.status === 'fail') {
+                        isDone = true;
+                        setError('Подписание отменено или произошла ошибка');
+                        setStep('error');
+                        return; // Exit loop
+                    }
+
+                    // For 'new', 'meta', 'data', SIGEX is still waiting.
+                    // Usually this GET request hangs, but if it returns early, we loop again.
+                } catch (err: any) {
+                    console.warn(`Status check retry ${i + 1}:`, err);
+                    // Usually network dropout or 504 Gateway Timeout since SIGEX hangs for 60s
+                    await new Promise(r => setTimeout(r, 1000));
                 }
-            } catch (err: any) {
-                console.error("Status check failed after signing:", err);
-                setError('Ошибка при проверке статуса подписи.');
+            }
+
+            if (!isDone) {
+                setError('Время ожидания подписания истекло');
                 setStep('error');
             }
 

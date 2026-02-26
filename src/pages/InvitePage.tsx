@@ -63,41 +63,59 @@ export default function InvitePage() {
 
             // 3. Initiate Long-Polling data upload
             let postSuccess = false;
-            for (let i = 0; i < 15; i++) {
+            for (let i = 0; i < 3; i++) {
                 try {
                     await SigexService.sendQrData(qrRes.operationId, base64Data, `Оформление: ${employee.full_name}`);
                     postSuccess = true;
                     break;
                 } catch (err: any) {
-                    console.warn(`Long-Polling retry ${i + 1}:`, err);
-                    await new Promise(r => setTimeout(r, 2000));
+                    console.warn(`Data POST retry ${i + 1}:`, err);
+                    await new Promise(r => setTimeout(r, 1000));
                 }
             }
 
             if (!postSuccess) {
-                setErrorMsg("Время ожидания подписания истекло");
+                setErrorMsg("Ошибка инициализации данных.");
                 setStep('review');
                 return;
             }
 
-            // 4. Verification & Status Check (ONLY AFTER POST RETURNS SUCCESS)
-            try {
-                const statusRes = await SigexService.checkQrStatus(qrRes.operationId);
+            // 4. Verification & Status Check (THIS HANGS / POLLS UP TO 25 TIMES)
+            let isDone = false;
+            for (let i = 0; i < 25; i++) {
+                try {
+                    const statusRes = await SigexService.checkQrStatus(qrRes.operationId);
 
-                if (statusRes.signatures && statusRes.signatures.length > 0) {
-                    // Validate signature
-                    await api.verifyInvite(token!, employee!.iin);
-                    setStep('success');
-                } else if (statusRes.status === 'canceled' || statusRes.status === 'fail') {
-                    setErrorMsg("Вы отменили подписание в приложении eGov Mobile.");
-                    setStep('review');
-                } else {
-                    setErrorMsg("Подписание не завершено (ошибка статуса).");
-                    setStep('review');
+                    if (statusRes.status === 'done') {
+                        isDone = true;
+
+                        if (statusRes.signatures && statusRes.signatures.length > 0) {
+                            // Validate signature
+                            await api.verifyInvite(token!, employee!.iin);
+                            setStep('success');
+                        } else {
+                            setErrorMsg("Подписание не завершено (ошибка выгрузки подписи).");
+                            setStep('review');
+                        }
+                        return; // Exit loop
+                    } else if (statusRes.status === 'canceled' || statusRes.status === 'fail') {
+                        isDone = true;
+                        setErrorMsg("Вы отменили подписание в приложении eGov Mobile.");
+                        setStep('review');
+                        return; // Exit loop
+                    }
+
+                    // For 'new', 'meta', 'data', SIGEX is still waiting.
+                    // Usually this GET request hangs, but if it returns early, we loop again.
+                } catch (err: any) {
+                    console.warn(`Status check retry ${i + 1}:`, err);
+                    // Usually network dropout or 504 Gateway Timeout since SIGEX hangs for 60s
+                    await new Promise(r => setTimeout(r, 1000));
                 }
-            } catch (err: any) {
-                console.error("Status check failed after signing:", err);
-                setErrorMsg("Ошибка при проверке статуса подписи.");
+            }
+
+            if (!isDone) {
+                setErrorMsg("Время ожидания подписания истекло");
                 setStep('review');
             }
 
