@@ -55,14 +55,15 @@ export default function InvitePage() {
             const base64Data = btoa(unescape(encodeURIComponent(signText)));
 
             // 2. Register one-step CMS_SIGN_ONLY session
-            const qrRes = await SigexService.registerQrSigning(`Оформление: ${employee.full_name}`, {
-                signMethod: 'CMS_SIGN_ONLY',
-                data: base64Data
-            });
+            const qrRes = await SigexService.registerQrSigning(`Оформление: ${employee.full_name}`);
 
             setQrCodeData(qrRes.qrCode);
             setMobileLink(qrRes.eGovMobileLaunchLink);
             setStep('qr');
+
+            // 3. Initiate Long-Polling data upload asynchronously
+            SigexService.sendQrData(qrRes.operationId, base64Data, `Оформление: ${employee.full_name}`)
+                .catch(err => console.error("QR data upload expected timeout/error:", err));
 
             // 4. Start polling for signature
             isPollingRef.current = true;

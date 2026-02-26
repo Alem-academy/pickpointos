@@ -45,12 +45,13 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
                 // If we already generated actual HTML/PDF document in SIGEX, use its ID directly
                 qrRes = await SigexService.registerQrSigningWithDocument(preRegisteredDocumentId, `Подписание: ${documentTitle}`);
             } else {
-                // Fallback for MVP: Raw string signing (PURE 1-STEP)
+                // Fallback for MVP: Raw string signing (Long-Polling Async Upload)
+                qrRes = await SigexService.registerQrSigning(`Подписание документа: ${documentTitle}`);
+
+                // 2. Initiate Long-Polling async data upload without awaiting
                 const dummyData = btoa(unescape(encodeURIComponent("Текст для подписания в PickPoint")));
-                qrRes = await SigexService.registerQrSigning(`Подписание документа: ${documentTitle}`, {
-                    signMethod: 'CMS_SIGN_ONLY',
-                    data: dummyData
-                });
+                SigexService.sendQrData(qrRes.operationId, dummyData, `Подписание документа: ${documentTitle}`)
+                    .catch(err => console.error("QR data upload expected timeout/error:", err));
             }
 
             setQrCode(qrRes.qrCode);

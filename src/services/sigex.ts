@@ -115,34 +115,14 @@ export class SigexService {
      * Register a new eGov QR signing procedure (Raw String/Nonce or Base64 PDF)
      */
     static async registerQrSigning(
-        description: string = 'Подписание документа',
-        options?: { documentNameRu?: string, signMethod?: 'CMS_SIGN_ONLY' | 'CMS_WITH_DATA', data?: string }
+        description: string = 'Подписание документа'
     ): Promise<{
         operationId: string;
         qrCode: string;
         eGovMobileLaunchLink: string;
         eGovBusinessLaunchLink: string;
     }> {
-        const body: any = {
-            description,
-            signMethod: options?.signMethod || 'CMS_SIGN_ONLY'
-        };
-
-        if (options?.data) {
-            body.data = options.data;
-        }
-
-        // Only include documentsToSign if explicitly requested for CMS_WITH_DATA
-        if (options?.signMethod === 'CMS_WITH_DATA' && options?.documentNameRu) {
-            body.documentsToSign = [
-                {
-                    id: 1,
-                    nameRu: options.documentNameRu,
-                    nameKz: options.documentNameRu,
-                    nameEn: options.documentNameRu
-                }
-            ];
-        }
+        const body: any = { description };
 
         const res = await this.request<any>(`/api/sign/egovQr`, {
             method: 'POST',
@@ -200,11 +180,32 @@ export class SigexService {
     /**
      * Send data to eGov QR signing operation
      */
-    static async sendQrData(operationId: string, data: string, signMethod: 'CMS_SIGN_ONLY' | 'CMS_WITH_DATA' = 'CMS_SIGN_ONLY', documentId: number = 1): Promise<any> {
+    static async sendQrData(operationId: string, data: string, documentName: string = 'Документ'): Promise<any> {
+        // This request will HANG (Long-Polling) until the user scans the QR code in eGov Mobile.
+        // It must NOT be awaited in the UI thread before showing the QR code!
+        const body = {
+            signMethod: 'CMS_SIGN_ONLY',
+            documentsToSign: [
+                {
+                    id: 1,
+                    nameRu: documentName,
+                    nameKz: documentName,
+                    nameEn: documentName,
+                    meta: [],
+                    document: {
+                        file: {
+                            mime: "",
+                            data: data
+                        }
+                    }
+                }
+            ]
+        };
+
         return this.request(`/api/sign/egovQr/${operationId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ documentId, data, signMethod })
+            body: JSON.stringify(body)
         });
     }
 

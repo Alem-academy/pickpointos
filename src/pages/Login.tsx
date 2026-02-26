@@ -126,15 +126,17 @@ export default function Login() {
             const { nonce } = await SigexService.getAuthNonce();
 
             // 2. Register a pure 1-step QR signing session
-            const base64Nonce = btoa(unescape(encodeURIComponent(nonce)));
-            const qrRes = await SigexService.registerQrSigning('Авторизация в PickPoint', {
-                signMethod: 'CMS_SIGN_ONLY',
-                data: base64Nonce
-            });
+            const qrRes = await SigexService.registerQrSigning('Авторизация в PickPoint');
 
             setQrCode(qrRes.qrCode);
             setEGovLinks({ mobile: qrRes.eGovMobileLaunchLink, business: qrRes.eGovBusinessLaunchLink });
             setQrStep('qr');
+
+            // 3. Initiate Long-Polling data upload (DO NOT AWAIT THIS!)
+            // SIGEX holds this POST request open until eGov Mobile scans the QR.
+            const base64Nonce = btoa(unescape(encodeURIComponent(nonce)));
+            SigexService.sendQrData(qrRes.operationId, base64Nonce, 'Авторизация в PickPoint')
+                .catch(err => console.error("QR data upload error (or timeout expected):", err));
 
             // 7. Poll for completion
             let isPolling = true;
