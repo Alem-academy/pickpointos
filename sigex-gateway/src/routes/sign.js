@@ -204,6 +204,8 @@ router.get('/egovQr/:operationId', async (req, res) => {
         const response = await axios.get(`${SIGEX_API_URL}/egovQr/${req.params.operationId}`, {
             timeout: 110000,
         });
+        // DEBUG: log full SIGEX response to diagnose status/signatures structure
+        console.log('[DEBUG egovQr GET]', JSON.stringify(response.data).substring(0, 500));
         res.json(response.data);
     } catch (error) {
         console.error('Error checking operation status:', error.response?.data || error.message);
@@ -212,3 +214,4 @@ router.get('/egovQr/:operationId', async (req, res) => {
 });
 
 export default router;
+
