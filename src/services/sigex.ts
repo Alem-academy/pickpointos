@@ -215,7 +215,17 @@ export class SigexService {
     static async checkQrStatus(operationId: string): Promise<{
         status: 'new' | 'meta' | 'data' | 'done' | 'canceled' | 'fail';
         signatures?: string[];
+        documentsToSign?: Array<any>;
     }> {
-        return this.request(`/api/sign/egovQr/${operationId}`);
+        const res = await this.request<any>(`/api/sign/egovQr/${operationId}`);
+
+        // Normalize signatures extraction if it comes nested from Jasalmaty-style documentsToSign payloads
+        if (res.status === 'done' && !res.signatures?.length && res.documentsToSign?.length) {
+            res.signatures = res.documentsToSign
+                .filter((d: any) => d.document?.file?.data)
+                .map((d: any) => d.document.file.data);
+        }
+
+        return res;
     }
 }
