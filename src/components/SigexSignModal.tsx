@@ -63,36 +63,44 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
 
             setStep('qr');
 
-            // 3. Wait for Signature
-            const waitForSignature = async () => {
-                let attempts = 0;
-                while (attempts < 5) {
-                    attempts++;
-                    try {
-                        const statusRes = await SigexService.checkQrStatus(qrRes.operationId);
-
-                        if (statusRes.signatures && statusRes.signatures.length > 0) {
-                            setStep('signing');
-                            await finalizeSignature(statusRes.signatures[0]);
-                            return;
-                        }
-
-                        if ((statusRes as any).message) {
-                            console.warn("SIGEX Response:", (statusRes as any).message);
-                            await new Promise(r => setTimeout(r, 2000));
-                            continue;
-                        }
-                    } catch (err: any) {
-                        console.error('Polling Error:', err);
-                        await new Promise(r => setTimeout(r, 2000));
-                    }
+            // 3. Wait for Signature (Long-Polling upload)
+            let postSuccess = false;
+            for (let i = 0; i < 15; i++) {
+                try {
+                    await SigexService.sendQrData(qrRes.operationId, qrRes.operationId, 'Подписание документа');
+                    postSuccess = true;
+                    break;
+                } catch (err: any) {
+                    console.warn(`Long-Polling retry ${i + 1}:`, err);
+                    await new Promise(r => setTimeout(r, 2000));
                 }
+            }
 
+            if (!postSuccess) {
                 setError('Время ожидания подписания истекло');
                 setStep('error');
-            };
+                return;
+            }
 
-            waitForSignature();
+            // 4. Verification & Status Check
+            try {
+                const statusRes = await SigexService.checkQrStatus(qrRes.operationId);
+
+                if (statusRes.signatures && statusRes.signatures.length > 0) {
+                    setStep('signing');
+                    await finalizeSignature(statusRes.signatures[0]);
+                } else if (statusRes.status === 'canceled' || statusRes.status === 'fail') {
+                    setError('Подписание отменено или произошла ошибка');
+                    setStep('error');
+                } else {
+                    setError('Подписание не завершено (ошибка статуса).');
+                    setStep('error');
+                }
+            } catch (err: any) {
+                console.error("Status check failed after signing:", err);
+                setError('Ошибка при проверке статуса подписи.');
+                setStep('error');
+            }
 
         } catch (err: any) {
             console.error('Sigex Init Error:', err);

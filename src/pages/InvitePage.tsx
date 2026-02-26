@@ -61,43 +61,45 @@ export default function InvitePage() {
             setMobileLink(qrRes.eGovMobileLaunchLink);
             setStep('qr');
 
-            // 3. Initiate Long-Polling data upload asynchronously
-            SigexService.sendQrData(qrRes.operationId, base64Data, `Оформление: ${employee.full_name}`)
-                .catch(err => console.error("QR data upload expected timeout/error:", err));
-
-            // 4. Start long-polling for signature
-            const waitForSignature = async () => {
-                let attempts = 0;
-                while (attempts < 5) {
-                    attempts++;
-                    try {
-                        const statusRes = await SigexService.checkQrStatus(qrRes.operationId);
-
-                        if (statusRes.signatures && statusRes.signatures.length > 0) {
-                            // Validate signature
-                            await api.verifyInvite(token!, employee!.iin);
-                            setStep('success');
-                            return;
-                        }
-
-                        if ((statusRes as any).message) {
-                            console.warn("SIGEX Response:", (statusRes as any).message);
-                            await new Promise(r => setTimeout(r, 2000));
-                            continue;
-                        }
-
-                    } catch (err: any) {
-                        console.error("Polling error:", err);
-                        await new Promise(r => setTimeout(r, 2000));
-                    }
+            // 3. Initiate Long-Polling data upload
+            let postSuccess = false;
+            for (let i = 0; i < 15; i++) {
+                try {
+                    await SigexService.sendQrData(qrRes.operationId, base64Data, `Оформление: ${employee.full_name}`);
+                    postSuccess = true;
+                    break;
+                } catch (err: any) {
+                    console.warn(`Long-Polling retry ${i + 1}:`, err);
+                    await new Promise(r => setTimeout(r, 2000));
                 }
+            }
 
+            if (!postSuccess) {
                 setErrorMsg("Время ожидания подписания истекло");
                 setStep('review');
-            };
+                return;
+            }
 
-            // Do not await, let it run in background
-            waitForSignature();
+            // 4. Verification & Status Check (ONLY AFTER POST RETURNS SUCCESS)
+            try {
+                const statusRes = await SigexService.checkQrStatus(qrRes.operationId);
+
+                if (statusRes.signatures && statusRes.signatures.length > 0) {
+                    // Validate signature
+                    await api.verifyInvite(token!, employee!.iin);
+                    setStep('success');
+                } else if (statusRes.status === 'canceled' || statusRes.status === 'fail') {
+                    setErrorMsg("Вы отменили подписание в приложении eGov Mobile.");
+                    setStep('review');
+                } else {
+                    setErrorMsg("Подписание не завершено (ошибка статуса).");
+                    setStep('review');
+                }
+            } catch (err: any) {
+                console.error("Status check failed after signing:", err);
+                setErrorMsg("Ошибка при проверке статуса подписи.");
+                setStep('review');
+            }
 
         } catch (err: any) {
             console.error(err);
