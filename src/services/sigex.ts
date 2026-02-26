@@ -219,7 +219,21 @@ export class SigexService {
     }> {
         const res = await this.request<any>(`/api/sign/egovQr/${operationId}`);
 
-        // Normalize signatures extraction if it comes nested from Jasalmaty-style documentsToSign payloads
+        // SIGEX sometimes returns documentsToSign with real CMS data on the first GET
+        // without setting status='done'. Detect this case and synthesize 'done'.
+        if (res.documentsToSign?.length) {
+            const cmsSignatures = res.documentsToSign
+                .filter((d: any) => d.document?.file?.data)
+                .map((d: any) => d.document.file.data);
+
+            if (cmsSignatures.length > 0) {
+                res.status = 'done';
+                res.signatures = cmsSignatures;
+                return res;
+            }
+        }
+
+        // Fallback: normalize signatures if status is 'done' but signatures are nested
         if (res.status === 'done' && !res.signatures?.length && res.documentsToSign?.length) {
             res.signatures = res.documentsToSign
                 .filter((d: any) => d.document?.file?.data)
