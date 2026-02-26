@@ -138,65 +138,68 @@ export default function Login() {
             SigexService.sendQrData(qrRes.operationId, base64Nonce, 'Авторизация в PickPoint')
                 .catch(err => console.error("QR data upload error (or timeout expected):", err));
 
-            // 7. Poll for completion
-            let isPolling = true;
-            const checkStatus = async () => {
-                if (!isPolling) return;
+            // 4. Wait for signatures via Long-Polling
+            // SIGEX holds this GET connection open until the user signs or it times out.
+            // We do NOT use setTimeout polling. We just await the single connection.
+            const waitForSignature = async () => {
+                let attempts = 0;
+                while (attempts < 5) {
+                    attempts++;
+                    try {
+                        const statusRes = await SigexService.checkQrStatus(qrRes.operationId);
 
-                try {
-                    const statusRes = await SigexService.checkQrStatus(qrRes.operationId);
+                        // If SIGEX returns documentsToSign with signatures, it's done.
+                        if (statusRes.signatures && statusRes.signatures.length > 0) {
+                            setQrStep('success');
 
-                    if (statusRes.status === 'done') {
-                        isPolling = false;
-                        setQrStep('success');
+                            const signature = statusRes.signatures[0];
+                            if (!signature) throw new Error("Подпись пуста");
 
-                        if (!statusRes.signatures || statusRes.signatures.length === 0) {
-                            throw new Error("Не найдена подпись в ответе eGov QR");
+                            try {
+                                // Authenticate using the signature of the string containing the nonce
+                                const authData = await SigexService.authenticate(nonce, signature);
+
+                                console.log("Успешная ЭЦП авторизация, данные:", authData);
+                                const certInfo = authData?.certInfo || authData;
+                                const iin = certInfo?.subjectInfo?.iin || certInfo?.iin || 'Неизвестен';
+                                console.log("Вход выполнен пользователем с ИИН:", iin);
+
+                                // Mapping
+                                let mockEmail = 'eds_user@example.com';
+                                let targetRoute = '/hr';
+
+                                await login({ email: mockEmail, password: 'password123' });
+                                navigate(targetRoute, { replace: true });
+                                return; // Exit completely
+                            } catch (authErr: any) {
+                                console.error("Auth validation failed:", authErr);
+                                setEdsError(authErr.message || "Ошибка проверки ЭЦП сервером.");
+                                setQrStep('idle');
+                                return;
+                            }
                         }
 
-                        const signature = statusRes.signatures[0];
-                        if (!signature) throw new Error("Подпись пуста");
-
-                        try {
-                            // 7. Authenticate using the signature of the string containing the nonce
-                            const authData = await SigexService.authenticate(nonce, signature);
-
-                            console.log("Успешная ЭЦП авторизация, данные:", authData);
-                            const certInfo = authData?.certInfo || authData; // Depending on if it's external or built-in validation
-                            const iin = certInfo?.subjectInfo?.iin || certInfo?.iin || 'Неизвестен';
-                            console.log("Вход выполнен пользователем с ИИН:", iin);
-
-                            // Здесь мы определяем кто вошел по ИИН и отправляем на нужный дашборд
-                            let mockEmail = 'eds_user@example.com';
-                            let targetRoute = '/hr';
-
-                            // Пример маппинга настоящих ИИН к ролям в системе (MVP):
-                            // if (iin === '123456789012') { mockEmail = 'financier_user@example.com'; targetRoute = '/finance'; }
-                            // else if (iin === '098765432109') { mockEmail = 'rf_user@example.com'; targetRoute = '/rf'; }
-
-                            // Mock login for MVP
-                            await login({ email: mockEmail, password: 'password123' });
-                            navigate(targetRoute, { replace: true });
-                        } catch (authErr: any) {
-                            console.error("Auth error post-QR:", authErr);
-                            setEdsError(authErr.message || "Ошибка проверки ЭЦП после подписания");
-                            setQrStep('idle');
+                        // If it returns message "not active" or something else, but no signatures
+                        if ((statusRes as any).message) {
+                            console.warn("SIGEX Response message:", (statusRes as any).message);
+                            // It usually means the connection dropped or we hit a parallel conflict. Let it retry.
+                            await new Promise(r => setTimeout(r, 2000));
+                            continue;
                         }
-                    } else if (statusRes.status === 'canceled' || statusRes.status === 'fail') {
-                        isPolling = false;
-                        setEdsError("Авторизация отменена в приложении.");
-                        setQrStep('idle');
-                    } else {
-                        // Poll again later (data, meta, new status)
-                        setTimeout(checkStatus, 3500);
+
+                    } catch (err: any) {
+                        console.error("Long-polling error/timeout:", err);
+                        // If network drops, retry
+                        await new Promise(r => setTimeout(r, 2000));
                     }
-                } catch (err: any) {
-                    console.error("Polling error:", err);
-                    setTimeout(checkStatus, 3500); // Retry on network errors
                 }
+
+                setEdsError("Время ожидания подписания истекло");
+                setQrStep('idle');
             };
 
-            setTimeout(checkStatus, 3500);
+            // Start waiting in background so it doesn't block React
+            waitForSignature();
 
         } catch (error: any) {
             console.error('eGov QR Auth Error:', error);

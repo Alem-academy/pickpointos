@@ -63,41 +63,41 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
 
             setStep('qr');
 
-            // 3. Start Polling
-            pollInterval.current = setInterval(checkStatus, 3000);
+            // 3. Wait for Signature
+            const waitForSignature = async () => {
+                let attempts = 0;
+                while (attempts < 5) {
+                    attempts++;
+                    try {
+                        const statusRes = await SigexService.checkQrStatus(qrRes.operationId);
+
+                        if (statusRes.signatures && statusRes.signatures.length > 0) {
+                            setStep('signing');
+                            await finalizeSignature(statusRes.signatures[0]);
+                            return;
+                        }
+
+                        if ((statusRes as any).message) {
+                            console.warn("SIGEX Response:", (statusRes as any).message);
+                            await new Promise(r => setTimeout(r, 2000));
+                            continue;
+                        }
+                    } catch (err: any) {
+                        console.error('Polling Error:', err);
+                        await new Promise(r => setTimeout(r, 2000));
+                    }
+                }
+
+                setError('Время ожидания подписания истекло');
+                setStep('error');
+            };
+
+            waitForSignature();
 
         } catch (err: any) {
             console.error('Sigex Init Error:', err);
             setError(err.message || 'Ошибка инициализации Sigex');
             setStep('error');
-        }
-    };
-
-    const checkStatus = async () => {
-        if (!operationIdRef.current) return;
-
-        try {
-            const statusRes = await SigexService.checkQrStatus(operationIdRef.current);
-
-            if (statusRes.status === 'done') {
-                stopPolling();
-                setStep('signing');
-
-                let finalSignature = "mock_signature";
-                if (statusRes.signatures && statusRes.signatures.length > 0) {
-                    finalSignature = statusRes.signatures[0];
-                }
-
-                await finalizeSignature(finalSignature);
-            } else if (statusRes.status === 'canceled' || statusRes.status === 'fail') {
-                stopPolling();
-                setError('Подписание отменено или произошла ошибка');
-                setStep('error');
-            }
-            // 'new', 'meta', 'data' -> continue polling
-        } catch (err) {
-            console.error('Polling Error:', err);
-            // Don't stop polling on transient network errors, but maybe count them?
         }
     };
 
