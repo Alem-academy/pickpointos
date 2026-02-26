@@ -16,7 +16,8 @@ router.post('/document', async (req, res) => {
         const response = await axios.post(`${SIGEX_API_URL}/document`, req.body, {
             headers: {
                 'Content-Type': 'application/json',
-            }
+            },
+            timeout: 15000,
         });
         res.json(response.data);
     } catch (error) {
@@ -150,7 +151,8 @@ router.post('/document/:id/data', async (req, res) => {
 router.post('/egovQr', async (req, res) => {
     try {
         const response = await axios.post(`${SIGEX_API_URL}/egovQr`, req.body, {
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 15000,
         });
         res.json(response.data);
     } catch (error) {
@@ -164,8 +166,10 @@ router.post('/egovQr', async (req, res) => {
  */
 router.post('/egovQr/:operationId/data', async (req, res) => {
     try {
+        // Long-poll: SIGEX can hold this open until user scans QR (~15-60s)
         const response = await axios.post(`${SIGEX_API_URL}/egovQr/${req.params.operationId}/data`, req.body, {
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 110000,
         });
         res.json(response.data);
     } catch (error) {
@@ -179,8 +183,10 @@ router.post('/egovQr/:operationId/data', async (req, res) => {
  */
 router.post('/egovQr/:operationId', async (req, res) => {
     try {
+        // Long-poll: SIGEX holds this open until user scans QR (~15-60s)
         const response = await axios.post(`${SIGEX_API_URL}/egovQr/${req.params.operationId}`, req.body, {
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 110000,
         });
         res.json(response.data);
     } catch (error) {
@@ -194,7 +200,10 @@ router.post('/egovQr/:operationId', async (req, res) => {
  */
 router.get('/egovQr/:operationId', async (req, res) => {
     try {
-        const response = await axios.get(`${SIGEX_API_URL}/egovQr/${req.params.operationId}`);
+        // Long-poll: SIGEX hangs this GET up to 60s waiting for user to sign
+        const response = await axios.get(`${SIGEX_API_URL}/egovQr/${req.params.operationId}`, {
+            timeout: 110000,
+        });
         res.json(response.data);
     } catch (error) {
         console.error('Error checking operation status:', error.response?.data || error.message);
