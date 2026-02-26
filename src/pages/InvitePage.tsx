@@ -65,53 +65,45 @@ export default function InvitePage() {
             SigexService.sendQrData(qrRes.operationId, base64Data, `Оформление: ${employee.full_name}`)
                 .catch(err => console.error("QR data upload expected timeout/error:", err));
 
-            // 4. Start polling for signature
-            isPollingRef.current = true;
-            pollQrStatus(qrRes.operationId);
+            // 4. Start long-polling for signature
+            const waitForSignature = async () => {
+                let attempts = 0;
+                while (attempts < 5) {
+                    attempts++;
+                    try {
+                        const statusRes = await SigexService.checkQrStatus(qrRes.operationId);
+
+                        if (statusRes.signatures && statusRes.signatures.length > 0) {
+                            // Validate signature
+                            await api.verifyInvite(token!, employee!.iin);
+                            setStep('success');
+                            return;
+                        }
+
+                        if ((statusRes as any).message) {
+                            console.warn("SIGEX Response:", (statusRes as any).message);
+                            await new Promise(r => setTimeout(r, 2000));
+                            continue;
+                        }
+
+                    } catch (err: any) {
+                        console.error("Polling error:", err);
+                        await new Promise(r => setTimeout(r, 2000));
+                    }
+                }
+
+                setErrorMsg("Время ожидания подписания истекло");
+                setStep('review');
+            };
+
+            // Do not await, let it run in background
+            waitForSignature();
 
         } catch (err: any) {
             console.error(err);
             setErrorMsg(err.message || 'Ошибка генерации документа для подписания');
         } finally {
             setIsGenerating(false);
-        }
-    };
-
-    const pollQrStatus = async (operationId: string) => {
-        if (!isPollingRef.current) return;
-
-        try {
-            const statusRes = await SigexService.checkQrStatus(operationId);
-
-            if (statusRes.status === 'done') {
-                isPollingRef.current = false;
-
-                if (!statusRes.signatures || statusRes.signatures.length === 0) {
-                    throw new Error("Не найдена подпись в ответе eGov QR");
-                }
-
-                // Get IIN from the document metadata/signature validation.
-                // In a real environment, backend does this. We mock verify it:
-                // const signature = statusRes.signatures[0];
-
-                // Usually we'd parse the CMS block. For MVP, we send to mock verification wrapper
-                // Here we just pass the planned IIN to simulate backend verification.
-                await api.verifyInvite(token!, employee!.iin);
-
-                setStep('success');
-
-            } else if (statusRes.status === 'canceled' || statusRes.status === 'fail') {
-                isPollingRef.current = false;
-                setErrorMsg("Вы отменили подписание в приложении eGov Mobile.");
-                setStep('review'); // go back to start
-            } else {
-                // Keep polling
-                setTimeout(() => pollQrStatus(operationId), 3500);
-            }
-        } catch (err: any) {
-            console.error("Polling error:", err);
-            // On network error, just retry
-            setTimeout(() => pollQrStatus(operationId), 3500);
         }
     };
 
