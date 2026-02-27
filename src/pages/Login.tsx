@@ -20,12 +20,12 @@ async function loginByIin(iin: string) {
  * Uses the gateway's /auth/parse-cms endpoint which registers the CMS with
  * SIGEX and reads userId (IIN) from the resulting document signature.
  */
-async function parseCmsForIin(cms: string, nonce: string): Promise<string> {
+async function parseCmsForIin(cms: string): Promise<string> {
     const gatewayUrl = import.meta.env.VITE_SIGEX_GATEWAY_URL || 'http://localhost:8080';
     const res = await fetch(`${gatewayUrl}/api/auth/parse-cms`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cms, nonce }),
+        body: JSON.stringify({ cms }),
     });
     if (!res.ok) {
         const err = await res.text();
@@ -212,7 +212,7 @@ export default function Login() {
 
                             try {
                                 // QR signature is a CMS block — extract IIN via gateway
-                                const iin = await parseCmsForIin(cms, nonce);
+                                const iin = await parseCmsForIin(cms);
 
                                 const iinRes = await loginByIin(iin);
                                 if (iinRes.found && iinRes.token && iinRes.user) {

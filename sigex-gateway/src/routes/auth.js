@@ -94,80 +94,45 @@ router.post('/login/document', async (req, res) => {
 
 /**
  * POST /auth/parse-cms
- * Extract the signer's IIN from a QR-flow CMS.
+ * Extract the signer's IIN from a QR-flow CMS by scanning the raw DER buffer.
  *
- * Flow:
- *  1. POST /api  – register CMS → get documentId
- *  2. POST /api/{id}/data – upload the original signed data (base64Nonce bytes)
- *     so SIGEX can verify the hash and mark the document as complete.
- *  3. GET /api/{id} – read signatures[0].userId (IIN)
+ * NCA RK (Kazakhstan National CA) X.509 certificates embed the IIN in the
+ * Subject field as:  SERIALNUMBER=IIN<12 digits>
+ * This string appears verbatim (ASCII) inside the CMS DER binary, so a simple
+ * regex on the decoded buffer is sufficient — no SIGEX roundtrip required.
  *
- * Body: { cms: "<base64 CMS>", nonce: "<original nonce from SIGEX getAuthNonce>" }
- * Response: { userId: "IIN...", subject, businessId? }
+ * Body: { cms: "<base64 CMS>" }
+ * Response: { userId: "IIN910506350166" }
  */
-router.post('/parse-cms', async (req, res) => {
-    const { cms, nonce } = req.body;
+router.post('/parse-cms', (req, res) => {
+    const { cms } = req.body;
     if (!cms) return res.status(400).json({ error: 'cms is required' });
-    if (!nonce) return res.status(400).json({ error: 'nonce is required (original SIGEX auth nonce)' });
 
-    let documentId;
     try {
-        // Step 1: Register the CMS as a new SIGEX document
-        const regRes = await axios.post(SIGEX_API_URL, {
-            title: 'PickPoint Auth',
-            signType: 'cms',
-            signature: cms,
-        }, {
-            headers: { 'Content-Type': 'application/json' },
-            timeout: 15000,
-        });
+        const buf = Buffer.from(cms, 'base64');
+        // IIN is stored as PrintableString in the certificate Subject attribute
+        // SERIALNUMBER = IIN<12 digits>   (all ASCII → visible in latin1 view)
+        const text = buf.toString('latin1');
+        const match = text.match(/IIN(\d{10,12})/);
 
-        documentId = regRes.data?.documentId;
-        if (!documentId) {
-            return res.status(422).json({ error: 'SIGEX did not return documentId', detail: regRes.data });
-        }
-        console.log(`[parse-cms] Registered documentId=${documentId}`);
-
-        // Step 2: Upload the signed data so SIGEX can complete registration.
-        // The frontend sent base64Nonce = btoa(unescape(encodeURIComponent(nonce))) as data.
-        // Replicate: convert nonce → base64 string, then send its UTF-8 bytes.
-        const base64Nonce = Buffer.from(unescape(encodeURIComponent(nonce)), 'binary').toString('base64');
-        const dataBytes = Buffer.from(base64Nonce, 'utf-8');
-
-        await axios.post(`${SIGEX_API_URL}/${documentId}/data`, dataBytes, {
-            headers: {
-                'Content-Type': 'application/octet-stream',
-                'Content-Length': dataBytes.length,
-            },
-            maxBodyLength: Infinity,
-            timeout: 15000,
-        });
-        console.log(`[parse-cms] Uploaded ${dataBytes.length} bytes for documentId=${documentId}`);
-
-        // Step 3: Fetch document details to get userId (IIN)
-        const docRes = await axios.get(`${SIGEX_API_URL}/${documentId}`, { timeout: 10000 });
-        const signer = docRes.data?.signatures?.[0];
-
-        if (!signer?.userId) {
-            console.warn('[parse-cms] No userId in signatures:', JSON.stringify(docRes.data?.signatures).substring(0, 400));
-            return res.status(422).json({
-                error: 'userId not found in SIGEX document signatures',
-                documentId,
-                signaturesCount: docRes.data?.signatures?.length ?? 0,
-            });
+        if (!match) {
+            // Also try BIN for corporate certificates
+            const binMatch = text.match(/BIN(\d{12})/);
+            if (binMatch) {
+                console.log(`[parse-cms] Found BIN: ${binMatch[0]}`);
+                return res.json({ userId: binMatch[0], isBin: true });
+            }
+            console.warn('[parse-cms] No IIN/BIN found in CMS buffer');
+            return res.status(422).json({ error: 'IIN not found in CMS certificate (NCA RK cert expected)' });
         }
 
-        res.json({
-            userId: signer.userId,
-            subject: signer.subject,
-            businessId: signer.businessId,
-            email: signer.email,
-        });
+        const userId = `IIN${match[1]}`;
+        console.log(`[parse-cms] Extracted userId=${userId}`);
+        res.json({ userId });
 
     } catch (err) {
-        const detail = err.response?.data || err.message;
-        console.error(`[parse-cms] Error (documentId=${documentId}):`, typeof detail === 'object' ? JSON.stringify(detail) : detail);
-        res.status(err.response?.status || 500).json({ error: 'parse-cms failed', detail, documentId });
+        console.error('[parse-cms] Buffer parse error:', err.message);
+        res.status(500).json({ error: 'Failed to parse CMS buffer', detail: err.message });
     }
 });
 
