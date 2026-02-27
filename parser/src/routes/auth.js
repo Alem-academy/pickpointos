@@ -118,7 +118,7 @@ router.post('/login/iin', async (req, res) => {
         if (result.rows.length === 0) {
             // IIN not in DB at all — redirect to self-service page
             Logger.info(`EDS Login: IIN ${iin} not found in DB`);
-            return res.status(404).json({ found: false });
+            return res.status(200).json({ found: false });
         }
 
         const employee = result.rows[0];
