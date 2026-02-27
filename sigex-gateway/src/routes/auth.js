@@ -94,54 +94,81 @@ router.post('/login/document', async (req, res) => {
 
 /**
  * POST /auth/parse-cms
- * Extract the signer's IIN from a QR-flow CMS signature.
+ * Extract the signer's IIN from a QR-flow CMS.
  *
- * The eGov QR flow has the user sign base64(nonce).
- * We call SIGEX /api/auth with { nonce: base64Nonce, signature: cms, external: true }.
- * SIGEX verifies the CMS against the nonce and returns certInfo with userId (IIN).
+ * Flow:
+ *  1. POST /api  – register CMS → get documentId
+ *  2. POST /api/{id}/data – upload the original signed data (base64Nonce bytes)
+ *     so SIGEX can verify the hash and mark the document as complete.
+ *  3. GET /api/{id} – read signatures[0].userId (IIN)
  *
- * Body: { cms: "<base64 CMS>", nonce: "<original nonce string>" }
+ * Body: { cms: "<base64 CMS>", nonce: "<original nonce from SIGEX getAuthNonce>" }
  * Response: { userId: "IIN...", subject, businessId? }
  */
 router.post('/parse-cms', async (req, res) => {
     const { cms, nonce } = req.body;
     if (!cms) return res.status(400).json({ error: 'cms is required' });
+    if (!nonce) return res.status(400).json({ error: 'nonce is required (original SIGEX auth nonce)' });
 
+    let documentId;
     try {
-        // The QR flow signed btoa(encodeURIComponent(nonce)) — replicate that here
-        const base64Nonce = nonce ? Buffer.from(decodeURIComponent(encodeURIComponent(nonce))).toString('base64') : '';
-
-        const authRes = await axios.post(`${SIGEX_API_URL}/auth`, {
-            nonce: base64Nonce,
+        // Step 1: Register the CMS as a new SIGEX document
+        const regRes = await axios.post(SIGEX_API_URL, {
+            title: 'PickPoint Auth',
+            signType: 'cms',
             signature: cms,
-            external: true,
         }, {
             headers: { 'Content-Type': 'application/json' },
             timeout: 15000,
         });
 
-        const data = authRes.data;
-        const userId = data.userId;
+        documentId = regRes.data?.documentId;
+        if (!documentId) {
+            return res.status(422).json({ error: 'SIGEX did not return documentId', detail: regRes.data });
+        }
+        console.log(`[parse-cms] Registered documentId=${documentId}`);
 
-        if (!userId) {
-            console.warn('[parse-cms] No userId in SIGEX response:', JSON.stringify(data).substring(0, 400));
-            return res.status(422).json({ error: 'userId not found in SIGEX auth response', detail: data });
+        // Step 2: Upload the signed data so SIGEX can complete registration.
+        // The frontend sent base64Nonce = btoa(unescape(encodeURIComponent(nonce))) as data.
+        // Replicate: convert nonce → base64 string, then send its UTF-8 bytes.
+        const base64Nonce = Buffer.from(unescape(encodeURIComponent(nonce)), 'binary').toString('base64');
+        const dataBytes = Buffer.from(base64Nonce, 'utf-8');
+
+        await axios.post(`${SIGEX_API_URL}/${documentId}/data`, dataBytes, {
+            headers: {
+                'Content-Type': 'application/octet-stream',
+                'Content-Length': dataBytes.length,
+            },
+            maxBodyLength: Infinity,
+            timeout: 15000,
+        });
+        console.log(`[parse-cms] Uploaded ${dataBytes.length} bytes for documentId=${documentId}`);
+
+        // Step 3: Fetch document details to get userId (IIN)
+        const docRes = await axios.get(`${SIGEX_API_URL}/${documentId}`, { timeout: 10000 });
+        const signer = docRes.data?.signatures?.[0];
+
+        if (!signer?.userId) {
+            console.warn('[parse-cms] No userId in signatures:', JSON.stringify(docRes.data?.signatures).substring(0, 400));
+            return res.status(422).json({
+                error: 'userId not found in SIGEX document signatures',
+                documentId,
+                signaturesCount: docRes.data?.signatures?.length ?? 0,
+            });
         }
 
         res.json({
-            userId,                       // IIN (may include "IIN" prefix)
-            subject: data.subject,
-            businessId: data.businessId,
-            email: data.email,
+            userId: signer.userId,
+            subject: signer.subject,
+            businessId: signer.businessId,
+            email: signer.email,
         });
 
     } catch (err) {
         const detail = err.response?.data || err.message;
-        console.error('[parse-cms] SIGEX auth error:', typeof detail === 'object' ? JSON.stringify(detail) : detail);
-        res.status(err.response?.status || 500).json({ error: 'SIGEX auth failed', detail });
+        console.error(`[parse-cms] Error (documentId=${documentId}):`, typeof detail === 'object' ? JSON.stringify(detail) : detail);
+        res.status(err.response?.status || 500).json({ error: 'parse-cms failed', detail, documentId });
     }
 });
 
 export default router;
-
-
