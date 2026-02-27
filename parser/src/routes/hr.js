@@ -16,6 +16,34 @@ router.get('/pvz', async (req, res) => {
     }
 });
 
+// GET /employees/by-iin/:iin - Public endpoint: fetch employee data by IIN (for self-service profile)
+// No auth required — used after eGov QR sign to show employee their own data.
+router.get('/employees/by-iin/:iin', async (req, res) => {
+    try {
+        const { iin } = req.params;
+
+        const result = await query(`
+            SELECT e.id, e.iin, e.full_name, e.role, e.status, e.phone, e.email,
+                   e.base_rate, e.hired_at, e.probation_until, e.address,
+                   p.name as main_pvz_name, p.address as main_pvz_address
+            FROM employees e
+            LEFT JOIN pvz_points p ON e.main_pvz_id = p.id
+            WHERE e.iin = $1
+        `, [iin]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ found: false });
+        }
+
+        res.json({ found: true, employee: result.rows[0] });
+    } catch (err) {
+        Logger.error('Error fetching employee by IIN:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+
 // GET /employees - List employees with filters
 router.get('/employees', authenticateToken, async (req, res) => {
     try {

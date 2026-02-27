@@ -5,6 +5,7 @@ import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { Layout } from "@/components/layout/Layout";
 import Login from "@/pages/Login";
 import InvitePage from "@/pages/InvitePage";
+import MyProfile from "@/pages/MyProfile";
 import HRDashboard from "@/pages/hr/Dashboard";
 import NewEmployeePage from "@/pages/hr/NewEmployee";
 import RFDashboard from "@/pages/rf/Dashboard";
@@ -48,6 +49,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/invite/:token" element={<InvitePage />} />
+          <Route path="/my-profile" element={<MyProfile />} />
 
           <Route element={<Layout />}>
             {/* HR Routes */}

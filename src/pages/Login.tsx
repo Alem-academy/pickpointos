@@ -5,13 +5,20 @@ import { Mail, Lock, Eye, EyeOff, Loader2, Smartphone, Monitor, CheckCircle } fr
 import { SigexService } from "@/services/sigex";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import api from "@/services/api";
 // @ts-ignore
 import { NCALayerClient } from 'ncalayer-js-client';
+
+/** Login via IIN obtained from SIGEX certInfo (after successful eGov signature). */
+async function loginByIin(iin: string) {
+    const res = await api.post('/auth/login/iin', { iin });
+    return res.data as { found: boolean; token?: string; user?: Record<string, unknown> };
+}
 
 export default function Login() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { login } = useAuth();
+    const { login, loginWithToken } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
@@ -101,12 +108,26 @@ export default function Login() {
                 return;
             }
 
-            // Send base64 signature back to Sigex Gateway for auth
-            await SigexService.authenticate(nonce, signature);
+            // Send signature to SIGEX for cert verification → get IIN
+            const authData = await SigexService.authenticate(nonce, signature);
+            const certInfo = authData?.certInfo || authData;
+            const iin = certInfo?.subjectInfo?.iin || certInfo?.subject?.iin || certInfo?.iin;
 
-            // Temporary Mock for MVP
-            await login({ email: 'eds_user@example.com', password: 'password123' });
-            navigate('/hr', { replace: true });
+            if (!iin) {
+                setEdsError("Не удалось извлечь ИИН из ЭЦП.");
+                setIsLoading(false);
+                return;
+            }
+
+            const iinRes = await loginByIin(iin);
+            if (iinRes.found && iinRes.token && iinRes.user) {
+                loginWithToken(iinRes.user, iinRes.token);
+                const target = location.state?.from?.pathname || '/';
+                navigate(target, { replace: true });
+            } else {
+                // IIN not in DB — redirect to self-service profile page
+                navigate(`/my-profile?iin=${encodeURIComponent(iin)}`, { replace: true });
+            }
 
         } catch (error: any) {
             console.error("EDS Login failed:", error);
@@ -171,13 +192,19 @@ export default function Login() {
                             try {
                                 const authData = await SigexService.authenticate(nonce, signature);
                                 const certInfo = authData?.certInfo || authData;
-                                console.log("Вход выполнен пользователем с ИИН:", certInfo?.subjectInfo?.iin || certInfo?.iin || 'Неизвестен');
+                                const iin = certInfo?.subjectInfo?.iin || certInfo?.subject?.iin || certInfo?.iin;
 
-                                let mockEmail = 'eds_user@example.com';
-                                let targetRoute = '/hr';
+                                if (!iin) throw new Error("Не удалось извлечь ИИН из ЭЦП");
 
-                                await login({ email: mockEmail, password: 'password123' });
-                                navigate(targetRoute, { replace: true });
+                                const iinRes = await loginByIin(iin);
+                                if (iinRes.found && iinRes.token && iinRes.user) {
+                                    loginWithToken(iinRes.user, iinRes.token);
+                                    const target = location.state?.from?.pathname || '/';
+                                    navigate(target, { replace: true });
+                                } else {
+                                    // IIN not in DB — redirect to self-service page
+                                    navigate(`/my-profile?iin=${encodeURIComponent(iin)}`, { replace: true });
+                                }
                             } catch (authErr: any) {
                                 console.error("Auth validation failed:", authErr);
                                 setEdsError(authErr.message || "Ошибка проверки ЭЦП сервером.");

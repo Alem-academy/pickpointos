@@ -97,4 +97,60 @@ router.get('/me', authenticateToken, async (req, res) => {
     }
 });
 
+// POST /auth/login/iin - Login via eGov IIN extracted from SIGEX certInfo
+// The IIN comes from a SIGEX-verified digital signature, so it is already trusted.
+router.post('/login/iin', async (req, res) => {
+    try {
+        const { iin } = req.body;
+
+        if (!iin) {
+            return res.status(400).json({ error: 'IIN is required' });
+        }
+
+        // 1. Find employee by IIN
+        const result = await query(`
+            SELECT e.*, p.name as main_pvz_name
+            FROM employees e
+            LEFT JOIN pvz_points p ON e.main_pvz_id = p.id
+            WHERE e.iin = $1
+        `, [iin]);
+
+        if (result.rows.length === 0) {
+            // IIN not in DB at all — redirect to self-service page
+            Logger.info(`EDS Login: IIN ${iin} not found in DB`);
+            return res.status(404).json({ found: false });
+        }
+
+        const employee = result.rows[0];
+        const { password_hash, invite_token, ...safeEmployee } = employee;
+
+        // 2. If employee exists but has no system access (e.g. status='new' without email/role)
+        // Still generate a token for self-service — using role from employee record.
+        Logger.info(`EDS Login: IIN ${iin} -> employee ${employee.id} (${employee.full_name}), status: ${employee.status}`);
+
+        // 3. Generate JWT — role comes from employees table
+        const token = jwt.sign(
+            {
+                id: employee.id,
+                email: employee.email || `iin_${iin}@pvz.internal`,
+                role: employee.role,
+                main_pvz_id: employee.main_pvz_id,
+                iin: employee.iin,
+            },
+            JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        res.json({
+            found: true,
+            token,
+            user: safeEmployee
+        });
+
+    } catch (err) {
+        Logger.error('IIN Login error:', err);
+        res.status(500).json({ error: 'Internal server error', details: err.message });
+    }
+});
+
 export default router;

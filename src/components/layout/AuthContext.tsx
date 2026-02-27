@@ -6,6 +6,7 @@ import { authService } from "@/services/auth";
 interface AuthContextType {
     user: User | null;
     login: (credentials: LoginCredentials) => Promise<void>;
+    loginWithToken: (userData: Record<string, unknown>, token: string) => void;
     logout: () => void;
     isLoading: boolean;
 }
@@ -59,6 +60,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const loginWithToken = (userData: Record<string, unknown>, token: string) => {
+        const user: User = {
+            id: String(userData.id || ''),
+            email: String(userData.email || `iin_${userData.iin}@pvz.internal`),
+            name: String(userData.full_name || userData.name || 'Сотрудник'),
+            role: (userData.role as User['role']) || 'employee',
+            pvz_id: (userData.main_pvz_id as string) || null,
+            token,
+        };
+        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('token', token);
+        setUser(user);
+    };
+
     const logout = () => {
         localStorage.clear();
         setUser(null);
@@ -66,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+        <AuthContext.Provider value={{ user, isLoading, login, loginWithToken, logout }}>
             {children}
         </AuthContext.Provider>
     );
