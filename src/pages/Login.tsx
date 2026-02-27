@@ -172,9 +172,14 @@ export default function Login() {
             // 2. Register QR signing session
             const qrRes = await SigexService.registerQrSigning('Авторизация в PickPoint');
 
-            // 3. Upload data to SIGEX BEFORE showing deeplinks.
-            //    eGov Mobile immediately fetches the document when the deeplink is opened,
-            //    so SIGEX must already have the data or "Проверка загруженных документов" hangs forever.
+            // 3. Show QR and deeplinks immediately so user can scan
+            setQrCode(qrRes.qrCode);
+            setEGovLinks({ mobile: qrRes.eGovMobileLaunchLink, business: qrRes.eGovBusinessLaunchLink });
+            setQrStep('qr');
+
+            // 4. Send data to SIGEX (LONG-POLL — SIGEX keeps this connection open until user signs).
+            //    NOTE: SIGEX makes the data available to eGov Mobile immediately when the request
+            //    body is received, even before the HTTP response completes. Awaiting here is correct.
             const base64Nonce = btoa(unescape(encodeURIComponent(nonce)));
 
             let postSuccess = false;
@@ -194,11 +199,6 @@ export default function Login() {
                 setQrStep('idle');
                 return;
             }
-
-            // 4. Data is on SIGEX — NOW show QR code and deeplinks
-            setQrCode(qrRes.qrCode);
-            setEGovLinks({ mobile: qrRes.eGovMobileLaunchLink, business: qrRes.eGovBusinessLaunchLink });
-            setQrStep('qr');
 
 
             // 4. Verification & Status Check (THIS HANGS / POLLS UP TO 25 TIMES)
