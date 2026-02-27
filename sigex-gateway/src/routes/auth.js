@@ -110,25 +110,47 @@ router.post('/parse-cms', (req, res) => {
 
     try {
         const buf = Buffer.from(cms, 'base64');
-        // IIN is stored as PrintableString in the certificate Subject attribute
-        // SERIALNUMBER = IIN<12 digits>   (all ASCII → visible in latin1 view)
-        const text = buf.toString('latin1');
-        const match = text.match(/IIN(\d{10,12})/);
+        const latin = buf.toString('latin1');
+        const utf8 = buf.toString('utf8');
 
-        if (!match) {
-            // Also try BIN for corporate certificates
-            const binMatch = text.match(/BIN(\d{12})/);
-            if (binMatch) {
-                console.log(`[parse-cms] Found BIN: ${binMatch[0]}`);
-                return res.json({ userId: binMatch[0], isBin: true });
-            }
+        // ── IIN / BIN (PrintableString, ASCII) ──────────────────────────────
+        const iinMatch = latin.match(/IIN(\d{10,12})/);
+        const binMatch = latin.match(/BIN(\d{12})/);
+
+        if (!iinMatch && !binMatch) {
             console.warn('[parse-cms] No IIN/BIN found in CMS buffer');
             return res.status(422).json({ error: 'IIN not found in CMS certificate (NCA RK cert expected)' });
         }
 
-        const userId = `IIN${match[1]}`;
-        console.log(`[parse-cms] Extracted userId=${userId}`);
-        res.json({ userId });
+        const userId = iinMatch ? `IIN${iinMatch[1]}` : binMatch[0];
+        const isBin = !iinMatch;
+
+        // ── Cyrillic name fields (UTF8String in DER) ─────────────────────────
+        // Find all Cyrillic word groups ≥ 2 chars.  The subject will contain:
+        //   surname  (SURNAME / SN),  given name (GIVENNAME / GN),  CN (full name)
+        // We collect unique strings longer than 3 chars and exclude the CA name.
+        const cyrillicRe = /[А-ЯЁа-яёӘәІіҢңҒғҰұҮүҚқӨөҺһ]{2,}(?:[\s\-][А-ЯЁа-яёӘәІіҢңҒғҰұҮүҚқӨөҺһ]{2,})*/gu;
+        const allCyrillic = [...utf8.matchAll(cyrillicRe)]
+            .map(m => m[0].trim())
+            .filter(s => s.length > 3);
+        const unique = [...new Set(allCyrillic)];
+
+        // Heuristic: the CA string contains "ОРТАЛЫҚ" or "ОРГАН" — exclude it.
+        const names = unique.filter(s => !s.includes('ОРТАЛЫҚ') && !s.includes('ОРГАН') && !s.includes('КУӘЛАН'));
+
+        // Longest string is typically the full CN (e.g. "ИБРАГИМОВ МИРЖАН")
+        const fullName = names.sort((a, b) => b.length - a.length)[0] || '';
+        // Single-word strings are surname / given name
+        const parts = names.filter(s => !s.includes(' '));
+
+        console.log(`[parse-cms] userId=${userId} fullName=${fullName}`);
+        res.json({
+            userId,
+            isBin,
+            fullName: fullName || undefined,
+            surname: parts[0] || undefined,
+            givenName: parts[1] || undefined,
+        });
 
     } catch (err) {
         console.error('[parse-cms] Buffer parse error:', err.message);

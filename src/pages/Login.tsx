@@ -20,7 +20,9 @@ async function loginByIin(iin: string) {
  * Uses the gateway's /auth/parse-cms endpoint which registers the CMS with
  * SIGEX and reads userId (IIN) from the resulting document signature.
  */
-async function parseCmsForIin(cms: string): Promise<string> {
+interface CertInfo { userId: string; fullName?: string; isBin?: boolean; }
+
+async function parseCmsForIin(cms: string): Promise<CertInfo> {
     const gatewayUrl = import.meta.env.VITE_SIGEX_GATEWAY_URL || 'http://localhost:8080';
     const res = await fetch(`${gatewayUrl}/api/auth/parse-cms`, {
         method: 'POST',
@@ -33,7 +35,7 @@ async function parseCmsForIin(cms: string): Promise<string> {
     }
     const data = await res.json();
     if (!data.userId) throw new Error('ИИН не найден в сертификате ЭЦП');
-    return String(data.userId).replace(/^IIN/i, '');
+    return data as CertInfo;
 }
 
 export default function Login() {
@@ -211,8 +213,9 @@ export default function Login() {
                             if (!cms) throw new Error("Подпись пуста");
 
                             try {
-                                // QR signature is a CMS block — extract IIN via gateway
-                                const iin = await parseCmsForIin(cms);
+                                // QR signature is a CMS block — extract IIN + name via gateway
+                                const cert = await parseCmsForIin(cms);
+                                const iin = String(cert.userId).replace(/^IIN/i, '');
 
                                 const iinRes = await loginByIin(iin);
                                 if (iinRes.found && iinRes.token && iinRes.user) {
@@ -220,8 +223,10 @@ export default function Login() {
                                     const target = location.state?.from?.pathname || '/';
                                     navigate(target, { replace: true });
                                 } else {
-                                    // IIN not in DB — redirect to self-service page
-                                    navigate(`/my-profile?iin=${encodeURIComponent(iin)}`, { replace: true });
+                                    // IIN not in DB — redirect to access-denied profile page
+                                    const q = new URLSearchParams({ iin });
+                                    if (cert.fullName) q.set('name', cert.fullName);
+                                    navigate(`/my-profile?${q.toString()}`, { replace: true });
                                 }
                             } catch (authErr: any) {
                                 console.error("Auth validation failed:", authErr);
