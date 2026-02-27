@@ -92,4 +92,65 @@ router.post('/login/document', async (req, res) => {
     }
 });
 
+/**
+ * POST /auth/parse-cms
+ * Extract the signer's IIN from a CMS signature block (e.g. returned by eGov QR flow).
+ * The CMS is registered as a temporary SIGEX document. SIGEX validates the CMS and
+ * returns the userId (IIN) from the embedded certificate. We delete the doc right away.
+ *
+ * Body: { cms: "<base64 encoded CMS>" }
+ * Response: { userId: "IIN...", subject: "...", businessId?: "..." }
+ */
+router.post('/parse-cms', async (req, res) => {
+    const { cms } = req.body;
+    if (!cms) {
+        return res.status(400).json({ error: 'cms field is required' });
+    }
+
+    try {
+        // Register CMS as a temporary SIGEX document — responses include userId (IIN)
+        const regRes = await axios.post(`${SIGEX_API_URL}`, {
+            title: 'PickPoint Auth',
+            description: 'Temporary auth document',
+            signType: 'cms',
+            signature: cms,
+        }, {
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 15000,
+        });
+
+        // SIGEX returns { documentId, signId } on success.
+        // The userId is embedded in the document — fetch it.
+        const { documentId } = regRes.data;
+        if (!documentId) {
+            return res.status(422).json({ error: 'SIGEX did not return a documentId', detail: regRes.data });
+        }
+
+        // GET the document details to obtain the signer info (userId = IIN)
+        const docRes = await axios.get(`${SIGEX_API_URL}/${documentId}`, {
+            timeout: 10000,
+        });
+
+        const signatures = docRes.data?.signatures || [];
+        const signer = signatures[0];
+
+        if (!signer || !signer.userId) {
+            return res.status(422).json({ error: 'Could not extract userId from CMS', documentId });
+        }
+
+        res.json({
+            userId: signer.userId,          // IIN
+            subject: signer.subject,
+            businessId: signer.businessId,  // BIN if corporate cert
+            email: signer.email,
+        });
+
+    } catch (err) {
+        const detail = err.response?.data || err.message;
+        console.error('[parse-cms] Error:', detail);
+        res.status(err.response?.status || 500).json({ error: 'Failed to parse CMS', detail });
+    }
+});
+
 export default router;
+

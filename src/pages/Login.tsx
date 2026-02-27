@@ -15,6 +15,30 @@ async function loginByIin(iin: string) {
     return res.data as { found: boolean; token?: string; user?: Record<string, unknown> };
 }
 
+/**
+ * Parse a CMS block from the eGov QR flow to extract the signer's IIN.
+ * Uses the gateway's /auth/parse-cms endpoint which registers the CMS with
+ * SIGEX and reads userId (IIN) from the resulting document signature.
+ */
+async function parseCmsForIin(cms: string): Promise<string> {
+    // SIGEX_GATEWAY_URL is not accessible here, but the frontend API client
+    // already knows the gateway base. We hit the gateway directly.
+    const gatewayUrl = import.meta.env.VITE_SIGEX_GATEWAY_URL || 'http://localhost:8080';
+    const res = await fetch(`${gatewayUrl}/api/auth/parse-cms`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cms }),
+    });
+    if (!res.ok) {
+        const err = await res.text();
+        throw new Error(`parse-cms failed: ${res.status} ${err}`);
+    }
+    const data = await res.json();
+    if (!data.userId) throw new Error('ИИН не найден в сертификате ЭЦП');
+    // userId from NCA RK certs is like "IIN123456789012" — strip the prefix
+    return String(data.userId).replace(/^IIN/i, '');
+}
+
 export default function Login() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -186,15 +210,12 @@ export default function Login() {
                         if (statusRes.signatures && statusRes.signatures.length > 0) {
                             setQrStep('success');
 
-                            const signature = statusRes.signatures[0];
-                            if (!signature) throw new Error("Подпись пуста");
+                            const cms = statusRes.signatures[0];
+                            if (!cms) throw new Error("Подпись пуста");
 
                             try {
-                                const authData = await SigexService.authenticate(nonce, signature);
-                                const certInfo = authData?.certInfo || authData;
-                                const iin = certInfo?.subjectInfo?.iin || certInfo?.subject?.iin || certInfo?.iin;
-
-                                if (!iin) throw new Error("Не удалось извлечь ИИН из ЭЦП");
+                                // QR signature is a CMS block — extract IIN via gateway
+                                const iin = await parseCmsForIin(cms);
 
                                 const iinRes = await loginByIin(iin);
                                 if (iinRes.found && iinRes.token && iinRes.user) {
