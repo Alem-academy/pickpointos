@@ -183,7 +183,9 @@ export const EMPLOYMENT_APPLICATION_TEMPLATE = `
 export function fillTemplate(template, data) {
     let content = template;
     for (const key in data) {
-        content = content.replace(new RegExp(\`\\\\{\\\\{$\{key\}\\\\}\\\\}\`, 'g'), data[key] || '__________');
+        const placeholder = '{{' + key + '}}';
+        const value = data[key] || '__________';
+        content = content.split(placeholder).join(value);
     }
     return content;
 }
