@@ -75,7 +75,7 @@ export default function NewHire() {
             return formData.firstName && formData.lastName && formData.iin.length === 12 && formData.phone;
         }
         if (stepIndex === 1) {
-            return formData.pvzId && formData.baseRate;
+            return formData.pvzId !== '';
         }
         return true; // Step 2 (Documents) validated on submit
     };

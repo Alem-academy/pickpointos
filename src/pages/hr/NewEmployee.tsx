@@ -76,7 +76,7 @@ export default function NewEmployeePage() {
             return formData.firstName && formData.lastName && formData.iin.length === 12 && formData.phone;
         }
         if (stepIndex === 1) {
-            return formData.role && formData.baseRate;
+            return formData.role;
         }
         return true;
     };
