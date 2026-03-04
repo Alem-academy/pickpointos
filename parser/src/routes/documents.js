@@ -134,44 +134,86 @@ router.post('/documents/generate', async (req, res) => {
 
         let htmlContent = '';
 
+        // ─── Employer constants ───────────────────────────────────────────
+        const EMPLOYER = {
+            name: 'AlemLab PickPoint',
+            bin: '230540009760',
+            director: 'Жалелов А.К.',
+            address: 'г. Алматы, ул. Байзакова 280',
+            bank: 'АО «Kaspi Bank»',
+            iban: 'KZ54722S000009084425',
+        };
+
+        // ─── Date helpers ──────────────────────────────────────────────────
+        const MONTHS_RU = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+            'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+        const now = new Date();
+        const contractDay = String(now.getDate()).padStart(2, '0');
+        const contractMonth = MONTHS_RU[now.getMonth()];
+        const contractYear = now.getFullYear();
+        const dateRu = `${contractDay} ${contractMonth} ${contractYear}`;
+
+        // ─── Contract number ───────────────────────────────────────────────
+        // Count existing contracts for this employee to get sequence
+        const cntRes = await query(
+            `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type = 'contract'`, [employeeId]
+        );
+        const seq = parseInt(cntRes.rows[0].count, 10) + 1;
+        const yearShort = String(contractYear).slice(-2);
+        const contractNum = `ТД-${String(seq).padStart(3, '0')}/${yearShort}`;
+
         if (type === 'contract') {
             htmlContent = fillTemplate(CONTRACT_TEMPLATE, {
-                contract_number: `TR-${emp.id.slice(0, 8).toUpperCase()}`,
-                date: new Date().toLocaleDateString('ru-RU'),
+                contract_number: contractNum,
+                contract_day: contractDay,
+                contract_month: contractMonth,
+                contract_year: String(contractYear),
+                // Employer
+                employer_name: EMPLOYER.name,
+                employer_bin: EMPLOYER.bin,
+                employer_director: EMPLOYER.director,
+                employer_address: EMPLOYER.address,
+                employer_bank: EMPLOYER.bank,
+                employer_iban: EMPLOYER.iban,
+                // Employee
                 full_name: emp.full_name,
-                iin: emp.iin,
-                address: emp.address || 'Адрес проживания не указан',
-                iban: emp.iban || 'IBAN не указан',
+                iin: emp.iin || '__________',
+                id_number: emp.id_number || '__________',
+                address: emp.address || 'не указан',
+                iban: emp.iban || 'не указан',
                 position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ',
-                pvz_address: emp.pvz_address || 'Адрес ПВЗ не указан',
-                start_date: new Date().toLocaleDateString('ru-RU'),
-                base_rate: emp.base_rate || '0'
+                pvz_address: emp.pvz_address || 'не указан',
+                start_date: dateRu,
+                base_rate: emp.base_rate ? Number(emp.base_rate).toLocaleString('ru-RU') : '0',
             });
         } else if (type === 'order_hiring') {
-            // Find contract number if exists
-            const contractRes = await query('SELECT id, created_at FROM documents WHERE employee_id = $1 AND type = \'contract\' LIMIT 1', [employeeId]);
-            const contractNum = contractRes.rows.length > 0 ? `TR-${contractRes.rows[0].id.slice(0, 8).toUpperCase()}` : '_______';
-            const contractDate = contractRes.rows.length > 0 ? new Date(contractRes.rows[0].created_at).toLocaleDateString('ru-RU') : '_______';
+            const contractRes = await query(
+                `SELECT id, created_at FROM documents WHERE employee_id = $1 AND type = 'contract' ORDER BY created_at DESC LIMIT 1`,
+                [employeeId]
+            );
+            const existingNum = contractRes.rows.length > 0 ? `ТД-001/${yearShort}` : '_______';
+            const existingDate = contractRes.rows.length > 0
+                ? new Date(contractRes.rows[0].created_at).toLocaleDateString('ru-RU') : '_______';
 
             htmlContent = fillTemplate(HIRING_ORDER_TEMPLATE, {
-                order_number: `ORD-${Date.now().toString().slice(-6)}`,
-                contract_number: contractNum,
-                date: contractDate,
+                order_number: `П-${String(seq).padStart(3, '0')}/${yearShort}`,
+                contract_number: existingNum,
+                date: existingDate,
                 full_name: emp.full_name,
-                iin: emp.iin,
+                iin: emp.iin || '__________',
                 position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ',
-                pvz_address: emp.pvz_address || 'Адрес не указан',
-                start_date: new Date().toLocaleDateString('ru-RU'),
-                base_rate: emp.base_rate || '0'
+                pvz_address: emp.pvz_address || 'не указан',
+                start_date: dateRu,
+                base_rate: emp.base_rate ? Number(emp.base_rate).toLocaleString('ru-RU') : '0',
             });
         } else if (type === 'application') {
             htmlContent = fillTemplate(EMPLOYMENT_APPLICATION_TEMPLATE, {
                 full_name: emp.full_name,
-                iin: emp.iin,
+                iin: emp.iin || '__________',
                 phone: emp.phone || '_____________',
                 position: emp.role === 'rf' ? 'Регионального менеджера' : 'Менеджера ПВЗ',
                 pvz_address: emp.pvz_address || '_____________',
-                date: new Date().toLocaleDateString('ru-RU')
+                date: dateRu,
             });
         } else {
             return res.status(400).json({ error: 'Unsupported document type' });
