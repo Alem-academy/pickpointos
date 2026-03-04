@@ -238,7 +238,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
 
                                     {/* Actions */}
                                     <div className="mt-auto pt-3 flex flex-wrap items-center gap-2 border-t">
-                                        {doc.scan_url && (
+                                        {(doc.scan_url || ['contract', 'order_hiring', 'application'].includes(doc.type)) && (
                                             <button
                                                 onClick={() => handlePreview(doc)}
                                                 className="flex flex-1 justify-center items-center gap-1 rounded bg-slate-100 px-2 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-200 transition-colors"
@@ -354,7 +354,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                             </button>
                             <button
                                 onClick={() => handleGenerate('contract', true)}
-                                disabled={ibanInput.length !== 20 || !!isGenerating}
+                                disabled={ibanInput.length < 16 || !!isGenerating}
                                 className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                             >
                                 {isGenerating === 'contract' ? (
