@@ -29,8 +29,13 @@ export default function NewPvz() {
             setCreatedPvz(pvz);
 
             // Fetch initial checklist
-            const list = await api.getPvzChecklist(pvz.id);
-            setChecklist(list);
+            try {
+                const list = await api.getPvzChecklist(pvz.id);
+                setChecklist(Array.isArray(list) ? list : []);
+            } catch (checkErr) {
+                console.error("Failed to fetch checklist", checkErr);
+                setChecklist([]);
+            }
 
             setStep('checklist');
         } catch (err) {
@@ -61,7 +66,8 @@ export default function NewPvz() {
         }
     };
 
-    const progress = checklist.length > 0
+    const isChecklistValid = Array.isArray(checklist);
+    const progress = isChecklistValid && checklist.length > 0
         ? Math.round((checklist.filter(i => i.status === 'done').length / checklist.length) * 100)
         : 0;
 
@@ -193,7 +199,7 @@ export default function NewPvz() {
                             </div>
 
                             <div className="space-y-4">
-                                {['renovation', 'equipment', 'staffing', 'legal'].map(category => {
+                                {isChecklistValid && ['renovation', 'equipment', 'staffing', 'legal'].map(category => {
                                     const items = checklist.filter(i => i.category === category);
                                     if (items.length === 0) return null;
 

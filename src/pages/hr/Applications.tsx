@@ -15,7 +15,7 @@ export default function Applications() {
     const loadEmployees = useCallback(async () => {
         try {
             const data = await api.getEmployees();
-            setEmployees(data);
+            setEmployees(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error(err);
         }

@@ -3,6 +3,36 @@ import { query } from '../lib/db.js';
 
 const router = express.Router();
 
+// GET /pvz/checklist/:id - Get checklist for a PVZ
+router.get('/pvz/checklist/:id', async (req, res) => {
+    try {
+        // Return dummy checklist items if there's no DB table for it yet
+        res.json([
+            { id: '1', category: 'renovation', label: 'Покраска стен', status: 'pending' },
+            { id: '2', category: 'renovation', label: 'Монтаж освещения', status: 'pending' },
+            { id: '3', category: 'equipment', label: 'Установка столов', status: 'pending' },
+            { id: '4', category: 'equipment', label: 'Подключение ПК и сканера', status: 'pending' },
+            { id: '5', category: 'staffing', label: 'Найм менеджеров', status: 'pending' },
+            { id: '6', category: 'legal', label: 'Подписание договора аренды', status: 'done' }
+        ]);
+    } catch (err) {
+        console.error('Error fetching checklist:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// PATCH /pvz/checklist/:pvzId/item/:itemId - Update checklist item status
+router.patch('/pvz/checklist/:pvzId/item/:itemId', async (req, res) => {
+    try {
+        const { status } = req.body;
+        // Mock update for now
+        res.json({ message: 'Updated', status });
+    } catch (err) {
+        console.error('Error updating checklist:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // GET /shifts - List shifts
 router.get('/shifts', async (req, res) => {
     try {
