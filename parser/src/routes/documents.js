@@ -3,10 +3,6 @@ import multer from 'multer';
 import { query } from '../lib/db.js';
 import { CONTRACT_TEMPLATE, HIRING_ORDER_TEMPLATE, EMPLOYMENT_APPLICATION_TEMPLATE, fillTemplate } from '../services/templates.js';
 import { storageService } from '../services/storage.service.js';
-import sharp from 'sharp';
-
-// Helper to determine if a mimetype is an image
-const isImageMime = (mime) => mime && mime.startsWith('image/');
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -66,10 +62,11 @@ router.post('/documents/upload', upload.single('file'), async (req, res) => {
         // Upload to S3
         await storageService.uploadFile(file.buffer, file.mimetype, key);
 
-        // Generate a lightweight thumbnail for images
+        // Generate a lightweight thumbnail for images (optional — requires sharp)
         let thumbnailKey = null;
-        if (isImageMime(file.mimetype)) {
+        if (file.mimetype && file.mimetype.startsWith('image/')) {
             try {
+                const { default: sharp } = await import('sharp');
                 const thumbBuffer = await sharp(file.buffer)
                     .resize({ width: 400, height: 300, fit: 'cover', position: 'centre' })
                     .webp({ quality: 75 })
@@ -77,7 +74,7 @@ router.post('/documents/upload', upload.single('file'), async (req, res) => {
                 thumbnailKey = `thumbnails/${employeeId}/thumb_${type}_${Date.now()}.webp`;
                 await storageService.uploadFile(thumbBuffer, 'image/webp', thumbnailKey);
             } catch (thumbErr) {
-                console.warn('Thumbnail generation failed, continuing without:', thumbErr.message);
+                console.warn('Thumbnail generation skipped (sharp unavailable or error):', thumbErr.message);
             }
         }
 
