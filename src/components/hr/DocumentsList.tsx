@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api, type Document } from '@/services/api';
-import { FileText, Loader2, PenTool, CheckCircle, Plus, Upload, Eye } from 'lucide-react';
+import { FileText, Loader2, PenTool, CheckCircle, Plus, Upload, Eye, Image } from 'lucide-react';
 import { SigexSignModal } from '../SigexSignModal';
+import { cn } from '@/lib/utils';
 
 interface DocumentsListProps {
     employeeId: string;
@@ -143,65 +144,96 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                 </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {documents.length === 0 ? (
-                    <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
+                    <div className="col-span-full rounded-lg border border-dashed p-8 text-center text-muted-foreground">
                         Нет документов. Нажмите "Сформировать ТД" для начала процесса оформления.
                     </div>
                 ) : (
-                    documents.map(doc => (
-                        <div key={doc.id} className="flex items-center justify-between rounded-lg border bg-background p-4">
-                            <div className="flex items-center gap-3">
-                                <div className={`rounded p-2 ${doc.status === 'signed' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
-                                    <FileText className="h-5 w-5" />
+                    documents.map(doc => {
+                        const isImage = doc.scan_url && /\.(jpg|jpeg|png|webp|gif)$/i.test(doc.scan_url);
+
+                        return (
+                            <div key={doc.id} className="group relative flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-md">
+                                {/* Thumbnail Header */}
+                                <div className="relative aspect-[4/3] w-full bg-slate-100 overflow-hidden border-b">
+                                    {isImage ? (
+                                        <img
+                                            src={doc.scan_url!}
+                                            alt={doc.type}
+                                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                        />
+                                    ) : (
+                                        <div className="flex h-full w-full items-center justify-center bg-slate-50 text-slate-400">
+                                            {doc.type === 'contract' || doc.type === 'order' || doc.type === 'application'
+                                                ? <FileText className="h-12 w-12 opacity-50" />
+                                                : <Image className="h-12 w-12 opacity-50" />
+                                            }
+                                        </div>
+                                    )}
+                                    <div className="absolute right-2 top-2">
+                                        <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] uppercase tracking-wider font-bold shadow-sm backdrop-blur-md",
+                                            doc.status === 'signed' ? 'bg-emerald-500/90 text-white' : 'bg-white/90 text-slate-700'
+                                        )}>
+                                            {doc.status === 'signed' ? 'Подписан' : 'Черновик'}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div>
-                                        <p className="font-medium">
+
+                                {/* Content */}
+                                <div className="flex flex-1 flex-col p-4">
+                                    <div className="mb-2">
+                                        <h4 className="font-bold text-sm leading-tight line-clamp-2">
                                             {doc.type === 'contract' ? 'Трудовой договор' :
                                                 doc.type === 'order' ? 'Приказ о приеме' :
                                                     doc.type === 'application' ? 'Заявление на прием' :
-                                                        doc.type === 'id_scan' ? 'Скан удостоверения' :
-                                                            'Документ'}
+                                                        doc.type === 'id_main' ? 'Уд. личности (Лиц.)' :
+                                                            doc.type === 'id_register' ? 'Уд. личности (Оборот)' :
+                                                                doc.type === 'cert_075' ? 'Справка 075/у' :
+                                                                    doc.type === 'photo' ? 'Фото 3х4' :
+                                                                        doc.type === 'bank_details' ? 'Справка IBAN' :
+                                                                            doc.type === 'cert_tb' ? 'Справка тубдиспансер' :
+                                                                                doc.type === 'address_cert' ? 'Адресная справка' :
+                                                                                    'Документ'}
+                                        </h4>
+                                        <p className="mt-1 text-[11px] text-muted-foreground">
+                                            {new Date(doc.created_at).toLocaleDateString('ru-RU')}
                                         </p>
-                                        <p className="text-xs text-muted-foreground">
-                                            Создан {new Date(doc.created_at).toLocaleDateString()} •
-                                            Статус: <span className="font-medium">{doc.status === 'signed' ? 'Подписан' : 'Черновик'}</span>
-                                        </p>
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="mt-auto pt-3 flex flex-wrap items-center gap-2 border-t">
+                                        {doc.scan_url && (
+                                            <button
+                                                onClick={() => handlePreview(doc)}
+                                                className="flex flex-1 justify-center items-center gap-1 rounded bg-slate-100 px-2 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-200 transition-colors"
+                                            >
+                                                <Eye className="h-3.5 w-3.5" />
+                                                Просмотр
+                                            </button>
+                                        )}
+
+                                        {doc.status === 'draft' && (
+                                            <button
+                                                onClick={() => handleSignClick(doc)}
+                                                className="flex flex-1 justify-center items-center gap-1 rounded bg-primary/10 px-2 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
+                                            >
+                                                <PenTool className="h-3.5 w-3.5" />
+                                                Подписать
+                                            </button>
+                                        )}
+
+                                        {doc.status === 'signed' && (
+                                            <div className="flex w-full items-center justify-center gap-1 rounded bg-emerald-50 px-2 py-1.5 text-xs font-medium text-emerald-600">
+                                                <CheckCircle className="h-3.5 w-3.5" />
+                                                Подписано успешно
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
-
-                            <div className="flex gap-2">
-                                {doc.scan_url && (
-                                    <button
-                                        onClick={() => handlePreview(doc)}
-                                        className="flex items-center gap-1 rounded bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-200"
-                                    >
-                                        <Eye className="h-4 w-4" />
-                                        Просмотр
-                                    </button>
-                                )}
-
-                                {doc.status === 'draft' && (
-                                    <button
-                                        onClick={() => handleSignClick(doc)}
-                                        className="flex items-center gap-1 rounded bg-primary/10 px-3 py-1 text-sm font-medium text-primary hover:bg-primary/20"
-                                    >
-                                        <PenTool className="h-4 w-4" />
-                                        Подписать (eGov)
-                                    </button>
-                                )}
-
-                                {doc.status === 'signed' && (
-                                    <div className="flex items-center gap-1 px-3 py-1 text-sm font-medium text-emerald-600">
-                                        <CheckCircle className="h-4 w-4" />
-                                        Подписано
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ))
+                        );
+                    })
                 )}
             </div>
 

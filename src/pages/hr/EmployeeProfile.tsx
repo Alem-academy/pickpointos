@@ -199,7 +199,7 @@ export default function EmployeeProfile() {
             </div>
 
             {/* Tab Content */}
-            <div className="max-w-4xl">
+            <div className="max-w-5xl">
                 {activeTab === 'general' && (
                     <div className="space-y-6">
                         {/* Onboarding Section - Visible only if not active */}
