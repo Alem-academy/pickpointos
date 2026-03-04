@@ -13,6 +13,7 @@ interface DocumentsListProps {
 export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps) {
     const [documents, setDocuments] = useState<Document[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState<string | null>(null); // 'contract' | 'order' | 'application' | null
     const [isUploading, setIsUploading] = useState(false);
     const [previewContent, setPreviewContent] = useState<string | null>(null);
@@ -27,11 +28,13 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const loadDocuments = useCallback(async () => {
+        setLoadError(null);
         try {
             const docs = await api.getDocuments(employeeId);
             setDocuments(docs);
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to load documents:', err);
+            setLoadError(err?.response?.data?.error || err?.message || 'Ошибка загрузки документов');
         } finally {
             setIsLoading(false);
         }
@@ -125,6 +128,13 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     };
 
     if (isLoading) return <div className="py-4 text-center text-muted-foreground">Загрузка документов...</div>;
+    if (loadError) return (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+            <p className="text-sm font-medium text-red-700">Ошибка загрузки документов</p>
+            <p className="mt-1 text-xs text-red-500">{loadError}</p>
+            <button onClick={loadDocuments} className="mt-3 rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100">Повторить</button>
+        </div>
+    );
 
     return (
         <div className="space-y-6">
