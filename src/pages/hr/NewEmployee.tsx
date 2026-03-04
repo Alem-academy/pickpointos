@@ -115,7 +115,7 @@ export default function NewEmployeePage() {
                 role: formData.role,
                 main_pvz_id: formData.pvzId || null,
                 status: 'new',
-                base_rate: Number(formData.baseRate)
+                base_rate: 85000
             });
 
             // 2. Upload files
@@ -311,18 +311,14 @@ export default function NewEmployeePage() {
                                             </select>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-semibold">Ставка (Оклад за смену) <span className="text-destructive">*</span></label>
+                                            <label className="text-sm font-semibold">Оклад (МЗП) <span className="text-destructive">*</span></label>
                                             <div className="relative">
                                                 <span className="absolute left-4 top-3 text-muted-foreground font-bold">₸</span>
                                                 <input
-                                                    required
-                                                    name="baseRate"
-                                                    type="number"
-                                                    min="0"
-                                                    value={formData.baseRate}
-                                                    onChange={handleChange}
-                                                    className="w-full rounded-lg border bg-background pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                                    placeholder="Например: 5000"
+                                                    readOnly
+                                                    type="text"
+                                                    value="85 000"
+                                                    className="w-full rounded-lg border bg-slate-100 text-slate-500 pl-10 pr-4 py-3 text-sm focus:outline-none cursor-not-allowed font-semibold"
                                                 />
                                             </div>
                                         </div>
