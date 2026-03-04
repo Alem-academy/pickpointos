@@ -50,6 +50,7 @@ export function Sidebar() {
             { to: "/hr/applications", icon: FileText, label: "Заявки" },
             { to: "/hr/employees", icon: Users, label: "Сотрудники" },
             { to: "/hr/employees/new", icon: UserPlus, label: "Новый сотрудник" },
+            { to: "/operations/new-pvz", icon: Building2, label: "Новый ПВЗ" },
         ];
 
         const rfLinks: SidebarLink[] = [
@@ -63,6 +64,7 @@ export function Sidebar() {
         ];
 
         const opsLinks: SidebarLink[] = [
+            { to: "/operations/new-pvz", icon: Building2, label: "Новый ПВЗ" },
             { to: "/operations/schedule", icon: Calendar, label: "График" },
             { to: "/operations/timesheets", icon: Clock, label: "Табели" },
             { to: "/finance/expenses", icon: Receipt, label: "Расходы" },
