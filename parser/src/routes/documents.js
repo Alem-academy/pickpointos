@@ -118,8 +118,10 @@ router.post('/documents/generate', async (req, res) => {
                 date: new Date().toLocaleDateString('ru-RU'),
                 full_name: emp.full_name,
                 iin: emp.iin,
+                address: emp.address || 'Адрес проживания не указан',
+                iban: emp.iban || 'IBAN не указан',
                 position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ',
-                pvz_address: emp.pvz_address || 'Адрес не указан',
+                pvz_address: emp.pvz_address || 'Адрес ПВЗ не указан',
                 start_date: new Date().toLocaleDateString('ru-RU'),
                 base_rate: emp.base_rate || '0'
             });
