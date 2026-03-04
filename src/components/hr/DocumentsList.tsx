@@ -12,7 +12,7 @@ interface DocumentsListProps {
 export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps) {
     const [documents, setDocuments] = useState<Document[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isGenerating, setIsGenerating] = useState<string | null>(null); // 'contract' | 'order' | null
+    const [isGenerating, setIsGenerating] = useState<string | null>(null); // 'contract' | 'order' | 'application' | null
     const [isUploading, setIsUploading] = useState(false);
     const [previewContent, setPreviewContent] = useState<string | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -36,7 +36,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
         loadDocuments();
     }, [loadDocuments]);
 
-    const handleGenerate = async (type: 'contract' | 'order') => {
+    const handleGenerate = async (type: 'contract' | 'order' | 'application') => {
         setIsGenerating(type);
         try {
             const { content } = await api.generateDocument(employeeId, type);
@@ -132,6 +132,14 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                         {isGenerating === 'order' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
                         Приказ о приеме
                     </button>
+                    <button
+                        onClick={() => handleGenerate('application')}
+                        disabled={!!isGenerating}
+                        className="flex items-center gap-2 rounded-lg border border-primary bg-primary/5 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
+                    >
+                        {isGenerating === 'application' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                        Заявление
+                    </button>
                 </div>
             </div>
 
@@ -152,8 +160,9 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                         <p className="font-medium">
                                             {doc.type === 'contract' ? 'Трудовой договор' :
                                                 doc.type === 'order' ? 'Приказ о приеме' :
-                                                    doc.type === 'id_scan' ? 'Скан удостоверения' :
-                                                        'Документ'}
+                                                    doc.type === 'application' ? 'Заявление на прием' :
+                                                        doc.type === 'id_scan' ? 'Скан удостоверения' :
+                                                            'Документ'}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
                                             Создан {new Date(doc.created_at).toLocaleDateString()} •
@@ -247,7 +256,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
             {signingDoc && (
                 <SigexSignModal
                     documentId={signingDoc.id}
-                    documentTitle={signingDoc.type === 'contract' ? 'Трудовой договор' : 'Приказ о приеме'}
+                    documentTitle={signingDoc.type === 'contract' ? 'Трудовой договор' : signingDoc.type === 'application' ? 'Заявление на прием' : 'Приказ о приеме'}
                     onClose={() => setSigningDoc(null)}
                     onSuccess={handleSignSuccess}
                 />

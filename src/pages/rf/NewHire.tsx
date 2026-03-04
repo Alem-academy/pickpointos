@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, UserPlus, CheckCircle2, X, FileText, AlertCircle, ArrowRight, ArrowLeft } from "lucide-react";
+import { Upload, UserPlus, CheckCircle2, X, FileText, ArrowRight, ArrowLeft } from "lucide-react";
 import { api, type PVZ } from "@/services/api";
 import { PageHeader } from "@/components/ui/page-header";
 import { Stepper } from "@/components/ui/stepper";
@@ -11,7 +11,9 @@ interface FileUploadState {
     id_register: File | null;
     cert_075: File | null;
     photo: File | null;
-    bank_details: File | null;
+    bank_cert: File | null;
+    cert_tb: File | null;
+    address_cert: File | null;
 }
 
 const STEPS = [
@@ -34,7 +36,6 @@ export default function NewHire() {
         lastName: '',
         phone: '',
         iin: '',
-        iban: '',
         pvzId: '',
         baseRate: '',
         role: 'employee' as 'employee' | 'rf'
@@ -45,7 +46,9 @@ export default function NewHire() {
         id_register: null,
         cert_075: null,
         photo: null,
-        bank_details: null,
+        bank_cert: null,
+        cert_tb: null,
+        address_cert: null,
     });
 
     useEffect(() => {
@@ -72,7 +75,7 @@ export default function NewHire() {
             return formData.firstName && formData.lastName && formData.iin.length === 12 && formData.phone;
         }
         if (stepIndex === 1) {
-            return formData.pvzId && formData.baseRate && formData.iban.length >= 16;
+            return formData.pvzId && formData.baseRate;
         }
         return true; // Step 2 (Documents) validated on submit
     };
@@ -110,8 +113,7 @@ export default function NewHire() {
                 role: formData.role,
                 main_pvz_id: formData.pvzId,
                 status: 'new',
-                base_rate: Number(formData.baseRate),
-                iban: formData.iban,
+                base_rate: Number(formData.baseRate)
             });
 
             setCreatedEmployeeId(newEmployee.id);
@@ -121,7 +123,9 @@ export default function NewHire() {
             if (files.id_register) uploadPromises.push(api.uploadDocument(newEmployee.id, 'id_register', files.id_register));
             if (files.cert_075) uploadPromises.push(api.uploadDocument(newEmployee.id, 'cert_075', files.cert_075));
             if (files.photo) uploadPromises.push(api.uploadDocument(newEmployee.id, 'photo', files.photo));
-            if (files.bank_details) uploadPromises.push(api.uploadDocument(newEmployee.id, 'bank_details', files.bank_details));
+            if (files.bank_cert) uploadPromises.push(api.uploadDocument(newEmployee.id, 'bank_details', files.bank_cert));
+            if (files.cert_tb) uploadPromises.push(api.uploadDocument(newEmployee.id, 'cert_tb', files.cert_tb));
+            if (files.address_cert) uploadPromises.push(api.uploadDocument(newEmployee.id, 'address_cert', files.address_cert));
 
             await Promise.all(uploadPromises);
 
@@ -306,21 +310,6 @@ export default function NewHire() {
                                                 />
                                             </div>
                                         </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-semibold">IBAN Счет <span className="text-destructive">*</span></label>
-                                            <input
-                                                required
-                                                name="iban"
-                                                value={formData.iban}
-                                                onChange={handleChange}
-                                                className="w-full rounded-lg border bg-background px-4 py-3 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-primary/50 font-mono tracking-wider"
-                                                placeholder="KZ..."
-                                            />
-                                            <div className="flex items-center gap-1.5 mt-1.5 text-xs font-medium text-amber-600">
-                                                <AlertCircle className="h-3.5 w-3.5" />
-                                                Обязательно проверьте правильность
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -360,10 +349,22 @@ export default function NewHire() {
                                             onRemove={() => removeFile('cert_075')}
                                         />
                                         <FileUploadField
-                                            label="Реквизиты (Скриншот)"
-                                            file={files.bank_details}
-                                            onChange={(e) => handleFileChange('bank_details', e)}
-                                            onRemove={() => removeFile('bank_details')}
+                                            label="Справка с банка (IBAN)"
+                                            file={files.bank_cert}
+                                            onChange={(e) => handleFileChange('bank_cert', e)}
+                                            onRemove={() => removeFile('bank_cert')}
+                                        />
+                                        <FileUploadField
+                                            label="Справка Тубдиспансер"
+                                            file={files.cert_tb}
+                                            onChange={(e) => handleFileChange('cert_tb', e)}
+                                            onRemove={() => removeFile('cert_tb')}
+                                        />
+                                        <FileUploadField
+                                            label="Справка eGov (Адресная)"
+                                            file={files.address_cert}
+                                            onChange={(e) => handleFileChange('address_cert', e)}
+                                            onRemove={() => removeFile('address_cert')}
                                         />
                                     </div>
                                 </div>

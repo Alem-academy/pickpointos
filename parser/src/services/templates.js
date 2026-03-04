@@ -131,10 +131,47 @@ export const HIRING_ORDER_TEMPLATE = `
 </html>
 `;
 
+export const EMPLOYMENT_APPLICATION_TEMPLATE = `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Times New Roman', serif; line-height: 1.5; padding: 60px; font-size: 14px; }
+        .header-block { margin-left: auto; width: 50%; margin-bottom: 50px; text-align: left; }
+        .title { text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 30px; letter-spacing: 2px; }
+        .body-text { margin-bottom: 40px; text-indent: 30px; text-align: justify; }
+        .signature-block { display: flex; justify-content: space-between; margin-top: 50px; }
+        .bold { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header-block">
+        <p>Директору ТОО "AlemLab PickPoint"</p>
+        <p>от гражданина(ки)</p>
+        <p class="bold">{{full_name}}</p>
+        <p>ИИН: {{iin}}</p>
+        <p>Тел: {{phone}}</p>
+    </div>
+
+    <div class="title">ЗАЯВЛЕНИЕ</div>
+    
+    <div class="body-text">
+        Прошу принять меня на работу в ТОО "AlemLab PickPoint" на должность <strong>{{position}}</strong> 
+        в пункт выдачи заказов по адресу <strong>{{pvz_address}}</strong> с обязательным испытательным сроком 3 (три) месяца.
+    </div>
+
+    <div class="signature-block">
+        <div>Дата: {{date}}</div>
+        <div>Подпись: _________________</div>
+    </div>
+</body>
+</html>
+\`;
+
 export function fillTemplate(template, data) {
     let content = template;
     for (const key in data) {
-        content = content.replace(new RegExp(`{{${key}}}`, 'g'), data[key] || '__________');
+        content = content.replace(new RegExp(\`{{\${key}}}\`, 'g'), data[key] || '__________');
     }
     return content;
 }

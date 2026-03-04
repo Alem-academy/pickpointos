@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { query } from '../lib/db.js';
-import { CONTRACT_TEMPLATE, HIRING_ORDER_TEMPLATE, fillTemplate } from '../services/templates.js';
+import { CONTRACT_TEMPLATE, HIRING_ORDER_TEMPLATE, EMPLOYMENT_APPLICATION_TEMPLATE, fillTemplate } from '../services/templates.js';
 import { storageService } from '../services/storage.service.js';
 
 const router = express.Router();
@@ -139,6 +139,15 @@ router.post('/documents/generate', async (req, res) => {
                 pvz_address: emp.pvz_address || 'Адрес не указан',
                 start_date: new Date().toLocaleDateString('ru-RU'),
                 base_rate: emp.base_rate || '0'
+            });
+        } else if (type === 'application') {
+            htmlContent = fillTemplate(EMPLOYMENT_APPLICATION_TEMPLATE, {
+                full_name: emp.full_name,
+                iin: emp.iin,
+                phone: emp.phone || '_____________',
+                position: emp.role === 'rf' ? 'Регионального менеджера' : 'Менеджера ПВЗ',
+                pvz_address: emp.pvz_address || '_____________',
+                date: new Date().toLocaleDateString('ru-RU')
             });
         } else {
             return res.status(400).json({ error: 'Unsupported document type' });
