@@ -166,12 +166,12 @@ export const EMPLOYMENT_APPLICATION_TEMPLATE = `
     </div>
 </body>
 </html>
-\`;
+`;
 
 export function fillTemplate(template, data) {
     let content = template;
     for (const key in data) {
-        content = content.replace(new RegExp(\`{{\${key}}}\`, 'g'), data[key] || '__________');
+        content = content.replace(new RegExp(`{{${key}}}`, 'g'), data[key] || '__________');
     }
     return content;
 }
