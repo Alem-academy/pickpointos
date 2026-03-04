@@ -19,6 +19,10 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [signingDoc, setSigningDoc] = useState<Document | null>(null);
 
+    // IBAN Modal State
+    const [isIbanModalOpen, setIsIbanModalOpen] = useState(false);
+    const [ibanInput, setIbanInput] = useState('');
+
     // File upload ref
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -37,12 +41,21 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
         loadDocuments();
     }, [loadDocuments]);
 
-    const handleGenerate = async (type: 'contract' | 'order' | 'application') => {
+    const handleGenerate = async (type: 'contract' | 'order' | 'application', bypassModal = false) => {
+        if (type === 'contract' && !bypassModal) {
+            setIsIbanModalOpen(true);
+            return;
+        }
+
         setIsGenerating(type);
         try {
-            const { content } = await api.generateDocument(employeeId, type);
+            const { content } = await api.generateDocument(employeeId, type, type === 'contract' ? ibanInput : undefined);
             setPreviewContent(content);
             await loadDocuments();
+            if (isIbanModalOpen) {
+                setIsIbanModalOpen(false);
+                setIbanInput('');
+            }
         } catch (err) {
             console.error('Failed to generate document:', err);
             alert('Ошибка при генерации документа');
@@ -282,6 +295,54 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
             {previewUrl && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" onClick={() => setPreviewUrl(null)}>
                     <img src={previewUrl} alt="Preview" className="max-h-[90vh] max-w-full rounded shadow-2xl" />
+                </div>
+            )}
+
+            {/* IBAN Modal — opens before contract generation */}
+            {isIbanModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+                    <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+                        <div className="border-b p-6">
+                            <h3 className="text-lg font-semibold">Введите IBAN сотрудника</h3>
+                            <p className="mt-1 text-sm text-slate-500">
+                                Для формирования Трудового Договора необходимо указать актуальный банковский IBAN (20 символов). Его можно найти в справке IBAN загруженной выше.
+                            </p>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="mb-1 block text-sm font-medium text-slate-700">IBAN</label>
+                                <input
+                                    type="text"
+                                    value={ibanInput}
+                                    onChange={(e) => setIbanInput(e.target.value.toUpperCase())}
+                                    placeholder="KZ..."
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 font-mono text-sm uppercase tracking-widest focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                    maxLength={20}
+                                    autoFocus
+                                />
+                                <p className="mt-1 text-right text-xs text-slate-400">{ibanInput.length} / 20</p>
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-3 border-t p-6">
+                            <button
+                                onClick={() => { setIsIbanModalOpen(false); setIbanInput(''); }}
+                                className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-slate-50"
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                onClick={() => handleGenerate('contract', true)}
+                                disabled={ibanInput.length !== 20 || !!isGenerating}
+                                className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                            >
+                                {isGenerating === 'contract' ? (
+                                    <><Loader2 className="h-4 w-4 animate-spin" /> Генерация...</>
+                                ) : (
+                                    'Сформировать договор'
+                                )}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 

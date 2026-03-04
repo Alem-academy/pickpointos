@@ -18,7 +18,7 @@ export type EmployeeStatus = 'new' | 'review' | 'revision' | 'signing' | 'active
 export interface Document {
     id: string;
     employee_id: string;
-    type: 'contract' | 'order' | 'application' | 'id_scan' | 'other';
+    type: 'contract' | 'order' | 'application' | 'id_main' | 'id_register' | 'id_scan' | 'cert_075' | 'photo' | 'bank_details' | 'cert_tb' | 'address_cert' | 'other';
     status: 'draft' | 'sent_to_employee' | 'signed' | 'rejected' | 'archived';
     scan_url?: string;
     created_at: string;

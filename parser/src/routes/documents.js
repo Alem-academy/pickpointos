@@ -95,7 +95,12 @@ router.get('/documents/stats', async (req, res) => {
 // POST /documents/generate - Generate a new document (Contract)
 router.post('/documents/generate', async (req, res) => {
     try {
-        const { employeeId, type } = req.body;
+        const { employeeId, type, iban } = req.body;
+
+        // If an IBAN is provided, save it to the employee
+        if (iban) {
+            await query('UPDATE employees SET iban = $1 WHERE id = $2', [iban, employeeId]);
+        }
 
         // Fetch employee data
         const empResult = await query(`
