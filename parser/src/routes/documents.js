@@ -33,6 +33,7 @@ router.get('/employees/:id/documents', async (req, res) => {
             return enhanced;
         }));
 
+        res.set('Cache-Control', 'no-store');
         res.json(documents);
     } catch (err) {
         console.error('Error fetching documents:', err);
