@@ -8,7 +8,9 @@ export default function NewPvz() {
         name: '',
         address: '',
         brand: 'wb',
-        area: ''
+        area: '',
+        region_id: 'AST', // Default
+        wb_id: ''
     });
     const [createdPvz, setCreatedPvz] = useState<PVZ | null>(null);
     const [checklist, setChecklist] = useState<any[]>([]);
@@ -20,7 +22,9 @@ export default function NewPvz() {
         try {
             const pvz = await api.createPvz({
                 ...formData,
-                area: Number(formData.area)
+                area: Number(formData.area),
+                region_id: formData.region_id,
+                wb_id: formData.wb_id
             });
             setCreatedPvz(pvz);
 
@@ -110,6 +114,37 @@ export default function NewPvz() {
                                     <option value="ozon">Ozon</option>
                                     <option value="yandex">Yandex</option>
                                 </select>
+                            </div>
+                            <div>
+                                <label className="mb-2 block font-bold flex items-center gap-2">
+                                    <MapPin className="h-5 w-5" /> Город / Регион
+                                </label>
+                                <select
+                                    value={formData.region_id}
+                                    onChange={e => setFormData({ ...formData, region_id: e.target.value })}
+                                    className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 p-4 font-bold outline-none focus:border-black"
+                                >
+                                    <option value="AST">Астана (AST)</option>
+                                    <option value="ALA">Алматы (ALA)</option>
+                                    <option value="SHY">Шымкент (SHY)</option>
+                                    <option value="KAR">Караганда (KAR)</option>
+                                    <option value="AKT">Актобе (AKT)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="mb-2 block font-bold flex items-center gap-2">
+                                    <CheckCircle className="h-5 w-5" /> WB ID (Официальный)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.wb_id}
+                                    onChange={e => setFormData({ ...formData, wb_id: e.target.value })}
+                                    placeholder="Например: 304673"
+                                    className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 p-4 font-bold outline-none focus:border-black"
+                                />
                             </div>
                             <div>
                                 <label className="mb-2 block font-bold flex items-center gap-2">
@@ -211,6 +246,16 @@ export default function NewPvz() {
                                 <div>
                                     <div className="text-yellow-800">Бренд</div>
                                     <div className="text-lg uppercase">{createdPvz.brand}</div>
+                                </div>
+                                {createdPvz.wb_id && (
+                                    <div>
+                                        <div className="text-yellow-800">WB ID</div>
+                                        <div className="text-lg font-mono">{createdPvz.wb_id}</div>
+                                    </div>
+                                )}
+                                <div>
+                                    <div className="text-yellow-800">Регион</div>
+                                    <div className="text-lg uppercase">{createdPvz.region_id}</div>
                                 </div>
                                 <div>
                                     <div className="text-yellow-800">Площадь</div>

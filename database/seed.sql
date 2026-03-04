@@ -2,12 +2,14 @@
 -- This script populates the database with test data for development
 
 -- Insert PVZ Points (Kazakhstan cities)
-INSERT INTO pvz_points (id, name, address, region_id, brand, area_sqm, is_active) VALUES
-    ('550e8400-e29b-41d4-a716-446655440001', 'ПВЗ Абая 45', 'г. Алматы, пр. Абая, д. 45', 'ALA', 'Wildberries', 45.5, true),
-    ('550e8400-e29b-41d4-a716-446655440002', 'ПВЗ Кабанбай Батыра 88', 'г. Астана, ул. Кабанбай Батыра, д. 88', 'AST', 'Wildberries', 60.0, true),
-    ('550e8400-e29b-41d4-a716-446655440003', 'ПВЗ Сатпаева 12', 'г. Шымкент, ул. Сатпаева, д. 12', 'SHY', 'Wildberries', 35.0, true),
-    ('550e8400-e29b-41d4-a716-446655440004', 'ПВЗ Независимости 33', 'г. Караганда, пр. Независимости, д. 33', 'KAR', 'Wildberries', 50.0, true),
-    ('550e8400-e29b-41d4-a716-446655440005', 'ПВЗ Достык 7', 'г. Актобе, ул. Достык, д. 7', 'AKT', 'Wildberries', 40.0, true)
+INSERT INTO pvz_points (id, name, address, region_id, wb_id, brand, area_sqm, is_active) VALUES
+    ('550e8400-e29b-41d4-a716-446655440001', 'ПВЗ Абая 45', 'г. Алматы, пр. Абая, д. 45', 'ALA', '111111', 'Wildberries', 45.5, true),
+    ('550e8400-e29b-41d4-a716-446655440002', 'ПВЗ Кабанбай Батыра 88', 'г. Астана, ул. Кабанбай Батыра, д. 88', 'AST', '222222', 'Wildberries', 60.0, true),
+    ('550e8400-e29b-41d4-a716-446655440003', 'ПВЗ Сатпаева 12', 'г. Шымкент, ул. Сатпаева, д. 12', 'SHY', '333333', 'Wildberries', 35.0, true),
+    ('550e8400-e29b-41d4-a716-446655440004', 'ПВЗ Независимости 33', 'г. Караганда, пр. Независимости, д. 33', 'KAR', '444444', 'Wildberries', 50.0, true),
+    ('550e8400-e29b-41d4-a716-446655440005', 'ПВЗ Достык 7', 'г. Актобе, ул. Достык, д. 7', 'AKT', '555555', 'Wildberries', 40.0, true),
+    ('550e8400-e29b-41d4-a716-446655440006', 'ПВЗ Кабанбай батыра 45/3', 'г. Астана, Кабанбай батыра 45/3', 'AST', '304673', 'Wildberries', 50.0, true),
+    ('550e8400-e29b-41d4-a716-446655440007', 'ПВЗ Акмешит 11', 'г. Астана, Акмешит 11', 'AST', '50140757', 'Wildberries', 50.0, true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert Employees (Kazakhstan names) with hashed password 'password123'

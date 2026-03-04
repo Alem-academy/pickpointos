@@ -7,7 +7,7 @@ export const operationsApi = {
         return res.data;
     },
 
-    async createPvz(data: { name: string; address: string; brand: string; area: number }): Promise<PVZ> {
+    async createPvz(data: { name: string; address: string; brand: string; area: number; region_id: string; wb_id: string }): Promise<PVZ> {
         const res = await axiosInstance.post('/pvz/new', data);
         return res.data;
     },

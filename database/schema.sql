@@ -44,6 +44,7 @@ CREATE TABLE pvz_points (
     name VARCHAR(255) NOT NULL,
     address TEXT NOT NULL,
     region_id VARCHAR(50) NOT NULL, -- Link to region/branch
+    wb_id VARCHAR(50), -- Official WB ID (e.g., 304673)
     brand VARCHAR(50) NOT NULL, -- e.g., 'Wildberries'
     area_sqm DECIMAL(10, 2), -- Квадратура (TZ 5.3)
     landlord_id UUID, -- Placeholder for Phase 2

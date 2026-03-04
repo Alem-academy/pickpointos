@@ -16,6 +16,34 @@ router.get('/pvz', async (req, res) => {
     }
 });
 
+// POST /pvz/new - Create a new PVZ point
+router.post('/pvz/new', async (req, res) => {
+    try {
+        const { name, address, brand, area, region_id, wb_id } = req.body;
+
+        if (!name || !address || !brand || !region_id) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const result = await query(`
+            INSERT INTO pvz_points (name, address, region_id, wb_id, brand, area_sqm)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING *
+        `, [
+            name,
+            address,
+            region_id,
+            wb_id || null,
+            brand,
+            area || null
+        ]);
+
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        Logger.error('Error creating PVZ:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 // GET /employees/by-iin/:iin - Public endpoint: fetch employee data by IIN (for self-service profile)
 // No auth required — used after eGov QR sign to show employee their own data.
 router.get('/employees/by-iin/:iin', async (req, res) => {

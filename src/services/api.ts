@@ -6,6 +6,8 @@ export interface PVZ {
     name: string;
     address: string;
     brand: string;
+    region_id?: string;
+    wb_id?: string;
     area_sqm?: number;
     is_active: boolean;
 }
