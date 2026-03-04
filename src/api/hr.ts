@@ -49,6 +49,11 @@ export const hrApi = {
         return res.data;
     },
 
+    async getDocumentContent(documentId: string): Promise<{ scan_url?: string; content?: string }> {
+        const res = await axiosInstance.get(`/documents/${documentId}/content`);
+        return res.data;
+    },
+
     async transferEmployee(id: string, pvzId: string, date: string, comment: string): Promise<Employee> {
         const res = await axiosInstance.post(`/employees/${id}/transfer`, { pvzId, date, comment });
         return res.data;

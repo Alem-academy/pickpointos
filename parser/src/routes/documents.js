@@ -176,11 +176,15 @@ router.post('/documents/generate', async (req, res) => {
             return res.status(400).json({ error: 'Unsupported document type' });
         }
 
+        // Save generated HTML to S3 so it can be re-read later
+        const htmlKey = `documents/${employeeId}/${type}_${Date.now()}.html`;
+        await storageService.uploadFile(Buffer.from(htmlContent, 'utf-8'), 'text/html', htmlKey);
+
         const docResult = await query(`
-            INSERT INTO documents (employee_id, type, status, created_at)
-            VALUES ($1, $2, 'draft', NOW())
+            INSERT INTO documents (employee_id, type, status, scan_url, created_at)
+            VALUES ($1, $2, 'draft', $3, NOW())
             RETURNING *
-        `, [employeeId, type]);
+        `, [employeeId, type, htmlKey]);
 
         res.status(201).json({
             document: docResult.rows[0],
@@ -189,6 +193,28 @@ router.post('/documents/generate', async (req, res) => {
 
     } catch (err) {
         console.error('Error generating document:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// GET /documents/:id/content - Get signed URL to re-read a generated document
+router.get('/documents/:id/content', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await query('SELECT * FROM documents WHERE id = $1', [id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Document not found' });
+        }
+        const doc = result.rows[0];
+        if (!doc.scan_url) {
+            return res.status(404).json({ error: 'No content stored for this document' });
+        }
+        const signedUrl = doc.scan_url.startsWith('http')
+            ? doc.scan_url
+            : await storageService.getFileUrl(doc.scan_url);
+        res.json({ scan_url: signedUrl });
+    } catch (err) {
+        console.error('Error fetching document content:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

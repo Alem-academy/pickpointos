@@ -97,12 +97,29 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
         if (onStatusChange) onStatusChange();
     };
 
-    const handlePreview = (doc: Document) => {
+    const handlePreview = async (doc: Document) => {
         if (doc.scan_url) {
-            if (doc.scan_url.endsWith('.pdf')) {
+            // Strip S3 query params before checking extension
+            const urlPath = doc.scan_url.split('?')[0];
+            if (/\.pdf$/i.test(urlPath)) {
                 window.open(doc.scan_url, '_blank');
             } else {
                 setPreviewUrl(doc.scan_url);
+            }
+        } else if (['contract', 'order_hiring', 'application'].includes(doc.type)) {
+            // Generated doc saved as HTML — fetch its content from backend
+            try {
+                const res = await api.getDocumentContent(doc.id);
+                if (res.scan_url) {
+                    // It's now stored as HTML file — open inline
+                    const r = await fetch(res.scan_url);
+                    const html = await r.text();
+                    setPreviewContent(html);
+                } else if (res.content) {
+                    setPreviewContent(res.content);
+                }
+            } catch (err) {
+                console.error('Could not fetch document content', err);
             }
         }
     };
