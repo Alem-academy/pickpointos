@@ -164,7 +164,12 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                     </div>
                 ) : (
                     documents.map(doc => {
-                        const isImage = doc.scan_url && /\.(jpg|jpeg|png|webp|gif)$/i.test(doc.scan_url);
+                        // Strip query params from URL before checking extension
+                        // S3 pre-signed URLs look like: https://.../file.jpg?X-Amz-...
+                        const urlPath = doc.scan_url ? doc.scan_url.split('?')[0] : '';
+                        const isImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(urlPath);
+                        // Use dedicated thumbnail URL if backend provides one, otherwise fall back to full image
+                        const thumbSrc = doc.thumbnail_url || doc.scan_url;
 
                         return (
                             <div key={doc.id} className="group relative flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-md">
@@ -172,7 +177,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                 <div className="relative aspect-[4/3] w-full bg-slate-100 overflow-hidden border-b">
                                     {isImage ? (
                                         <img
-                                            src={doc.scan_url!}
+                                            src={thumbSrc!}
                                             alt={doc.type}
                                             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                                         />

@@ -21,6 +21,7 @@ export interface Document {
     type: 'contract' | 'order' | 'application' | 'id_main' | 'id_register' | 'id_scan' | 'cert_075' | 'photo' | 'bank_details' | 'cert_tb' | 'address_cert' | 'other';
     status: 'draft' | 'sent_to_employee' | 'signed' | 'rejected' | 'archived';
     scan_url?: string;
+    thumbnail_url?: string; // lightweight resized thumbnail for grid display
     created_at: string;
     signed_at?: string;
     egov_operation_id?: string;

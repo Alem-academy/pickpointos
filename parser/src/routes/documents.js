@@ -3,6 +3,10 @@ import multer from 'multer';
 import { query } from '../lib/db.js';
 import { CONTRACT_TEMPLATE, HIRING_ORDER_TEMPLATE, EMPLOYMENT_APPLICATION_TEMPLATE, fillTemplate } from '../services/templates.js';
 import { storageService } from '../services/storage.service.js';
+import sharp from 'sharp';
+
+// Helper to determine if a mimetype is an image
+const isImageMime = (mime) => mime && mime.startsWith('image/');
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -15,17 +19,22 @@ router.get('/employees/:id/documents', async (req, res) => {
 
         // Enhance documents with signed URLs if they are stored in S3
         const documents = await Promise.all(result.rows.map(async (doc) => {
+            let enhanced = { ...doc };
             if (doc.scan_url && !doc.scan_url.startsWith('http')) {
-                // It's an S3 key
                 try {
-                    const url = await storageService.getFileUrl(doc.scan_url);
-                    return { ...doc, scan_url: url };
+                    enhanced.scan_url = await storageService.getFileUrl(doc.scan_url);
                 } catch (e) {
-                    console.error(`Failed to sign URL for doc ${doc.id}:`, e);
-                    return doc;
+                    console.error(`Failed to sign scan_url for doc ${doc.id}:`, e);
                 }
             }
-            return doc;
+            if (doc.thumbnail_url && !doc.thumbnail_url.startsWith('http')) {
+                try {
+                    enhanced.thumbnail_url = await storageService.getFileUrl(doc.thumbnail_url);
+                } catch (e) {
+                    console.error(`Failed to sign thumbnail_url for doc ${doc.id}:`, e);
+                }
+            }
+            return enhanced;
         }));
 
         res.json(documents);
@@ -57,17 +66,27 @@ router.post('/documents/upload', upload.single('file'), async (req, res) => {
         // Upload to S3
         await storageService.uploadFile(file.buffer, file.mimetype, key);
 
+        // Generate a lightweight thumbnail for images
+        let thumbnailKey = null;
+        if (isImageMime(file.mimetype)) {
+            try {
+                const thumbBuffer = await sharp(file.buffer)
+                    .resize({ width: 400, height: 300, fit: 'cover', position: 'centre' })
+                    .webp({ quality: 75 })
+                    .toBuffer();
+                thumbnailKey = `thumbnails/${employeeId}/thumb_${type}_${Date.now()}.webp`;
+                await storageService.uploadFile(thumbBuffer, 'image/webp', thumbnailKey);
+            } catch (thumbErr) {
+                console.warn('Thumbnail generation failed, continuing without:', thumbErr.message);
+            }
+        }
+
         // Record in DB
         const result = await query(`
-            INSERT INTO documents (employee_id, type, status, scan_url, created_at)
-            VALUES ($1, $2, 'signed', $3, NOW())
+            INSERT INTO documents (employee_id, type, status, scan_url, thumbnail_url, created_at)
+            VALUES ($1, $2, 'signed', $3, $4, NOW())
             RETURNING *
-        `, [employeeId, type, key]);
-
-        // If it was a signed contract/scan upload, activate the employee
-        if (type === 'contract' || type === 'id_scan') {
-            // Optional: Auto-activate or move to next stage
-        }
+        `, [employeeId, type, key, thumbnailKey]);
 
         res.status(201).json(result.rows[0]);
 
