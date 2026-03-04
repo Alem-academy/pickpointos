@@ -49,6 +49,7 @@ export function Sidebar() {
             { to: "/hr", icon: LayoutDashboard, label: "Дашборд", end: true },
             { to: "/hr/applications", icon: FileText, label: "Заявки" },
             { to: "/hr/employees", icon: Users, label: "Сотрудники" },
+            { to: "/hr/employees/new", icon: UserPlus, label: "Новый сотрудник" },
         ];
 
         const rfLinks: SidebarLink[] = [

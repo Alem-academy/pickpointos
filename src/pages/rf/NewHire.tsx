@@ -25,6 +25,8 @@ export default function NewHire() {
     const [isLoading, setIsLoading] = useState(false);
     const [currentStep, setCurrentStep] = useState(0);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [createdEmployeeId, setCreatedEmployeeId] = useState<string | null>(null);
+    const [isGeneratingContract, setIsGeneratingContract] = useState(false);
     const [pvzList, setPvzList] = useState<PVZ[]>([]);
 
     const [formData, setFormData] = useState({
@@ -100,7 +102,7 @@ export default function NewHire() {
         setIsLoading(true);
 
         try {
-            await api.createEmployee({
+            const newEmployee = await api.createEmployee({
                 full_name: `${formData.lastName} ${formData.firstName}`,
                 iin: formData.iin,
                 phone: formData.phone,
@@ -112,12 +114,38 @@ export default function NewHire() {
                 iban: formData.iban,
             });
 
+            setCreatedEmployeeId(newEmployee.id);
+            const uploadPromises = [];
+
+            if (files.id_main) uploadPromises.push(api.uploadDocument(newEmployee.id, 'id_main', files.id_main));
+            if (files.id_register) uploadPromises.push(api.uploadDocument(newEmployee.id, 'id_register', files.id_register));
+            if (files.cert_075) uploadPromises.push(api.uploadDocument(newEmployee.id, 'cert_075', files.cert_075));
+            if (files.photo) uploadPromises.push(api.uploadDocument(newEmployee.id, 'photo', files.photo));
+            if (files.bank_details) uploadPromises.push(api.uploadDocument(newEmployee.id, 'bank_details', files.bank_details));
+
+            await Promise.all(uploadPromises);
+
             setIsSubmitted(true);
         } catch (err) {
             console.error(err);
             alert('Ошибка при создании заявки: ' + (err as Error).message);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleGenerateContract = async () => {
+        if (!createdEmployeeId) return;
+        setIsGeneratingContract(true);
+        try {
+            await api.generateDocument(createdEmployeeId, 'contract');
+            alert('Трудовой договор успешно сгенерирован!');
+            // Optional: navigate somewhere else or keep here
+        } catch (err) {
+            console.error(err);
+            alert('Ошибка при генерации договора: ' + (err as Error).message);
+        } finally {
+            setIsGeneratingContract(false);
         }
     };
 
@@ -139,10 +167,13 @@ export default function NewHire() {
                             HR отдел получит уведомление и рассмотрит документы кандидата в ближайшее время.
                         </p>
                         <div className="flex flex-col gap-3">
-                            <Button className="w-full h-12 text-base font-semibold" onClick={() => window.location.reload()}>
+                            <Button className="w-full h-12 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleGenerateContract} disabled={isGeneratingContract}>
+                                {isGeneratingContract ? "Генерация..." : "Сгенерировать договор"}
+                            </Button>
+                            <Button variant="outline" className="w-full h-12 text-base font-semibold border-2" onClick={() => window.location.reload()}>
                                 Создать новую заявку
                             </Button>
-                            <Button variant="outline" className="w-full h-12 text-base font-semibold border-2" onClick={() => navigate("/rf")}>
+                            <Button variant="ghost" className="w-full h-12 text-base font-semibold" onClick={() => navigate("/rf")}>
                                 Вернуться в Дашборд
                             </Button>
                         </div>
