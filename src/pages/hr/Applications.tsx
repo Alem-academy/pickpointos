@@ -1,23 +1,28 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api, type Employee } from '@/services/api';
-import { UserPlus, Users, ClipboardCheck, UserCheck, Briefcase } from 'lucide-react';
+import { UserPlus, Users, UserCheck, Briefcase } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
-import { TOOLTIPS } from '@/constants/tooltips';
 import { CandidateModal } from '@/components/hr/CandidateModal';
 import { format } from 'date-fns';
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
+import { FileWarning } from 'lucide-react';
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Applications() {
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [selectedCandidate, setSelectedCandidate] = useState<Employee | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     const loadEmployees = useCallback(async () => {
         try {
+            setIsLoading(true);
             const data = await api.getEmployees();
             setEmployees(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error(err);
+        } finally {
+            setIsLoading(false);
         }
     }, []);
 
@@ -47,22 +52,22 @@ export default function Applications() {
     const columns = [
         {
             id: 'new',
-            label: 'Новые заявки',
-            tooltip: TOOLTIPS.hr.kanban_new,
+            label: 'Ожидают проверки',
+            tooltip: 'Кандидаты, загрузившие документы. Ожидают проверки HR.',
             icon: Users,
             color: 'border-blue-200 bg-blue-50/50 text-blue-700'
         },
         {
-            id: 'review',
-            label: 'Собеседование',
-            tooltip: TOOLTIPS.hr.kanban_review,
-            icon: ClipboardCheck,
-            color: 'border-orange-200 bg-orange-50/50 text-orange-700'
+            id: 'revision',
+            label: 'Запрос корректировки',
+            tooltip: 'Документы отправлены на доработку (ошибка в сканах или данных).',
+            icon: FileWarning,
+            color: 'border-red-200 bg-red-50/50 text-red-700'
         },
         {
             id: 'signing',
-            label: 'Оформление',
-            tooltip: TOOLTIPS.hr.kanban_signing,
+            label: 'На подписании',
+            tooltip: 'Документы одобрены. Формируется и подписывается трудовой договор.',
             icon: UserCheck,
             color: 'border-emerald-200 bg-emerald-50/50 text-emerald-700'
         },
@@ -71,69 +76,88 @@ export default function Applications() {
     return (
         <div className="flex flex-col h-full bg-background/50">
             <PageHeader
-                title="Воронка найма"
-                description="Канбан доска для обработки новых кандидатов"
-                breadcrumbs={[{ label: "HR", path: "/hr" }, { label: "Воронка" }]}
+                title="Период оформления"
+                description="Управление заявками на прием (Onboarding)"
+                breadcrumbs={[{ label: "HR", path: "/hr" }, { label: "Оформление" }]}
                 action={
-                    <Tooltip text={TOOLTIPS.hr.add_employee}>
-                        <Button className="gap-2">
+                    <Tooltip text="Оформление нового сотрудника">
+                        <Button className="gap-2" onClick={() => window.location.href = '/hr/new-employee'}>
                             <UserPlus className="h-4 w-4" />
-                            Добавить кандидата
+                            Создать заявку на прием
                         </Button>
                     </Tooltip>
                 }
             />
 
             <div className="flex-1 overflow-x-auto px-6 pb-6">
-                <div className="flex gap-6 h-full min-w-max">
-                    {columns.map(col => {
-                        const colEmployees = employees.filter(e => e.status === col.id);
-
-                        return (
-                            <div key={col.id} className="flex flex-col w-80 shrink-0">
-                                {/* Column Header */}
+                {isLoading ? (
+                    <div className="flex gap-6 h-full min-w-max">
+                        {columns.map((col, idx) => (
+                            <div key={idx} className="flex flex-col w-80 shrink-0">
                                 <div className={`flex items-center gap-2 rounded-t-xl border-x border-t p-3 ${col.color}`}>
-                                    <col.icon className="h-4 w-4" />
-                                    <h2 className="text-sm font-semibold uppercase tracking-wider">{col.label}</h2>
-                                    <span className="ml-auto rounded-md bg-background/80 px-2 py-0.5 text-xs font-bold text-foreground">
-                                        {colEmployees.length}
-                                    </span>
+                                    <Skeleton className="h-4 w-4" />
+                                    <Skeleton className="h-4 w-32" />
+                                    <Skeleton className="ml-auto h-6 w-8" />
                                 </div>
-
-                                {/* Cards Area */}
                                 <div className="flex-1 flex flex-col gap-3 rounded-b-xl border-x border-b border-border bg-muted/30 p-3 overflow-y-auto">
-                                    {colEmployees.length === 0 && (
-                                        <div className="flex h-32 items-center justify-center rounded-lg border-2 border-dashed border-border text-xs text-muted-foreground p-4 text-center">
-                                            Нет кандидатов на этом этапе
-                                        </div>
-                                    )}
-                                    {colEmployees.map(employee => (
-                                        <ApplicationCard
-                                            key={employee.id}
-                                            employee={employee}
-                                            onClick={() => {
-                                                if (employee.status === 'signing') {
-                                                    window.location.href = `/hr/employees/${employee.id}`;
-                                                } else {
-                                                    setSelectedCandidate(employee);
-                                                }
-                                            }}
-                                        />
+                                    {[1, 2, 3].map((i) => (
+                                        <Skeleton key={i} className="h-32 w-full" />
                                     ))}
                                 </div>
                             </div>
-                        );
-                    })}
-                </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex gap-6 h-full min-w-max">
+                        {columns.map(col => {
+                            const colEmployees = employees.filter(e => e.status === col.id);
+
+                            return (
+                                <div key={col.id} className="flex flex-col w-80 shrink-0">
+                                    {/* Column Header */}
+                                    <div className={`flex items-center gap-2 rounded-t-xl border-x border-t p-3 ${col.color}`}>
+                                        <col.icon className="h-4 w-4" />
+                                        <h2 className="text-sm font-semibold uppercase tracking-wider">{col.label}</h2>
+                                        <span className="ml-auto rounded-md bg-background/80 px-2 py-0.5 text-xs font-bold text-foreground">
+                                            {colEmployees.length}
+                                        </span>
+                                    </div>
+
+                                    {/* Cards Area */}
+                                    <div className="flex-1 flex flex-col gap-3 rounded-b-xl border-x border-b border-border bg-muted/30 p-3 overflow-y-auto">
+                                        {colEmployees.length === 0 && (
+                                            <div className="flex h-32 items-center justify-center rounded-lg border-2 border-dashed border-border text-xs text-muted-foreground p-4 text-center">
+                                                Нет кандидатов на этом этапе
+                                            </div>
+                                        )}
+                                        {colEmployees.map(employee => (
+                                            <ApplicationCard
+                                                key={employee.id}
+                                                employee={employee}
+                                                onClick={() => {
+                                                    if (employee.status === 'signing') {
+                                                        window.location.href = `/hr/employees/${employee.id}`;
+                                                    } else {
+                                                        setSelectedCandidate(employee);
+                                                    }
+                                                }}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
 
-            {/* Candidate Details Modal */}
             {selectedCandidate && (
                 <CandidateModal
                     candidate={selectedCandidate}
                     onClose={() => setSelectedCandidate(null)}
-                    onApprove={() => handleStatusUpdate(selectedCandidate.id, 'review')}
+                    onApprove={() => handleStatusUpdate(selectedCandidate.id, 'signing')}
                     onReject={() => handleStatusUpdate(selectedCandidate.id, 'fired')}
+                    onRevision={() => handleStatusUpdate(selectedCandidate.id, 'revision')}
                 />
             )}
         </div>
@@ -170,9 +194,10 @@ function ApplicationCard({ employee, onClick }: { employee: Employee, onClick: (
                     <Briefcase className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                     <span className="font-medium truncate">{employee.main_pvz_name || 'ПВЗ не назначен'}</span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-card-foreground">
-                    <span className="flex h-3.5 w-3.5 items-center justify-center rounded bg-background text-[10px] font-bold text-muted-foreground shrink-0 border">₸</span>
-                    <span className="font-medium">{employee.base_rate?.toLocaleString()} ₸</span>
+                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <span className="font-mono">{employee.iin}</span>
+                    <span className="mx-1">•</span>
+                    <span>{employee.phone}</span>
                 </div>
             </div>
         </div>

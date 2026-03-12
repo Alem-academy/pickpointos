@@ -4,7 +4,6 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import { Logger } from './lib/logger.js';
-import { parseSheet } from './services/parser.service.js';
 
 // Import Routes
 import hrRoutes from './routes/hr.js';
