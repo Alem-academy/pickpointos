@@ -11,12 +11,21 @@ import {
     Briefcase,
     ArrowRight,
     UserX,
-    Award,
-    AlertTriangle
+    FileWarning,
+    Edit2,
+    Save,
+    X,
+    Plus,
+    Trash2,
+    Loader2,
+    CreditCard
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TransferModal } from "@/components/hr/TransferModal";
 import { TerminationModal } from "@/components/hr/TerminationModal";
+
+import { OnboardingTab } from "@/components/hr/profile/OnboardingTab";
+import { DisciplineTab } from "@/components/hr/profile/DisciplineTab";
 
 const STATUS_LABELS = {
     new: 'Новый',
@@ -50,6 +59,35 @@ export default function EmployeeProfile() {
     const [activeTab, setActiveTab] = useState<Tab>('general');
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [showTerminationModal, setShowTerminationModal] = useState(false);
+
+    const [isEditingContacts, setIsEditingContacts] = useState(false);
+    const [editContacts, setEditContacts] = useState<{ name: string, phone: string, relationship: string }[]>([]);
+    const [isSavingContacts, setIsSavingContacts] = useState(false);
+
+    const handleEditContactsClick = () => {
+        setEditContacts(employee?.emergency_contacts || []);
+        setIsEditingContacts(true);
+    };
+
+    const handleSaveContacts = async () => {
+        if (!employee) return;
+        setIsSavingContacts(true);
+        const validContacts = editContacts.filter(c => c.name && c.phone && c.relationship);
+        try {
+            await api.updateEmployee(employee.id, {
+                status: employee.status,
+                emergency_contacts: validContacts.length > 0 ? validContacts : null
+            } as any);
+            const updated = await api.getEmployee(employee.id);
+            setEmployee(updated);
+            setIsEditingContacts(false);
+        } catch (err) {
+            console.error(err);
+            alert('Ошибка при сохранении контактов');
+        } finally {
+            setIsSavingContacts(false);
+        }
+    };
 
     useEffect(() => {
         const loadEmployee = async () => {
@@ -204,7 +242,7 @@ export default function EmployeeProfile() {
                     <div className="space-y-6">
                         {/* Onboarding Section - Visible only if not active */}
                         {employee.status !== 'active' && (
-                            <OnboardingTabContent
+                            <OnboardingTab
                                 employee={employee}
                                 onUpdate={() => {
                                     api.getEmployee(employee.id).then(setEmployee);
@@ -212,48 +250,179 @@ export default function EmployeeProfile() {
                             />
                         )}
 
-                        <div className="grid gap-6 md:grid-cols-2">
-                            <div className="rounded-2xl border bg-card p-6 shadow-sm">
-                                <div className="mb-4 flex items-center gap-2">
-                                    <MapPin className="h-5 w-5 text-blue-600" />
-                                    <h3 className="font-bold text-lg">Место работы</h3>
+                        {employee.status === 'revision' && (
+                            <div className="rounded-2xl border border-orange-200 bg-orange-50 p-6 flex gap-4 items-start shadow-sm">
+                                <div className="rounded-full bg-orange-100 p-2 text-orange-600">
+                                    <FileWarning className="h-6 w-6" />
                                 </div>
-                                <div className="space-y-4">
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Основной ПВЗ</p>
-                                        <p className="font-bold text-lg">{employee.main_pvz_name || 'Не назначен'}</p>
-                                    </div>
-                                    {employee.base_rate && (
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Ставка</p>
-                                            <p className="font-bold">{employee.base_rate} ₸ / смена</p>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-lg text-orange-900 mb-1">Документы на доработке</h3>
+                                    <p className="text-orange-800 text-sm">
+                                        Один или несколько документов были отклонены. Сотруднику необходимо загрузить новые документы или вы можете сделать это за него во вкладке "Документы".
+                                    </p>
+                                    {employee.rejection_reason && (
+                                        <div className="mt-3 p-3 rounded-lg bg-orange-100 border border-orange-200">
+                                            <p className="text-sm font-semibold text-orange-900 mb-1">Причина отклонения:</p>
+                                            <p className="text-orange-800">{employee.rejection_reason}</p>
                                         </div>
                                     )}
                                 </div>
                             </div>
+                        )}
 
-                            <div className="rounded-2xl border bg-card p-6 shadow-sm">
-                                <div className="mb-4 flex items-center gap-2">
-                                    <Calendar className="h-5 w-5 text-purple-600" />
-                                    <h3 className="font-bold text-lg">Даты</h3>
-                                </div>
-                                <div className="space-y-4">
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Дата найма</p>
-                                        <p className="font-bold text-lg">
-                                            {employee.hired_at
-                                                ? new Date(employee.hired_at).toLocaleDateString('ru-RU')
-                                                : '—'}
-                                        </p>
+                        <div className="grid gap-6 md:grid-cols-2">
+                            {/* БЛОК ЛИЧНЫЕ ДАННЫЕ */}
+                            <div className="rounded-2xl border bg-card p-6 shadow-sm flex flex-col">
+                                <div className="mb-5 flex items-center gap-3 border-b pb-4">
+                                    <div className="rounded-lg bg-indigo-50 p-2 text-indigo-600">
+                                        <UserX className="h-5 w-5" />
                                     </div>
-                                    {employee.probation_until && (
+                                    <h3 className="font-bold text-lg">Личные данные</h3>
+                                </div>
+                                <div className="space-y-5 flex-1">
+                                    <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <p className="text-sm text-muted-foreground">Испытательный срок</p>
-                                            <p className="font-bold text-orange-600">
-                                                до {new Date(employee.probation_until).toLocaleDateString('ru-RU')}
+                                            <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1.5 flex items-center gap-1.5"><UserX className="h-3 w-3" /> ИИН</p>
+                                            <p className="font-mono bg-muted/50 px-2 py-1.5 rounded-md border inline-block text-sm font-medium">{employee.iin || '—'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1.5 flex items-center gap-1.5"><CreditCard className="h-3 w-3" /> IBAN</p>
+                                            <p className="font-mono bg-muted/50 px-2 py-1.5 rounded-md border inline-block text-sm font-medium break-all">{employee.iban || '—'}</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1.5 flex items-center gap-1.5"><MapPin className="h-3 w-3" /> Фактический адрес</p>
+                                        <p className="text-sm font-medium bg-muted/30 p-2.5 rounded-lg border border-transparent">{employee.address || 'Не указан'}</p>
+                                    </div>
+
+                                    {/* Emergency Contacts */}
+                                    <div className="pt-2 mt-auto">
+                                        <div className="flex items-center justify-between mb-3 bg-slate-50 p-2 rounded-t-lg border-b">
+                                            <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Контакты родственников</p>
+                                            {!isEditingContacts && (
+                                                <button onClick={handleEditContactsClick} className="text-xs flex items-center gap-1 text-primary hover:text-primary/80 font-semibold transition-colors bg-white px-2 py-1 rounded shadow-sm border">
+                                                    <Edit2 className="h-3 w-3" /> Изменить
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {isEditingContacts ? (
+                                            <div className="space-y-3 bg-slate-50/50 p-3 rounded-b-lg border border-t-0">
+                                                {editContacts.map((contact, index) => (
+                                                    <div key={index} className="flex flex-col gap-2 p-3 rounded-lg bg-white border shadow-sm relative group">
+                                                        <div className="flex justify-between items-center mb-1">
+                                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-1.5 py-0.5 rounded">Контакт {index + 1}</span>
+                                                            <button
+                                                                title="Удалить"
+                                                                onClick={() => setEditContacts(editContacts.filter((_, i) => i !== index))}
+                                                                className="text-red-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </button>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <input value={contact.name} onChange={(e) => { const newC = [...editContacts]; newC[index].name = e.target.value; setEditContacts(newC); }} placeholder="ФИО" className="col-span-2 text-sm px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-slate-300" />
+                                                            <input value={contact.phone} onChange={(e) => { const newC = [...editContacts]; newC[index].phone = e.target.value; setEditContacts(newC); }} placeholder="Телефон" className="text-sm px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-slate-300" />
+                                                            <input value={contact.relationship} onChange={(e) => { const newC = [...editContacts]; newC[index].relationship = e.target.value; setEditContacts(newC); }} placeholder="Кем приходится" className="text-sm px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-slate-300" />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                <div className="flex items-center justify-between pt-2">
+                                                    <button onClick={() => setEditContacts([...editContacts, { name: '', phone: '', relationship: '' }])} className="text-xs font-bold text-slate-600 hover:text-black flex items-center gap-1.5 px-3 py-2 rounded-md hover:bg-slate-200 transition-colors">
+                                                        <Plus className="h-4 w-4" /> Добавить
+                                                    </button>
+                                                    <div className="flex gap-2">
+                                                        <button onClick={() => setIsEditingContacts(false)} className="px-4 py-2 text-xs border rounded-md font-semibold hover:bg-slate-100 flex items-center gap-1.5 text-slate-600 transition-colors">
+                                                            Отмена
+                                                        </button>
+                                                        <button disabled={isSavingContacts} onClick={handleSaveContacts} className="px-4 py-2 text-xs bg-black text-white rounded-md font-semibold hover:bg-slate-800 flex items-center gap-1.5 disabled:opacity-50 transition-colors shadow-sm">
+                                                            {isSavingContacts ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                                                            Сохранить
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="bg-slate-50/50 p-4 rounded-b-lg border border-t-0">
+                                                {employee.emergency_contacts && employee.emergency_contacts.length > 0 ? (
+                                                    <div className="space-y-3">
+                                                        {employee.emergency_contacts.map((contact, index) => (
+                                                            <div key={index} className="flex flex-col gap-1 p-3 bg-white rounded-lg border shadow-sm">
+                                                                <div className="flex justify-between items-start">
+                                                                    <span className="font-bold text-sm text-slate-800">{contact.name}</span>
+                                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{contact.relationship}</span>
+                                                                </div>
+                                                                <a href={`tel:${contact.phone}`} className="text-primary hover:underline font-mono text-sm inline-flex items-center gap-1.5 mt-1 w-fit">
+                                                                    <Phone className="h-3 w-3" /> {contact.phone}
+                                                                </a>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col items-center justify-center py-6 text-center border-2 border-dashed rounded-lg bg-white">
+                                                        <p className="text-sm font-medium text-slate-400">Контакты не указаны</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* БЛОК РАБОЧАЯ ИНФОРМАЦИЯ */}
+                            <div className="flex flex-col gap-6">
+                                <div className="rounded-2xl border bg-card p-6 shadow-sm flex-1">
+                                    <div className="mb-5 flex items-center gap-3 border-b pb-4">
+                                        <div className="rounded-lg bg-blue-50 p-2 text-blue-600">
+                                            <Briefcase className="h-5 w-5" />
+                                        </div>
+                                        <h3 className="font-bold text-lg">Рабочая информация</h3>
+                                    </div>
+                                    <div className="space-y-5">
+                                        <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
+                                            <p className="text-xs text-blue-600/80 uppercase font-bold tracking-wider mb-1">Должность</p>
+                                            <p className="font-bold text-lg text-blue-950 flex items-center gap-2">
+                                                {employee.role === 'rf' ? 'Региональный менеджер / РФ' : 'Менеджер ПВЗ'}
                                             </p>
                                         </div>
-                                    )}
+                                        <div>
+                                            <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1.5 flex items-center gap-1.5"><MapPin className="h-3 w-3" /> Основной ПВЗ</p>
+                                            <p className="font-semibold text-foreground bg-muted/30 p-2.5 rounded-lg border border-transparent">{employee.main_pvz_name || 'Не назначен'}</p>
+                                        </div>
+                                        {employee.base_rate && (
+                                            <div>
+                                                <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1.5 flex items-center gap-1.5"><CreditCard className="h-3 w-3" /> Ставка (Оклад)</p>
+                                                <p className="font-bold text-lg text-emerald-600">{employee.base_rate.toLocaleString()} ₸ <span className="text-sm font-medium text-muted-foreground">/ смена</span></p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="rounded-2xl border bg-card p-6 shadow-sm">
+                                    <div className="mb-5 flex items-center gap-3 border-b pb-4">
+                                        <div className="rounded-lg bg-purple-50 p-2 text-purple-600">
+                                            <Calendar className="h-5 w-5" />
+                                        </div>
+                                        <h3 className="font-bold text-lg">Даты</h3>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center p-3 rounded-lg bg-muted/30">
+                                            <p className="text-sm font-semibold text-muted-foreground">Дата найма</p>
+                                            <p className="font-bold">
+                                                {employee.hired_at
+                                                    ? new Date(employee.hired_at).toLocaleDateString('ru-RU')
+                                                    : '—'}
+                                            </p>
+                                        </div>
+                                        {employee.probation_until && (
+                                            <div className="flex justify-between items-center p-3 rounded-lg bg-orange-50/50 border border-orange-100">
+                                                <p className="text-sm font-semibold text-orange-600/80">Испытательный срок</p>
+                                                <p className="font-bold text-orange-600">
+                                                    до {new Date(employee.probation_until).toLocaleDateString('ru-RU')}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -271,7 +440,7 @@ export default function EmployeeProfile() {
                 )}
 
                 {activeTab === 'discipline' && (
-                    <DisciplineTabContent employeeId={employee.id} hiredAt={employee.hired_at || new Date().toISOString()} />
+                    <DisciplineTab employeeId={employee.id} hiredAt={employee.hired_at || new Date().toISOString()} />
                 )}
 
                 {activeTab === 'history' && (
@@ -302,266 +471,3 @@ export default function EmployeeProfile() {
     );
 }
 
-const CHECKLIST_ITEMS = [
-    { id: 'docs_uploaded', label: 'Документы загружены (УДЛ, Справки)' },
-    { id: 'contract_signed', label: 'Трудовой договор подписан' },
-    { id: 'telegram_added', label: 'Добавлен в рабочий чат Telegram' },
-    { id: 'safety_briefing', label: 'Проведен инструктаж по ТБ' },
-    { id: 'uniform_issued', label: 'Выдана форма (жилетка, бейдж)' },
-    { id: 'crm_access', label: 'Доступ в CRM выдан' }
-];
-
-function OnboardingTabContent({ employee, onUpdate }: { employee: Employee, onUpdate: () => void }) {
-    const checklist = employee.onboarding_checklist || {};
-    const [isUpdating, setIsUpdating] = useState(false);
-
-    // Contract Signing State
-    const [isGeneratingContract, setIsGeneratingContract] = useState(false);
-
-    const toggleItem = async (itemId: string) => {
-        const newValue = !checklist[itemId];
-        const newChecklist = { ...checklist, [itemId]: newValue };
-
-        try {
-            await api.updateEmployee(employee.id, {
-                status: employee.status, // Required by backend
-                onboarding_checklist: newChecklist
-            } as any);
-            onUpdate();
-        } catch (err) {
-            console.error(err);
-            alert('Ошибка обновления чек-листа');
-        }
-    };
-
-    const handleActivate = async () => {
-        if (!confirm('Активировать сотрудника? Это даст ему доступ к системе.')) return;
-        setIsUpdating(true);
-        try {
-            await api.updateEmployeeStatus(employee.id, 'active');
-            onUpdate();
-        } catch (err) {
-            console.error(err);
-            alert('Ошибка активации');
-        } finally {
-            setIsUpdating(false);
-        }
-    };
-
-    const [inviteLink, setInviteLink] = useState<string | null>(null);
-
-    const handleGenerateInvite = async () => {
-        setIsGeneratingContract(true);
-        try {
-            const res = await api.generateInviteLink(employee.id);
-            setInviteLink(res.url);
-        } catch (err) {
-            console.error(err);
-            alert('Ошибка при генерации ссылки-приглашения');
-        } finally {
-            setIsGeneratingContract(false);
-        }
-    };
-
-    const progress = CHECKLIST_ITEMS.filter(i => checklist[i.id]).length;
-    const total = CHECKLIST_ITEMS.length;
-    const isComplete = progress === total;
-
-    return (
-        <div className="grid gap-6 md:grid-cols-3">
-            <div className="md:col-span-2 space-y-6">
-                <div className="rounded-2xl border bg-card p-6 shadow-sm">
-                    <div className="mb-6 flex items-center justify-between">
-                        <div>
-                            <h3 className="font-bold text-lg">Чек-лист пребординга</h3>
-                            <p className="text-sm text-muted-foreground">Выполните все пункты перед активацией</p>
-                        </div>
-                        <div className="text-right">
-                            <span className="text-2xl font-black text-slate-900">{progress}/{total}</span>
-                        </div>
-                    </div>
-
-                    <div className="space-y-3">
-                        {CHECKLIST_ITEMS.map(item => (
-                            <label key={item.id} className="flex items-center gap-4 rounded-xl border p-4 transition-colors hover:bg-slate-50 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={!!checklist[item.id]}
-                                    onChange={() => toggleItem(item.id)}
-                                    className="h-6 w-6 rounded-md border-slate-300 text-black focus:ring-black"
-                                />
-                                <div className="flex-1">
-                                    <span className={cn("font-medium", checklist[item.id] ? "text-slate-900" : "text-slate-500")}>
-                                        {item.label}
-                                    </span>
-                                </div>
-                                {item.id === 'contract_signed' && !checklist['contract_signed'] && (
-                                    <div className="flex flex-col items-end gap-2 w-full max-w-sm mt-2 sm:mt-0">
-                                        {!inviteLink ? (
-                                            <button
-                                                onClick={(e) => { e.preventDefault(); handleGenerateInvite(); }}
-                                                disabled={isGeneratingContract}
-                                                className="rounded-lg bg-black px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-50"
-                                            >
-                                                {isGeneratingContract ? 'Генерация...' : 'Сгенерировать ссылку'}
-                                            </button>
-                                        ) : (
-                                            <div className="flex items-center gap-2 p-2 bg-blue-50 border border-blue-100 rounded text-xs w-full justify-between">
-                                                <span className="truncate text-blue-700 font-mono mr-2">{inviteLink}</span>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        navigator.clipboard.writeText(inviteLink).then(() => alert('Ссылка скопирована!'));
-                                                    }}
-                                                    className="px-2 py-1 bg-blue-600 hover:bg-blue-700 transition-colors text-white rounded font-medium shadow-sm"
-                                                >
-                                                    Копировать
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </label>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            <div className="space-y-6">
-                <div className="rounded-2xl border bg-slate-50 p-6">
-                    <h3 className="mb-4 font-bold text-lg">Действия</h3>
-
-                    {employee.status === 'active' ? (
-                        <div className="rounded-xl bg-green-100 p-4 text-green-800 font-bold text-center">
-                            Сотрудник активен
-                        </div>
-                    ) : (
-                        <button
-                            onClick={handleActivate}
-                            disabled={!isComplete || isUpdating}
-                            className="w-full rounded-xl bg-black py-4 font-bold text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 transition-all"
-                        >
-                            {isUpdating ? 'Активация...' : 'АКТИВИРОВАТЬ СОТРУДНИКА'}
-                        </button>
-                    )}
-
-                    {!isComplete && employee.status !== 'active' && (
-                        <p className="mt-3 text-xs text-center text-muted-foreground">
-                            Заполните чек-лист полностью для активации
-                        </p>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function DisciplineTabContent({ employeeId, hiredAt }: { employeeId: string, hiredAt: string }) {
-    const [records, setRecords] = useState<any[]>([]);
-    const [bonusInfo, setBonusInfo] = useState<any>(null);
-
-    useEffect(() => {
-        const load = async () => {
-            try {
-                const recs = await api.getDisciplineRecords(employeeId);
-                setRecords(recs);
-
-                // Calculate bonus locally for now
-                const hireDate = new Date(hiredAt);
-                const now = new Date();
-                const months = (now.getFullYear() - hireDate.getFullYear()) * 12 + (now.getMonth() - hireDate.getMonth());
-
-                let bonus = 0;
-                let nextBonus = 0;
-                let monthsToNext = 0;
-
-                if (months >= 36) { bonus = 100000; }
-                else if (months >= 24) { bonus = 50000; nextBonus = 100000; monthsToNext = 36 - months; }
-                else if (months >= 12) { bonus = 20000; nextBonus = 50000; monthsToNext = 24 - months; }
-                else if (months >= 6) { bonus = 15000; nextBonus = 20000; monthsToNext = 12 - months; }
-                else { nextBonus = 15000; monthsToNext = 6 - months; }
-
-                setBonusInfo({
-                    tenureMonths: months,
-                    currentBonus: bonus,
-                    nextBonus: { amount: nextBonus, monthsLeft: monthsToNext }
-                });
-            } catch (err) {
-                console.error(err);
-            }
-        };
-        load();
-    }, [employeeId, hiredAt]);
-
-    return (
-        <div className="space-y-6">
-            {/* Bonus Card */}
-            {bonusInfo && (
-                <div className="rounded-2xl border bg-card p-6 shadow-sm">
-                    <div className="mb-4 flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100 text-yellow-600">
-                            <Award className="h-6 w-6" />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-lg">Бонус за стаж</h3>
-                            <p className="text-sm text-muted-foreground">Стаж работы: {bonusInfo.tenureMonths} мес.</p>
-                        </div>
-                    </div>
-
-                    <div className="mb-6 grid grid-cols-2 gap-4 rounded-xl bg-slate-50 p-4">
-                        <div>
-                            <p className="text-xs text-muted-foreground uppercase font-bold">Текущий бонус</p>
-                            <p className="text-2xl font-black text-green-600">{bonusInfo.currentBonus.toLocaleString()} ₸</p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-muted-foreground uppercase font-bold">Следующий уровень</p>
-                            <p className="text-2xl font-black text-slate-900">{bonusInfo.nextBonus.amount.toLocaleString()} ₸</p>
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <div className="flex justify-between text-xs font-medium text-muted-foreground">
-                            <span>Прогресс</span>
-                            <span>Осталось {bonusInfo.nextBonus.monthsLeft} мес.</span>
-                        </div>
-                        <div className="relative h-4 w-full overflow-hidden rounded-full bg-slate-100">
-                            <div
-                                className="absolute left-0 top-0 h-full bg-yellow-400 transition-all duration-1000"
-                                style={{ width: `${Math.min(100, (bonusInfo.tenureMonths / (bonusInfo.tenureMonths + bonusInfo.nextBonus.monthsLeft)) * 100)}%` }}
-                            />
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Discipline Records */}
-            <div className="rounded-2xl border bg-card p-6 shadow-sm">
-                <h3 className="mb-4 font-bold text-lg">История взысканий</h3>
-                {records.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                        <Award className="h-12 w-12 text-slate-200 mb-2" />
-                        <p>Нарушений нет. Отличная работа!</p>
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        {records.map(record => (
-                            <div key={record.id} className="flex items-start gap-4 rounded-xl border p-4 bg-red-50/50 border-red-100">
-                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
-                                    <AlertTriangle className="h-4 w-4" />
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-bold text-red-900">{record.reason}</span>
-                                        <span className="rounded bg-white px-2 py-0.5 text-xs font-bold uppercase border shadow-sm">{record.type}</span>
-                                    </div>
-                                    <p className="text-sm text-red-700 mt-1">{record.date}</p>
-                                    {record.comment && <p className="mt-2 text-sm text-slate-600 bg-white p-2 rounded border border-red-100">{record.comment}</p>}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-}

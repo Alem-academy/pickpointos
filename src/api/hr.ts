@@ -17,8 +17,12 @@ export const hrApi = {
         return res.data;
     },
 
-    async updateEmployeeStatus(id: string, status: string): Promise<Employee> {
-        const res = await axiosInstance.patch(`/employees/${id}/status`, { status });
+    async updateEmployeeStatus(id: string, status: string, rejection_reason?: string): Promise<Employee> {
+        const data: { status: string; rejection_reason?: string } = { status };
+        if (rejection_reason !== undefined) {
+            data.rejection_reason = rejection_reason;
+        }
+        const res = await axiosInstance.patch(`/employees/${id}/status`, data);
         return res.data;
     },
 
@@ -89,5 +93,9 @@ export const hrApi = {
     async signDocument(id: string): Promise<Document> {
         const res = await axiosInstance.post(`/documents/${id}/sign`);
         return res.data;
+    },
+
+    async deleteDocument(id: string): Promise<void> {
+        await axiosInstance.delete(`/documents/${id}`);
     },
 };

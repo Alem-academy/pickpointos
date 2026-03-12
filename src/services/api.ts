@@ -29,6 +29,12 @@ export interface Document {
     signers?: { iin: string; name: string; date: string }[];
 }
 
+export interface EmergencyContact {
+    name: string;
+    phone: string;
+    relationship: string; // e.g., "мать", "отец", "супруг(а)"
+}
+
 export interface Employee {
     id: string;
     iin: string;
@@ -48,6 +54,8 @@ export interface Employee {
     created_at: string;
     iban?: string; // KZ IBAN
     onboarding_checklist?: Record<string, boolean>;
+    rejection_reason?: string | null; // Reason for revision status
+    emergency_contacts?: EmergencyContact[]; // Array of emergency contacts
 }
 
 export interface Shift {

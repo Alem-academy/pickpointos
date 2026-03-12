@@ -53,6 +53,7 @@ router.get('/employees/by-iin/:iin', async (req, res) => {
         const result = await query(`
             SELECT e.id, e.iin, e.full_name, e.role, e.status, e.phone, e.email,
                    e.base_rate, e.hired_at, e.probation_until, e.address,
+                   e.rejection_reason, e.emergency_contacts,
                    p.name as main_pvz_name, p.address as main_pvz_address
             FROM employees e
             LEFT JOIN pvz_points p ON e.main_pvz_id = p.id
@@ -63,7 +64,10 @@ router.get('/employees/by-iin/:iin', async (req, res) => {
             return res.status(404).json({ found: false });
         }
 
-        res.json({ found: true, employee: result.rows[0] });
+        // JSONB fields are parsed automatically by node-postgres
+        const employee = result.rows[0];
+
+        res.json({ found: true, employee });
     } catch (err) {
         Logger.error('Error fetching employee by IIN:', err);
         res.status(500).json({ error: 'Internal server error' });
@@ -104,7 +108,11 @@ router.get('/employees', authenticateToken, async (req, res) => {
         sql += ' ORDER BY e.created_at DESC';
 
         const result = await query(sql, params);
-        res.json(result.rows);
+
+        // JSONB is automatically parsed by node-postgres
+        const employees = result.rows;
+
+        res.json(employees);
     } catch (err) {
         Logger.error('Error fetching employees:', err);
         res.status(500).json({ error: 'Internal server error' });
@@ -114,7 +122,7 @@ router.get('/employees', authenticateToken, async (req, res) => {
 // POST /employees - Create new employee
 router.post('/employees', async (req, res) => {
     try {
-        const { iin, full_name, phone, email, role, main_pvz_id, status, address, base_rate, probation_until, hired_at, iban } = req.body;
+        const { iin, full_name, phone, email, role, main_pvz_id, status, address, base_rate, probation_until, hired_at, iban, emergency_contacts } = req.body;
 
         // Basic validation
         if (!iin || !full_name || !role) {
@@ -124,9 +132,9 @@ router.post('/employees', async (req, res) => {
         const result = await query(`
             INSERT INTO employees (
                 iin, full_name, phone, email, role, main_pvz_id, status,
-                address, base_rate, probation_until, hired_at, iban
+                address, base_rate, probation_until, hired_at, iban, emergency_contacts
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             RETURNING *
         `, [
             iin,
@@ -140,7 +148,8 @@ router.post('/employees', async (req, res) => {
             base_rate || null,
             probation_until || null,
             hired_at || null,
-            iban || null
+            iban || null,
+            emergency_contacts ? JSON.stringify(emergency_contacts) : null
         ]);
 
         res.status(201).json(result.rows[0]);
@@ -157,7 +166,7 @@ router.get('/employees/:id', async (req, res) => {
 
         const result = await query(`
             SELECT e.*, p.name as main_pvz_name, p.address as main_pvz_address
-            FROM employees e 
+            FROM employees e
             LEFT JOIN pvz_points p ON e.main_pvz_id = p.id
             WHERE e.id = $1
         `, [id]);
@@ -166,7 +175,10 @@ router.get('/employees/:id', async (req, res) => {
             return res.status(404).json({ error: 'Employee not found' });
         }
 
-        res.json(result.rows[0]);
+        // JSONB is parsed automatically by node-postgres
+        const employee = result.rows[0];
+
+        res.json(employee);
     } catch (err) {
         Logger.error('Error fetching employee:', err);
         res.status(500).json({ error: 'Internal server error' });
@@ -199,6 +211,21 @@ router.patch('/employees/:id/status', async (req, res) => {
         if (req.body.onboarding_checklist) {
             sql += `, onboarding_checklist = $${paramIdx++}`;
             params.push(req.body.onboarding_checklist);
+        }
+
+        // Handle rejection reason if status is revision
+        if (req.body.rejection_reason !== undefined) {
+            sql += `, rejection_reason = $${paramIdx++}`;
+            params.push(req.body.rejection_reason);
+        } else if (status === 'active' || status === 'signing') {
+            // Clear rejection reason if moving forward
+            sql += `, rejection_reason = NULL`;
+        }
+
+        // Handle emergency contacts updates
+        if (req.body.emergency_contacts !== undefined) {
+            sql += `, emergency_contacts = $${paramIdx++}`;
+            params.push(req.body.emergency_contacts ? JSON.stringify(req.body.emergency_contacts) : null);
         }
 
         sql += ` WHERE id = $2 RETURNING *`;

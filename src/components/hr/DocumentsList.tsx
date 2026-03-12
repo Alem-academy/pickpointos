@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api, type Document } from '@/services/api';
-import { FileText, Loader2, PenTool, CheckCircle, Plus, Upload, Eye, Image } from 'lucide-react';
+import { FileText, Loader2, PenTool, CheckCircle, Plus, Upload, Eye, Image, XCircle } from 'lucide-react';
 import { SigexSignModal } from '../SigexSignModal';
 import { cn } from '@/lib/utils';
 
@@ -23,6 +23,11 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     // IBAN Modal State
     const [isIbanModalOpen, setIsIbanModalOpen] = useState(false);
     const [ibanInput, setIbanInput] = useState('');
+
+    const [isRejecting, setIsRejecting] = useState<string | null>(null);
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [rejectReason, setRejectReason] = useState('');
+    const [rejectingDocId, setRejectingDocId] = useState<string | null>(null);
 
     // File upload ref
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -98,6 +103,37 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     const handleSignSuccess = async () => {
         await loadDocuments();
         if (onStatusChange) onStatusChange();
+    };
+
+    const handleRejectDocument = async (docId: string) => {
+        setRejectingDocId(docId);
+        setShowRejectModal(true);
+    };
+
+    const confirmRejectDocument = async () => {
+        if (!rejectReason.trim()) {
+            alert('Пожалуйста, укажите причину отклонения');
+            return;
+        }
+        
+        if (!rejectingDocId) return;
+        
+        setIsRejecting(rejectingDocId);
+        setShowRejectModal(false);
+        
+        try {
+            await api.deleteDocument(rejectingDocId);
+            await api.updateEmployeeStatus(employeeId, 'revision', rejectReason);
+            await loadDocuments();
+            if (onStatusChange) onStatusChange();
+            setRejectReason('');
+        } catch (err) {
+            console.error('Failed to reject document', err);
+            alert('Не удалось отклонить документ');
+        } finally {
+            setIsRejecting(null);
+            setRejectingDocId(null);
+        }
     };
 
     const handlePreview = async (doc: Document) => {
@@ -268,6 +304,18 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                             </button>
                                         )}
 
+                                        {doc.status !== 'signed' && doc.type !== 'contract' && doc.type !== 'order' && doc.type !== 'application' && (
+                                            <button
+                                                onClick={() => handleRejectDocument(doc.id)}
+                                                disabled={isRejecting === doc.id}
+                                                className="flex flex-1 justify-center items-center gap-1 rounded bg-red-50 text-red-600 px-2 py-1.5 text-xs font-medium hover:bg-red-100 transition-colors disabled:opacity-50"
+                                                title="Отклонить документ (отправить на доработку)"
+                                            >
+                                                {isRejecting === doc.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5" />}
+                                                Отклонить
+                                            </button>
+                                        )}
+
                                         {doc.status === 'signed' && (
                                             <div className="flex w-full items-center justify-center gap-1 rounded bg-emerald-50 px-2 py-1.5 text-xs font-medium text-emerald-600">
                                                 <CheckCircle className="h-3.5 w-3.5" />
@@ -385,6 +433,50 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                     onClose={() => setSigningDoc(null)}
                     onSuccess={handleSignSuccess}
                 />
+            )}
+
+            {/* Rejection Reason Modal */}
+            {showRejectModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-lg">
+                        <div className="mb-4 flex items-center gap-3">
+                            <div className="rounded-full bg-orange-100 p-2 text-orange-600">
+                                <FileText className="h-5 w-5" />
+                            </div>
+                            <h3 className="text-lg font-bold">Причина отклонения</h3>
+                        </div>
+                        <p className="mb-4 text-sm text-muted-foreground">
+                            Укажите причину, по которой документ отправляется на доработку. Сотрудник увидит это пояснение.
+                        </p>
+                        <textarea
+                            value={rejectReason}
+                            onChange={(e) => setRejectReason(e.target.value)}
+                            className="min-h-[120px] w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                            placeholder="Например: Фото смазанное, нужно переделать. Или: Документ не читается..."
+                            autoFocus
+                        />
+                        <div className="mt-6 flex justify-end gap-3">
+                            <button
+                                onClick={() => { setShowRejectModal(false); setRejectReason(''); setRejectingDocId(null); }}
+                                className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-slate-50"
+                                disabled={isRejecting !== null}
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                onClick={confirmRejectDocument}
+                                disabled={!rejectReason.trim() || isRejecting !== null}
+                                className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50"
+                            >
+                                {isRejecting !== null ? (
+                                    <><Loader2 className="inline h-4 w-4 animate-spin" /> Отправка...</>
+                                ) : (
+                                    'Отклонить документ'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

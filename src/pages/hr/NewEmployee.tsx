@@ -1,20 +1,15 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, UserPlus, CheckCircle2, X, FileText, ArrowRight, ArrowLeft } from "lucide-react";
-import { api, type PVZ, type EmployeeRole } from "@/services/api";
+import { UserPlus, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
+import { api, type PVZ } from "@/services/api";
 import { PageHeader } from "@/components/ui/page-header";
 import { Stepper } from "@/components/ui/stepper";
 import { Button } from "@/components/ui/button";
 
-interface FileUploadState {
-    id_main: File | null;
-    id_register: File | null;
-    cert_075: File | null;
-    photo: File | null;
-    bank_cert: File | null;
-    cert_tb: File | null;
-    address_cert: File | null;
-}
+import { useEmployeeForm } from "@/hooks/useEmployeeForm";
+import { GeneralInfoStep } from "@/components/hr/new-employee/GeneralInfoStep";
+import { WorkConditionsStep } from "@/components/hr/new-employee/WorkConditionsStep";
+import { DocumentsStep } from "@/components/hr/new-employee/DocumentsStep";
 
 const STEPS = [
     { label: "Личные данные" },
@@ -31,61 +26,26 @@ export default function NewEmployeePage() {
     const [isGeneratingContract, setIsGeneratingContract] = useState(false);
     const [pvzList, setPvzList] = useState<PVZ[]>([]);
 
-    const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        phone: '',
-        iin: '',
-        pvzId: '',
-        baseRate: '',
-        role: 'employee' as EmployeeRole,
-        email: ''
-    });
-
-    const [files, setFiles] = useState<FileUploadState>({
-        id_main: null,
-        id_register: null,
-        cert_075: null,
-        photo: null,
-        bank_cert: null,
-        cert_tb: null,
-        address_cert: null,
-    });
+    const {
+        formData,
+        errors,
+        files,
+        emergencyContacts,
+        setEmergencyContacts,
+        handleChange,
+        handleFileChange,
+        removeFile,
+        validateStep,
+        clearDraft
+    } = useEmployeeForm();
 
     useEffect(() => {
         api.getPvzList().then(setPvzList).catch(console.error);
     }, []);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleFileChange = (type: keyof FileUploadState, e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            setFiles(prev => ({ ...prev, [type]: e.target.files![0] }));
-        }
-    };
-
-    const removeFile = (type: keyof FileUploadState) => {
-        setFiles(prev => ({ ...prev, [type]: null }));
-    };
-
-    const validateStep = (stepIndex: number) => {
-        if (stepIndex === 0) {
-            return formData.firstName && formData.lastName && formData.iin.length === 12 && formData.phone;
-        }
-        if (stepIndex === 1) {
-            return formData.role;
-        }
-        return true;
-    };
-
     const handleNext = () => {
         if (validateStep(currentStep)) {
             setCurrentStep(prev => Math.min(prev + 1, STEPS.length - 1));
-        } else {
-            alert('Пожалуйста, заполните все обязательные поля корректно.');
         }
     };
 
@@ -106,6 +66,9 @@ export default function NewEmployeePage() {
         setIsLoading(true);
 
         try {
+            // Filter out empty contacts
+            const validContacts = emergencyContacts.filter(c => c.name && c.phone && c.relationship);
+
             // 1. Create employee
             const newEmployee = await api.createEmployee({
                 full_name: `${formData.lastName} ${formData.firstName}`,
@@ -113,9 +76,11 @@ export default function NewEmployeePage() {
                 phone: formData.phone,
                 email: formData.email,
                 role: formData.role,
-                main_pvz_id: formData.pvzId || null,
+                main_pvz_id: formData.pvzId || undefined,
                 status: 'new',
-                base_rate: 85000
+                base_rate: 85000,
+                address: formData.address || undefined,
+                emergency_contacts: validContacts.length > 0 ? validContacts : undefined
             });
 
             // 2. Upload files
@@ -132,6 +97,7 @@ export default function NewEmployeePage() {
 
             await Promise.all(uploadPromises);
 
+            clearDraft();
             setIsSubmitted(true);
         } catch (err) {
             console.error(err);
@@ -204,182 +170,28 @@ export default function NewEmployeePage() {
 
                     <div className="mt-8 rounded-2xl border bg-card shadow-sm overflow-hidden">
                         <div className="p-8">
-                            {/* STEP 1: Personal Info */}
                             {currentStep === 0 && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <div className="mb-6">
-                                        <h3 className="text-xl font-bold">Личные данные</h3>
-                                        <p className="text-sm text-muted-foreground mt-1">Основная информация о сотруднике</p>
-                                    </div>
-                                    <div className="grid gap-6 md:grid-cols-2">
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-semibold">Имя <span className="text-destructive">*</span></label>
-                                            <input
-                                                required
-                                                name="firstName"
-                                                value={formData.firstName}
-                                                onChange={handleChange}
-                                                className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                                placeholder="Например: Айдар"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-semibold">Фамилия <span className="text-destructive">*</span></label>
-                                            <input
-                                                required
-                                                name="lastName"
-                                                value={formData.lastName}
-                                                onChange={handleChange}
-                                                className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                                placeholder="Например: Нұрланов"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-semibold">ИИН <span className="text-destructive">*</span></label>
-                                            <input
-                                                required
-                                                name="iin"
-                                                maxLength={12}
-                                                value={formData.iin}
-                                                onChange={handleChange}
-                                                className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                                placeholder="12 цифр"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-semibold">Телефон <span className="text-destructive">*</span></label>
-                                            <input
-                                                required
-                                                name="phone"
-                                                type="tel"
-                                                value={formData.phone}
-                                                onChange={handleChange}
-                                                className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                                placeholder="+7..."
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-semibold">Email</label>
-                                            <input
-                                                name="email"
-                                                type="email"
-                                                value={formData.email}
-                                                onChange={handleChange}
-                                                className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                                placeholder="example@mail.com"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
+                                <GeneralInfoStep
+                                    formData={formData}
+                                    errors={errors}
+                                    handleChange={handleChange}
+                                    emergencyContacts={emergencyContacts}
+                                    setEmergencyContacts={setEmergencyContacts}
+                                />
                             )}
-
-                            {/* STEP 2: Job Info */}
                             {currentStep === 1 && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-                                    <div className="mb-6">
-                                        <h3 className="text-xl font-bold">Условия работы</h3>
-                                        <p className="text-sm text-muted-foreground mt-1">Организационные детали приема</p>
-                                    </div>
-                                    <div className="grid gap-6 md:grid-cols-2">
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-semibold">Пункт выдачи (ПВЗ)</label>
-                                            <select
-                                                name="pvzId"
-                                                value={formData.pvzId}
-                                                onChange={handleChange}
-                                                className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                            >
-                                                <option value="" disabled>Выберите ПВЗ (если применимо)</option>
-                                                {pvzList.map(pvz => (
-                                                    <option key={pvz.id} value={pvz.id}>{pvz.name} ({pvz.address})</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-semibold">Должность <span className="text-destructive">*</span></label>
-                                            <select
-                                                name="role"
-                                                value={formData.role}
-                                                onChange={handleChange}
-                                                className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                            >
-                                                <option value="employee">Менеджер ПВЗ</option>
-                                                <option value="rf">Региональный Менеджер (РФ)</option>
-                                                <option value="hr">HR</option>
-                                                <option value="admin">Администратор</option>
-                                                <option value="financier">Финансист</option>
-                                            </select>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-semibold">Оклад (МЗП) <span className="text-destructive">*</span></label>
-                                            <div className="relative">
-                                                <span className="absolute left-4 top-3 text-muted-foreground font-bold">₸</span>
-                                                <input
-                                                    readOnly
-                                                    type="text"
-                                                    value="85 000"
-                                                    className="w-full rounded-lg border bg-slate-100 text-slate-500 pl-10 pr-4 py-3 text-sm focus:outline-none cursor-not-allowed font-semibold"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <WorkConditionsStep
+                                    formData={formData}
+                                    handleChange={handleChange}
+                                    pvzList={pvzList}
+                                />
                             )}
-
-                            {/* STEP 3: Documents */}
                             {currentStep === 2 && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-                                    <div className="mb-6">
-                                        <h3 className="text-xl font-bold">Скан-копии документов</h3>
-                                        <p className="text-sm text-muted-foreground mt-1">Обязательные документы для оформления</p>
-                                    </div>
-                                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                        <FileUploadField
-                                            label="Уд. личности (Лицевая)"
-                                            file={files.id_main}
-                                            onChange={(e) => handleFileChange('id_main', e)}
-                                            onRemove={() => removeFile('id_main')}
-                                            required
-                                        />
-                                        <FileUploadField
-                                            label="Фото 3х4 (Для профиля)"
-                                            file={files.photo}
-                                            onChange={(e) => handleFileChange('photo', e)}
-                                            onRemove={() => removeFile('photo')}
-                                            required
-                                        />
-                                        <FileUploadField
-                                            label="Уд. личности (Обратная)"
-                                            file={files.id_register}
-                                            onChange={(e) => handleFileChange('id_register', e)}
-                                            onRemove={() => removeFile('id_register')}
-                                        />
-                                        <FileUploadField
-                                            label="Мед. справка 075/у"
-                                            file={files.cert_075}
-                                            onChange={(e) => handleFileChange('cert_075', e)}
-                                            onRemove={() => removeFile('cert_075')}
-                                        />
-                                        <FileUploadField
-                                            label="Справка с банка (IBAN)"
-                                            file={files.bank_cert}
-                                            onChange={(e) => handleFileChange('bank_cert', e)}
-                                            onRemove={() => removeFile('bank_cert')}
-                                        />
-                                        <FileUploadField
-                                            label="Справка Тубдиспансер"
-                                            file={files.cert_tb}
-                                            onChange={(e) => handleFileChange('cert_tb', e)}
-                                            onRemove={() => removeFile('cert_tb')}
-                                        />
-                                        <FileUploadField
-                                            label="Справка eGov (Адресная)"
-                                            file={files.address_cert}
-                                            onChange={(e) => handleFileChange('address_cert', e)}
-                                            onRemove={() => removeFile('address_cert')}
-                                        />
-                                    </div>
-                                </div>
+                                <DocumentsStep
+                                    files={files}
+                                    handleFileChange={handleFileChange}
+                                    removeFile={removeFile}
+                                />
                             )}
                         </div>
 
@@ -421,71 +233,6 @@ export default function NewEmployeePage() {
                     </div>
                 </div>
             </div>
-        </div>
-    );
-}
-
-function FileUploadField({
-    label,
-    file,
-    onChange,
-    onRemove,
-    required = false
-}: {
-    label: string;
-    file: File | null;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    onRemove: () => void;
-    required?: boolean;
-}) {
-    const inputRef = useRef<HTMLInputElement>(null);
-
-    return (
-        <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex justify-between">
-                <span>{label}</span>
-                {required && <span className="text-destructive">*</span>}
-            </label>
-
-            {!file ? (
-                <div
-                    onClick={() => inputRef.current?.click()}
-                    className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/20 px-6 py-6 transition-colors hover:bg-muted/50 hover:border-primary/50 group h-[120px]"
-                >
-                    <Upload className="mb-2 h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
-                    <p className="text-xs font-semibold text-center mt-1 group-hover:text-primary transition-colors">
-                        Нажмите для загрузки
-                    </p>
-                    <input
-                        ref={inputRef}
-                        type="file"
-                        className="hidden"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={onChange}
-                    />
-                </div>
-            ) : (
-                <div className="flex flex-col justify-center rounded-xl border border-primary/20 bg-primary/5 p-4 shadow-sm h-[120px] relative group overflow-hidden">
-                    <div className="flex items-center gap-3">
-                        <div className="rounded-lg bg-background p-2 text-primary shadow-sm">
-                            <FileText className="h-5 w-5" />
-                        </div>
-                        <div className="min-w-0 pr-6">
-                            <p className="truncate text-sm font-bold text-foreground" title={file.name}>{file.name}</p>
-                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={onRemove}
-                        className="absolute top-2 right-2 rounded-lg p-1.5 text-muted-foreground opacity-0 group-hover:opacity-100 bg-background shadow-sm hover:text-destructive transition-all"
-                        title="Удалить файл"
-                    >
-                        <X className="h-4 w-4" />
-                    </button>
-                    <div className="absolute bottom-0 left-0 h-1 bg-emerald-500 w-full opacity-60"></div>
-                </div>
-            )}
         </div>
     );
 }
