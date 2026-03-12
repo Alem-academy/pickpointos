@@ -44,19 +44,30 @@ function parseIIN(iin: string | undefined) {
         default: return null;
     }
 
-    const birthDate = new Date(year, mm - 1, dd);
     const today = new Date();
-    let age = today.getFullYear() - year;
-    if (today.getMonth() < birthDate.getMonth() ||
-        (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())) {
-        age--;
-    }
+    const age = today.getFullYear() - year;
+    const isBeforeBirthday = today.getMonth() < mm - 1 ||
+        (today.getMonth() === mm - 1 && today.getDate() < dd);
 
     return {
         birthDate: `${dd.toString().padStart(2, '0')}.${mm.toString().padStart(2, '0')}.${year}`,
-        age,
+        age: isBeforeBirthday ? age - 1 : age,
         gender
     };
+}
+
+function getEmergencyContacts(contacts: any): { name: string, phone: string, relationship: string }[] {
+    if (!contacts) return [];
+    if (Array.isArray(contacts)) return contacts;
+    if (typeof contacts === 'string') {
+        try {
+            return JSON.parse(contacts) || [];
+        } catch (e) {
+            console.error("Failed to parse emergency_contacts", e);
+            return [];
+        }
+    }
+    return [];
 }
 
 const STATUS_LABELS = {
@@ -97,7 +108,7 @@ export default function EmployeeProfile() {
     const [isSavingContacts, setIsSavingContacts] = useState(false);
 
     const handleEditContactsClick = () => {
-        setEditContacts(employee?.emergency_contacts || []);
+        setEditContacts(getEmergencyContacts(employee?.emergency_contacts));
         setIsEditingContacts(true);
     };
 
@@ -182,6 +193,7 @@ export default function EmployeeProfile() {
     }
 
     const iinInfo = parseIIN(employee.iin);
+    const safeEmergencyContacts = getEmergencyContacts(employee.emergency_contacts);
 
     return (
         <div className="p-8">
@@ -390,9 +402,9 @@ export default function EmployeeProfile() {
                                             </div>
                                         ) : (
                                             <div className="bg-slate-50/50 p-4 rounded-b-lg border border-t-0">
-                                                {employee.emergency_contacts && employee.emergency_contacts.length > 0 ? (
+                                                {safeEmergencyContacts.length > 0 ? (
                                                     <div className="space-y-3">
-                                                        {employee.emergency_contacts.map((contact, index) => (
+                                                        {safeEmergencyContacts.map((contact, index) => (
                                                             <div key={index} className="flex flex-col gap-1 p-3 bg-white rounded-lg border shadow-sm">
                                                                 <div className="flex justify-between items-start">
                                                                     <span className="font-bold text-sm text-slate-800">{contact.name}</span>
