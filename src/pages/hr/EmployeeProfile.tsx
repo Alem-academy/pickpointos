@@ -14,7 +14,6 @@ import {
     FileWarning,
     Edit2,
     Save,
-    X,
     Plus,
     Trash2,
     Loader2,
