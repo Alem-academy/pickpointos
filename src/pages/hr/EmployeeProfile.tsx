@@ -26,6 +26,39 @@ import { TerminationModal } from "@/components/hr/TerminationModal";
 import { OnboardingTab } from "@/components/hr/profile/OnboardingTab";
 import { DisciplineTab } from "@/components/hr/profile/DisciplineTab";
 
+function parseIIN(iin: string | undefined) {
+    if (!iin || iin.length !== 12) return null;
+    const yy = parseInt(iin.substring(0, 2), 10);
+    const mm = parseInt(iin.substring(2, 4), 10);
+    const dd = parseInt(iin.substring(4, 6), 10);
+    const centuryStr = iin.substring(6, 7);
+
+    let year, gender;
+    switch (centuryStr) {
+        case '1': year = 1800 + yy; gender = 'Мужской'; break;
+        case '2': year = 1800 + yy; gender = 'Женский'; break;
+        case '3': year = 1900 + yy; gender = 'Мужской'; break;
+        case '4': year = 1900 + yy; gender = 'Женский'; break;
+        case '5': year = 2000 + yy; gender = 'Мужской'; break;
+        case '6': year = 2000 + yy; gender = 'Женский'; break;
+        default: return null;
+    }
+
+    const birthDate = new Date(year, mm - 1, dd);
+    const today = new Date();
+    let age = today.getFullYear() - year;
+    if (today.getMonth() < birthDate.getMonth() ||
+        (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+
+    return {
+        birthDate: `${dd.toString().padStart(2, '0')}.${mm.toString().padStart(2, '0')}.${year}`,
+        age,
+        gender
+    };
+}
+
 const STATUS_LABELS = {
     new: 'Новый',
     review: 'На проверке',
@@ -147,6 +180,8 @@ export default function EmployeeProfile() {
             </div>
         );
     }
+
+    const iinInfo = parseIIN(employee.iin);
 
     return (
         <div className="p-8">
@@ -288,6 +323,18 @@ export default function EmployeeProfile() {
                                             <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1.5 flex items-center gap-1.5"><CreditCard className="h-3 w-3" /> IBAN</p>
                                             <p className="font-mono bg-muted/50 px-2 py-1.5 rounded-md border inline-block text-sm font-medium break-all">{employee.iban || '—'}</p>
                                         </div>
+                                        {iinInfo && (
+                                            <>
+                                                <div>
+                                                    <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1.5 flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Дата рождения</p>
+                                                    <p className="font-medium bg-muted/50 px-2 py-1.5 rounded-md border inline-block text-sm">{iinInfo.birthDate} <span className="text-muted-foreground ml-1">({iinInfo.age} лет)</span></p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1.5 flex items-center gap-1.5"><UserX className="h-3 w-3" /> Пол</p>
+                                                    <p className="font-medium bg-muted/50 px-2 py-1.5 rounded-md border inline-block text-sm">{iinInfo.gender}</p>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                     <div>
                                         <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1.5 flex items-center gap-1.5"><MapPin className="h-3 w-3" /> Фактический адрес</p>
