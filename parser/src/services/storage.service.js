@@ -4,7 +4,8 @@ import { Logger } from '../lib/logger.js';
 
 const s3Client = new S3Client({
     region: (process.env.AWS_REGION || 'auto').toLowerCase(),
-    endpoint: process.env.AWS_ENDPOINT, // Required for R2: https://<accountid>.r2.cloudflarestorage.com
+    endpoint: process.env.AWS_ENDPOINT, // Required for R2/GCore: https://s-ed1.cloud.gcore.lu
+    forcePathStyle: true, // Required for non-AWS S3
     credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
