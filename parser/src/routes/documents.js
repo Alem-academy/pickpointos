@@ -3,6 +3,7 @@ import multer from 'multer';
 import { query } from '../lib/db.js';
 import { CONTRACT_TEMPLATE, HIRING_ORDER_TEMPLATE, EMPLOYMENT_APPLICATION_TEMPLATE, fillTemplate } from '../services/templates.js';
 import { storageService } from '../services/storage.service.js';
+import { Logger } from '../lib/logger.js';
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -20,7 +21,7 @@ router.get('/employees/:id/documents', async (req, res) => {
                 try {
                     enhanced.scan_url = await storageService.getFileUrl(doc.scan_url);
                 } catch (e) {
-                    console.error(`Failed to sign scan_url for doc ${doc.id}:`, e);
+                    Logger.error(`Failed to sign scan_url for doc ${doc.id}:`, e);
                 }
             }
             if (doc.thumbnail_url && !doc.thumbnail_url.startsWith('http')) {
@@ -36,7 +37,7 @@ router.get('/employees/:id/documents', async (req, res) => {
         res.set('Cache-Control', 'no-store');
         res.json(documents);
     } catch (err) {
-        console.error('Error fetching documents:', err);
+        Logger.error('Error fetching documents:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -52,8 +53,11 @@ router.post('/documents/upload', upload.single('file'), async (req, res) => {
         }
 
         if (!employeeId || !type) {
+            Logger.warn(`[Docs] Upload failed: Employee ID (${employeeId}) and Type (${type}) are required`);
             return res.status(400).json({ error: 'Employee ID and Type are required' });
         }
+
+        Logger.info(`[Docs] Uploading document scan for employee ${employeeId}, type: ${type}`);
 
         // Generate a clean filename/key
         // e.g. documents/emp_123/scan_contract_1700000000.pdf
@@ -61,6 +65,7 @@ router.post('/documents/upload', upload.single('file'), async (req, res) => {
         const key = `documents/${employeeId}/scan_${type}_${Date.now()}.${ext}`;
 
         // Upload to S3
+        Logger.info(`[Docs] Uploading to bucket with key: ${key}`);
         await storageService.uploadFile(file.buffer, file.mimetype, key);
 
         // Generate a lightweight thumbnail for images (optional — requires sharp)
@@ -74,8 +79,9 @@ router.post('/documents/upload', upload.single('file'), async (req, res) => {
                     .toBuffer();
                 thumbnailKey = `thumbnails/${employeeId}/thumb_${type}_${Date.now()}.webp`;
                 await storageService.uploadFile(thumbBuffer, 'image/webp', thumbnailKey);
+                Logger.info(`[Docs] Thumbnail generated and uploaded to ${thumbnailKey}`);
             } catch (thumbErr) {
-                console.warn('Thumbnail generation skipped (sharp unavailable or error):', thumbErr.message);
+                Logger.warn(`[Docs] Thumbnail generation skipped (sharp unavailable or error): ${thumbErr.message}`);
             }
         }
 
@@ -89,7 +95,7 @@ router.post('/documents/upload', upload.single('file'), async (req, res) => {
         res.status(201).json(result.rows[0]);
 
     } catch (err) {
-        console.error('Upload failed:', err);
+        Logger.error('[Docs] Upload failed:', err);
         res.status(500).json({ error: 'Upload failed', details: err.message });
     }
 });
@@ -235,7 +241,7 @@ router.post('/documents/generate', async (req, res) => {
         });
 
     } catch (err) {
-        console.error('Error generating document:', err);
+        Logger.error('[Docs] Error generating document:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

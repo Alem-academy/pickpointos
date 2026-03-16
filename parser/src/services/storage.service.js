@@ -1,5 +1,6 @@
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Logger } from '../lib/logger.js';
 
 const s3Client = new S3Client({
     region: (process.env.AWS_REGION || 'auto').toLowerCase(),
@@ -21,7 +22,11 @@ export const storageService = {
      * @returns {Promise<string>} The key of the uploaded object
      */
     async uploadFile(buffer, mimeType, key) {
-        if (!BUCKET_NAME) throw new Error('AWS_BUCKET_NAME is not defined');
+        Logger.info(`[S3] Starting upload to ${BUCKET_NAME}/${key} (${mimeType})`);
+        if (!BUCKET_NAME) {
+            Logger.error('[S3/R2] AWS_BUCKET_NAME is not defined in environment variables');
+            throw new Error('AWS_BUCKET_NAME is not defined');
+        }
 
         const command = new PutObjectCommand({
             Bucket: BUCKET_NAME,
@@ -30,8 +35,14 @@ export const storageService = {
             ContentType: mimeType
         });
 
-        await s3Client.send(command);
-        return key;
+        try {
+            await s3Client.send(command);
+            Logger.info(`[S3] Successfully uploaded to ${key}`);
+            return key;
+        } catch (error) {
+            Logger.error(`[S3] Upload failed for ${key}:`, error);
+            throw error;
+        }
     },
 
     /**
@@ -41,7 +52,10 @@ export const storageService = {
      * @returns {Promise<string>}
      */
     async getFileUrl(key, expiresInSeconds = 3600) {
-        if (!BUCKET_NAME) throw new Error('AWS_BUCKET_NAME is not defined');
+        if (!BUCKET_NAME) {
+            Logger.error('[S3/R2] AWS_BUCKET_NAME is not defined in environment variables');
+            throw new Error('AWS_BUCKET_NAME is not defined');
+        }
 
         // If it's a full URL (legacy or external), return as is
         if (key.startsWith('http')) return key;
@@ -51,6 +65,13 @@ export const storageService = {
             Key: key
         });
 
-        return await getSignedUrl(s3Client, command, { expiresIn: expiresInSeconds });
+        try {
+            const url = await getSignedUrl(s3Client, command, { expiresIn: expiresInSeconds });
+            Logger.debug(`[S3] Generated signed URL for ${key}`);
+            return url;
+        } catch (error) {
+            Logger.error(`[S3] Failed to generate signed URL for ${key}:`, error);
+            throw error;
+        }
     }
 };
