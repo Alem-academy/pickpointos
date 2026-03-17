@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api, type Document } from '@/services/api';
-import { FileText, Loader2, PenTool, CheckCircle, Plus, Upload, Eye, Image, XCircle } from 'lucide-react';
+import { FileText, Loader2, PenTool, CheckCircle, Plus, Upload, Eye, Image, XCircle, Trash2 } from 'lucide-react';
 import { SigexSignModal } from '../SigexSignModal';
 import { cn } from '@/lib/utils';
 
@@ -122,6 +122,30 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
         setPendingFile(null);
         setSelectedDocType('');
         if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    const handleDeleteDocument = async (docId: string, docType: string) => {
+        const docName = docType === 'id_main' ? 'Уд. личности (Лиц.)' :
+                       docType === 'id_register' ? 'Уд. личности (Оборот)' :
+                       docType === 'photo' ? 'Фото 3х4' :
+                       docType === 'cert_075' ? 'Справка 075/у' :
+                       docType === 'bank_details' ? 'Справка IBAN' :
+                       docType === 'cert_tb' ? 'Справка тубдиспансер' :
+                       docType === 'address_cert' ? 'Адресная справка' :
+                       'Документ';
+        
+        if (!confirm(`Вы уверены, что хотите удалить "${docName}"? Это действие нельзя отменить.`)) {
+            return;
+        }
+
+        try {
+            await api.deleteDocument(docId);
+            await loadDocuments();
+            if (onStatusChange) onStatusChange();
+        } catch (err) {
+            console.error('Failed to delete document', err);
+            alert('Не удалось удалить документ');
+        }
     };
 
     const handleSignClick = (doc: Document) => {
@@ -341,6 +365,18 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                             >
                                                 {isRejecting === doc.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5" />}
                                                 Отклонить
+                                            </button>
+                                        )}
+
+                                        {/* Delete Button - Show for all uploaded documents */}
+                                        {['id_main', 'id_register', 'photo', 'cert_075', 'bank_details', 'cert_tb', 'address_cert', 'other'].includes(doc.type) && (
+                                            <button
+                                                onClick={() => handleDeleteDocument(doc.id, doc.type)}
+                                                className="flex flex-1 justify-center items-center gap-1 rounded bg-red-50 text-red-600 px-2 py-1.5 text-xs font-medium hover:bg-red-100 transition-colors"
+                                                title="Удалить документ"
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                                Удалить
                                             </button>
                                         )}
 
