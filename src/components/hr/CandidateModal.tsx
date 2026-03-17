@@ -104,8 +104,9 @@ export function CandidateModal({ candidate, onClose, onApprove, onReject, onRevi
                         size="lg"
                         className="border-destructive/30 text-destructive hover:bg-destructive/10 font-semibold"
                         onClick={onReject}
+                        title="Полностью отклонить кандидата (отказ в приеме)"
                     >
-                        Отклонить
+                        Отказать
                     </Button>
 
                     <div className="flex gap-3">
@@ -115,6 +116,7 @@ export function CandidateModal({ candidate, onClose, onApprove, onReject, onRevi
                                 size="lg"
                                 className="border-orange-200 text-orange-600 hover:bg-orange-50 font-semibold gap-2"
                                 onClick={onRevision}
+                                title="Отправить документы на доработку (кандидат должен загрузить документы заново)"
                             >
                                 <FileWarning className="h-4 w-4" />
                                 На доработку

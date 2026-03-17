@@ -40,6 +40,13 @@ export default function Applications() {
             return;
         }
 
+        // If status is 'fired', confirm before proceeding
+        if (newStatus === 'fired') {
+            if (!confirm('Вы уверены, что хотите отклонить кандидата? Ему будет отказано в приеме.')) {
+                return;
+            }
+        }
+
         try {
             await api.updateEmployeeStatus(id, newStatus);
             loadEmployees();
@@ -157,7 +164,7 @@ export default function Applications() {
                     onClose={() => setSelectedCandidate(null)}
                     onApprove={() => handleStatusUpdate(selectedCandidate.id, 'signing')}
                     onReject={() => handleStatusUpdate(selectedCandidate.id, 'fired')}
-                    onRevision={() => handleStatusUpdate(selectedCandidate.id, 'revision')}
+                    onRevision={selectedCandidate.status !== 'revision' ? () => handleStatusUpdate(selectedCandidate.id, 'revision') : undefined}
                 />
             )}
         </div>
