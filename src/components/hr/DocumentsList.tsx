@@ -29,6 +29,11 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     const [rejectReason, setRejectReason] = useState('');
     const [rejectingDocId, setRejectingDocId] = useState<string | null>(null);
 
+    // Upload Modal State
+    const [showUploadModal, setShowUploadModal] = useState(false);
+    const [selectedDocType, setSelectedDocType] = useState<string>('');
+    const [pendingFile, setPendingFile] = useState<File | null>(null);
+
     // File upload ref
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -73,27 +78,50 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     };
 
     const handleUploadClick = () => {
-        fileInputRef.current?.click();
+        // Open modal to select document type first
+        setShowUploadModal(true);
+        setSelectedDocType(''); // Reset selection
     };
 
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        
+        // Store file temporarily, will upload after type is confirmed
+        setPendingFile(file);
+    };
 
-        // Reset input
-        if (fileInputRef.current) fileInputRef.current.value = '';
+    const handleConfirmUpload = async () => {
+        if (!selectedDocType) {
+            alert('Пожалуйста, выберите тип документа');
+            return;
+        }
+        if (!pendingFile) {
+            alert('Пожалуйста, выберите файл');
+            return;
+        }
 
         setIsUploading(true);
         try {
-            // Assume uploading generic 'other' doc for now, or 'id_scan' if explicit button
-            await api.uploadDocument(employeeId, 'id_scan', file);
+            await api.uploadDocument(employeeId, selectedDocType, pendingFile);
             await loadDocuments();
+            setShowUploadModal(false);
+            setPendingFile(null);
+            setSelectedDocType('');
+            if (fileInputRef.current) fileInputRef.current.value = '';
         } catch (err) {
             console.error('Upload failed:', err);
             alert('Ошибка загрузки файла');
         } finally {
             setIsUploading(false);
         }
+    };
+
+    const handleCancelUpload = () => {
+        setShowUploadModal(false);
+        setPendingFile(null);
+        setSelectedDocType('');
+        if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
     const handleSignClick = (doc: Document) => {
@@ -190,7 +218,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                         ref={fileInputRef}
                         className="hidden"
                         accept="application/pdf,image/*"
-                        onChange={handleFileChange}
+                        onChange={handleFileSelect}
                     />
 
                     <button
@@ -433,6 +461,90 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                     onClose={() => setSigningDoc(null)}
                     onSuccess={handleSignSuccess}
                 />
+            )}
+
+            {/* Upload Document Modal */}
+            {showUploadModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="w-full max-w-lg rounded-2xl border bg-card p-6 shadow-lg">
+                        <div className="mb-6 flex items-center gap-3">
+                            <div className="rounded-full bg-blue-100 p-2 text-blue-600">
+                                <Upload className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold">Загрузка документа</h3>
+                                <p className="text-sm text-muted-foreground">Выберите тип и загрузите файл</p>
+                            </div>
+                        </div>
+
+                        {/* Document Type Selection */}
+                        <div className="mb-6">
+                            <label className="text-sm font-semibold mb-2 block">Тип документа *</label>
+                            <select
+                                value={selectedDocType}
+                                onChange={(e) => setSelectedDocType(e.target.value)}
+                                className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                            >
+                                <option value="">Выберите тип...</option>
+                                <option value="id_main">Уд. личности (Лицевая сторона)</option>
+                                <option value="id_register">Уд. личности (Оборотная сторона)</option>
+                                <option value="photo">Фото 3х4</option>
+                                <option value="cert_075">Справка 075/у (Мед. справка)</option>
+                                <option value="bank_details">Справка IBAN</option>
+                                <option value="cert_tb">Справка тубдиспансер</option>
+                                <option value="address_cert">Адресная справка</option>
+                                <option value="other">Другое</option>
+                            </select>
+                        </div>
+
+                        {/* File Upload */}
+                        <div className="mb-6">
+                            <label className="text-sm font-semibold mb-2 block">Файл *</label>
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    className="flex-1 rounded-lg border bg-background px-4 py-2 text-sm"
+                                    accept="application/pdf,image/*"
+                                    onChange={handleFileSelect}
+                                />
+                            </div>
+                            <p className="mt-2 text-xs text-muted-foreground">
+                                Поддерживаются: PDF, JPG, PNG, WEBP
+                            </p>
+                            {pendingFile && (
+                                <div className="mt-2 flex items-center gap-2 rounded bg-blue-50 p-2 text-xs text-blue-700">
+                                    <FileText className="h-4 w-4" />
+                                    <span className="font-medium">{pendingFile.name}</span>
+                                    <span className="text-muted-foreground">
+                                        ({(pendingFile.size / 1024).toFixed(1)} KB)
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex justify-end gap-3 border-t pt-6">
+                            <button
+                                onClick={handleCancelUpload}
+                                className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-slate-50"
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                onClick={handleConfirmUpload}
+                                disabled={!selectedDocType || !pendingFile || isUploading}
+                                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                            >
+                                {isUploading ? (
+                                    <><Loader2 className="inline h-4 w-4 animate-spin" /> Загрузка...</>
+                                ) : (
+                                    <><Upload className="inline h-4 w-4" /> Загрузить</>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {/* Rejection Reason Modal */}
