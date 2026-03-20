@@ -242,28 +242,27 @@ router.post('/documents/generate', async (req, res) => {
             return res.status(400).json({ error: 'Unsupported document type' });
         }
 
-        // Generate PDF from HTML using Puppeteer
-        let pdfBuffer;
+        // Save generated HTML directly to S3 (skip PDF generation for now)
+        const htmlBuffer = Buffer.from(htmlContent, 'utf8');
+        const htmlKey = `documents/${employeeId}/${type}_${Date.now()}.html`;
+        
         try {
-            pdfBuffer = await pdfService.generatePdfFromHtml(htmlContent);
-        } catch (pdfErr) {
-            Logger.error('[Docs] Error generating PDF from HTML:', pdfErr);
-            return res.status(500).json({ error: 'Failed to render PDF from document template' });
+            await storageService.uploadFile(htmlBuffer, 'text/html', htmlKey);
+            Logger.info('[Docs] Document saved as HTML:', htmlKey);
+        } catch (uploadErr) {
+            Logger.error('[Docs] S3 upload failed:', uploadErr.message);
+            throw uploadErr;
         }
-
-        // Save generated PDF to S3
-        const pdfKey = `documents/${employeeId}/${type}_${Date.now()}.pdf`;
-        await storageService.uploadFile(pdfBuffer, 'application/pdf', pdfKey);
 
         const docResult = await query(`
             INSERT INTO documents (employee_id, type, status, scan_url, created_at)
             VALUES ($1, $2, 'draft', $3, NOW())
             RETURNING *
-        `, [employeeId, type, pdfKey]);
+        `, [employeeId, type, htmlKey]);
 
         res.status(201).json({
             document: docResult.rows[0],
-            content: htmlContent // keep returning HTML if frontend needs basic preview
+            content: htmlContent
         });
 
     } catch (err) {

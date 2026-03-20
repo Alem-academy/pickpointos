@@ -2,10 +2,10 @@
 providers = ["node"]
 
 [phases.setup]
-nixPkgs = ["nodejs", "npm", "python3", "chromium", "nss", "freetype", "harfbuzz"]
+nixPkgs = ["nodejs", "npm", "python3"]
 
 [phases.install]
-cmds = ["npm install"]
+cmds = ["npm install --force"]
 
 [phases.build]
 cmds = ["npm run build"]

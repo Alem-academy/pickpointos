@@ -12,7 +12,15 @@ export const pdfService = {
         let browser;
         try {
             Logger.info('[PDF Service] Launching browser...');
+            
+            // Use executable path from env if available (for Railway/Nix)
+            const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+            if (executablePath) {
+                Logger.info('[PDF Service] Using Chromium from: ' + executablePath);
+            }
+            
             browser = await puppeteer.launch({
+                executablePath: executablePath,
                 headless: "new",
                 args: [
                     '--no-sandbox',
@@ -21,15 +29,19 @@ export const pdfService = {
                     '--disable-gpu',
                     '--no-first-run',
                     '--no-zygote',
-                    '--single-process'
+                    '--single-process',
+                    '--disable-software-rasterizer'
                 ]
             });
 
+            Logger.info('[PDF Service] Browser launched successfully');
+
             const page = await browser.newPage();
             
-            // Set the HTML content
+            Logger.info('[PDF Service] Setting HTML content...');
             await page.setContent(htmlContent, {
-                waitUntil: ['networkidle0', 'load', 'domcontentloaded']
+                waitUntil: ['domcontentloaded', 'networkidle0'],
+                timeout: 30000
             });
 
             // Default PDF format is A4 with standard margins
@@ -48,9 +60,11 @@ export const pdfService = {
             Logger.info('[PDF Service] Generating PDF buffer...');
             const pdfBuffer = await page.pdf(defaultOptions);
             
+            Logger.info('[PDF Service] PDF generated successfully (' + pdfBuffer.length + ' bytes)');
             return Buffer.from(pdfBuffer);
         } catch (error) {
-            Logger.error('[PDF Service] Error generating PDF:', error);
+            Logger.error('[PDF Service] Error generating PDF:', error.message);
+            Logger.error('[PDF Service] Stack:', error.stack);
             throw error;
         } finally {
             if (browser) {
