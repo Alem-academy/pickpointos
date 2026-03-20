@@ -4,7 +4,6 @@ import { query } from '../lib/db.js';
 import QRCode from 'qrcode';
 import { CONTRACT_TEMPLATE, HIRING_ORDER_TEMPLATE, EMPLOYMENT_APPLICATION_TEMPLATE, SIGNATURE_SHEET_TEMPLATE, fillTemplate } from '../services/templates.js';
 import { storageService } from '../services/storage.service.js';
-import { pdfService } from '../services/pdf.service.js';
 import { Logger } from '../lib/logger.js';
 
 const router = express.Router();
