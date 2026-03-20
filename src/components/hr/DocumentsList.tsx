@@ -62,7 +62,8 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
 
         setIsGenerating(type);
         try {
-            const { content } = await api.generateDocument(employeeId, type, type === 'contract' ? ibanInput : undefined);
+            const docType = type === 'order' ? 'order_hiring' : type;
+            const { content } = await api.generateDocument(employeeId, docType, type === 'contract' ? ibanInput : undefined);
             setPreviewContent(content);
             await loadDocuments();
             if (isIbanModalOpen) {
