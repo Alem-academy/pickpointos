@@ -1,148 +1,5 @@
-export const CONTRACT_TEMPLATE = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <style>
-        body { font-family: 'Times New Roman', Times, serif; line-height: 1.6; font-size: 13px; color: #000; max-width: 780px; margin: 0 auto; padding: 20px 40px; }
-        h1 { text-align: center; font-size: 15px; font-weight: bold; margin: 0 0 4px 0; letter-spacing: 1px; }
-        h2 { text-align: center; font-size: 13px; font-weight: normal; margin: 0 0 28px 0; }
-        .meta { display: flex; justify-content: space-between; margin-bottom: 28px; font-size: 13px; }
-        .preamble { margin-bottom: 20px; }
-        .preamble p { text-align: justify; margin: 6px 0; }
-        .indent { text-indent: 25px; }
-        .section { margin-bottom: 18px; }
-        .section-title { font-weight: bold; text-align: center; margin: 18px 0 8px; font-size: 13px; text-transform: uppercase; }
-        p { margin: 3px 0 7px; text-align: justify; }
-        .sub { margin-left: 20px; }
-        hr { border: none; border-top: 1px solid #999; margin: 30px 0; }
-        .requisites { width: 100%; border-collapse: collapse; margin-top: 40px; }
-        .requisites th { background: #f2f2f2; border: 1px solid #000; padding: 7px 12px; font-size: 12px; text-align: center; }
-        .requisites td { border: 1px solid #000; padding: 14px; vertical-align: top; width: 50%; font-size: 12px; }
-        .requisites td p { margin: 3px 0; text-align: left; }
-        .sign-area { margin-top: 30px; }
-        .sign-line { border-top: 1px solid #000; width: 160px; display: inline-block; margin-top: 45px; }
-        .sign-label { font-size: 11px; color: #444; }
-    </style>
-</head>
-<body>
+export { CONTRACT_TEMPLATE } from './contract_template.js';
 
-    <h1>ТРУДОВОЙ ДОГОВОР № {{contract_number}}</h1>
-    <h2>о приёме на работу</h2>
-
-    <div class="meta">
-        <span>г. Алматы</span>
-        <span>«{{contract_day}}» {{contract_month}} {{contract_year}} года</span>
-    </div>
-
-    <div class="preamble">
-        <p class="indent">Товарищество с ограниченной ответственностью <strong>«{{employer_name}}»</strong> (БИН: {{employer_bin}}), именуемое в дальнейшем <strong>«Работодатель»</strong>, в лице Директора <strong>{{employer_director}}</strong>, действующего на основании Устава, с одной стороны, и</p>
-        <p class="indent">гражданин(ка) Республики Казахстан <strong>{{full_name}}</strong> (ИИН: <strong>{{iin}}</strong>), именуемый(ая) в дальнейшем <strong>«Работник»</strong>, с другой стороны,</p>
-        <p class="indent">совместно именуемые «Стороны», руководствуясь Трудовым кодексом Республики Казахстан, заключили настоящий трудовой договор о нижеследующем:</p>
-    </div>
-
-    <div class="section">
-        <div class="section-title">1. Предмет договора</div>
-        <p>1.1. Работодатель принимает Работника на работу в должности <strong>{{position}}</strong>.</p>
-        <p>1.2. Место выполнения работы: пункт выдачи заказов по адресу <strong>{{pvz_address}}</strong>.</p>
-        <p>1.3. Дата начала работы: <strong>{{start_date}}</strong>.</p>
-        <p>1.4. Настоящий договор заключается на <strong>неопределённый срок</strong>.</p>
-        <p>1.5. Работнику устанавливается испытательный срок продолжительностью <strong>3 (три) месяца</strong> с даты начала работы.</p>
-        <p>1.6. Работник обязуется лично выполнять трудовые обязанности и соблюдать Правила внутреннего трудового распорядка.</p>
-    </div>
-
-    <div class="section">
-        <div class="section-title">2. Оплата труда</div>
-        <p>2.1. Работнику устанавливается должностной оклад в размере <strong>{{base_rate}} тенге</strong> в месяц, до удержания обязательных налогов и платежей в соответствии с законодательством РК.</p>
-        <p>2.2. Заработная плата выплачивается в безналичной форме в национальной валюте не реже одного раза в месяц, не позднее 10-го числа месяца, следующего за отработанным.</p>
-        <p>2.3. Заработная плата перечисляется на банковский счёт Работника: <strong>IBAN {{iban}}</strong>.</p>
-        <p>2.4. Работодатель вправе устанавливать надбавки и премии согласно действующему Положению об оплате труда.</p>
-    </div>
-
-    <div class="section">
-        <div class="section-title">3. Режим рабочего времени и отдыха</div>
-        <p>3.1. Работнику устанавливается сменный режим рабочего времени. Конкретный график сменности устанавливается Работодателем и доводится до сведения Работника не позднее чем за 5 дней.</p>
-        <p>3.2. Продолжительность рабочей смены — 9 (девять) часов, включая перерыв для отдыха и питания продолжительностью 1 (один) час.</p>
-        <p>3.3. Работнику предоставляется ежегодный оплачиваемый трудовой отпуск — <strong>24 (двадцать четыре) календарных дня</strong>.</p>
-        <p>3.4. Очерёдность предоставления отпусков определяется утверждаемым Работодателем ежегодным графиком отпусков.</p>
-    </div>
-
-    <div class="section">
-        <div class="section-title">4. Права и обязанности сторон</div>
-        <p>4.1. <strong>Работодатель обязуется:</strong></p>
-        <p class="sub">— обеспечить Работника работой, обусловленной настоящим Договором;</p>
-        <p class="sub">— создавать условия труда, отвечающие требованиям охраны труда и безопасности;</p>
-        <p class="sub">— своевременно и в полном объёме выплачивать заработную плату;</p>
-        <p class="sub">— осуществлять обязательное социальное страхование, пенсионные отчисления и удержание ИПН согласно законодательству РК.</p>
-        <p>4.2. <strong>Работник обязуется:</strong></p>
-        <p class="sub">— добросовестно исполнять трудовые обязанности в соответствии с должностной инструкцией;</p>
-        <p class="sub">— соблюдать трудовую дисциплину и Правила внутреннего трудового распорядка;</p>
-        <p class="sub">— бережно относиться к имуществу Работодателя и третьих лиц;</p>
-        <p class="sub">— незамедлительно сообщать о ситуациях, угрожающих жизни, здоровью или сохранности имущества;</p>
-        <p class="sub">— соблюдать коммерческую тайну и конфиденциальность информации.</p>
-    </div>
-
-    <div class="section">
-        <div class="section-title">5. Материальная ответственность</div>
-        <p>5.1. Работник несёт полную индивидуальную материальную ответственность за сохранность товарно-материальных ценностей, переданных ему для хранения, приёма и выдачи заказов.</p>
-        <p>5.2. С Работником заключается Договор о полной индивидуальной материальной ответственности (Приложение № 1), являющийся неотъемлемой частью настоящего Договора.</p>
-        <p>5.3. Ущерб, причинённый Работодателю, возмещается в соответствии с Трудовым кодексом РК.</p>
-    </div>
-
-    <div class="section">
-        <div class="section-title">6. Прекращение договора</div>
-        <p>6.1. Договор прекращается по основаниям, предусмотренным Трудовым кодексом РК.</p>
-        <p>6.2. Работник вправе расторгнуть Договор, письменно предупредив Работодателя не менее чем за <strong>1 (один) месяц</strong>.</p>
-        <p>6.3. В период испытательного срока каждая Сторона вправе расторгнуть Договор, письменно предупредив другую Сторону не позднее чем за <strong>3 (три) рабочих дня</strong>.</p>
-    </div>
-
-    <div class="section">
-        <div class="section-title">7. Заключительные положения</div>
-        <p>7.1. Договор составлен в двух экземплярах, имеющих одинаковую юридическую силу, — по одному для каждой Стороны.</p>
-        <p>7.2. Условия Договора могут быть изменены по письменному соглашению Сторон.</p>
-        <p>7.3. По всем вопросам, не урегулированным настоящим Договором, Стороны руководствуются законодательством РК.</p>
-        <p>7.4. Неотъемлемыми частями Договора являются: Приложение № 1 — Договор о полной индивидуальной материальной ответственности; Приложение № 2 — Договор о коллективной (солидарной) ответственности.</p>
-        <p>7.5. Работник подтверждает, что до подписания Договора ознакомлен(а) с Правилами внутреннего трудового распорядка, должностной инструкцией и иными локальными актами Работодателя.</p>
-    </div>
-
-    <hr>
-
-    <table class="requisites">
-        <tr>
-            <th>РАБОТОДАТЕЛЬ</th>
-            <th>РАБОТНИК</th>
-        </tr>
-        <tr>
-            <td>
-                <p><strong>ТОО «{{employer_name}}»</strong></p>
-                <p>БИН: {{employer_bin}}</p>
-                <p>Юридический адрес: {{employer_address}}</p>
-                <p>Банк: {{employer_bank}}</p>
-                <p>IBAN: {{employer_iban}}</p>
-                <div class="sign-area">
-                    <p style="margin-top:8px">Директор &nbsp;<div class="sign-line"></div></p>
-                    <p class="sign-label">(подпись) &nbsp;&nbsp;&nbsp;&nbsp; {{employer_director}}</p>
-                    <p style="margin-top:10px">М.П.</p>
-                </div>
-            </td>
-            <td>
-                <p><strong>{{full_name}}</strong></p>
-                <p>ИИН: {{iin}}</p>
-                <p>Уд. личности: {{id_number}}</p>
-                <p>Адрес проживания: {{address}}</p>
-                <p>IBAN: {{iban}}</p>
-                <div class="sign-area">
-                    <p style="margin-top:8px">Работник &nbsp;<div class="sign-line"></div></p>
-                    <p class="sign-label">(подпись) &nbsp;&nbsp;&nbsp;&nbsp; {{full_name}}</p>
-                    <p style="margin-top:10px">«{{contract_day}}» {{contract_month}} {{contract_year}} г.</p>
-                </div>
-            </td>
-        </tr>
-    </table>
-
-</body>
-</html>
-`;
 
 export const HIRING_ORDER_TEMPLATE = `
 <!DOCTYPE html>
@@ -251,3 +108,94 @@ export function fillTemplate(template, data) {
     }
     return content;
 }
+
+export const SIGNATURE_SHEET_TEMPLATE = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: 'Arial', sans-serif; padding: 40px; font-size: 13px; color: #000; line-height: 1.5; }
+        h1 { text-align: center; font-size: 18px; margin-bottom: 20px; font-weight: bold; text-transform: uppercase; }
+        .meta { margin-bottom: 30px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        td, th { border: 1px solid #000; padding: 10px; vertical-align: top; }
+        .sign-title { font-weight: bold; background-color: #f2f2f2; text-align: center; font-size: 14px; }
+        .qr-container { text-align: center; margin-top: 40px; }
+        .qr-container img { width: 150px; height: 150px; display: block; margin: 0 auto 10px; }
+        .footer-note { font-size: 11px; color: #555; text-align: justify; margin-top: 40px; border-top: 1px solid #ddd; padding-top: 10px; }
+        .success-badge { color: green; font-weight: bold; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <h1>ЛИСТ ПОДПИСАНИЯ ЭЛЕКТРОННОГО ДОКУМЕНТА</h1>
+    
+    <div class="meta">
+        <strong>Документ:</strong> {{document_name}}<br>
+        <strong>Уникальный идентификатор (UUID):</strong> {{document_uuid}}
+    </div>
+
+    <table>
+        <tr>
+            <td colspan="2" class="sign-title">СТОРОНА 1: РАБОТОДАТЕЛЬ</td>
+        </tr>
+        <tr>
+            <td width="30%"><strong>Наименование / ФИО:</strong></td>
+            <td>ТОО / ИП «{{employer_name}}»</td>
+        </tr>
+        <tr>
+            <td><strong>БИН / ИИН:</strong></td>
+            <td>{{employer_bin}}</td>
+        </tr>
+        <tr>
+            <td><strong>Результат подписания:</strong></td>
+            <td><div class="success-badge">✓ Подписано ЭЦП</div></td>
+        </tr>
+        <tr>
+            <td><strong>Дата и время подписания:</strong></td>
+            <td>{{employer_sign_date}}</td>
+        </tr>
+        <tr>
+            <td><strong>Данные сертификата ЭЦП:</strong></td>
+            <td>{{employer_cert_info}}</td>
+        </tr>
+    </table>
+
+    <table>
+        <tr>
+            <td colspan="2" class="sign-title">СТОРОНА 2: РАБОТНИК</td>
+        </tr>
+        <tr>
+            <td width="30%"><strong>ФИО:</strong></td>
+            <td>{{employee_name}}</td>
+        </tr>
+        <tr>
+            <td><strong>ИИН:</strong></td>
+            <td>{{employee_iin}}</td>
+        </tr>
+        <tr>
+            <td><strong>Результат подписания:</strong></td>
+            <td><div class="success-badge">✓ Подписано ЭЦП (eGov QR)</div></td>
+        </tr>
+        <tr>
+            <td><strong>Дата и время подписания:</strong></td>
+            <td>{{employee_sign_date}}</td>
+        </tr>
+        <tr>
+            <td><strong>Данные сертификата ЭЦП:</strong></td>
+            <td>{{employee_cert_info}}</td>
+        </tr>
+    </table>
+
+    <div class="qr-container">
+        <img src="{{qr_code_base64}}" alt="QR Code">
+        <div>Отсканируйте код для проверки подлинности документа</div>
+    </div>
+
+    <div class="footer-note">
+        Данный документ согласно пункту 1 статьи 7 ЗРК от 7 января 2003 года «Об электронном документе и электронной цифровой подписи» равнозначен документу на бумажном носителе. 
+        Электронная подпись достоверна. Для проверки подлинности отсканируйте QR-код или введите UUID документа на портале проверки ЭЦП.
+    </div>
+</body>
+</html>
+`;

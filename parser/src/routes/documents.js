@@ -1,8 +1,10 @@
 import express from 'express';
 import multer from 'multer';
 import { query } from '../lib/db.js';
-import { CONTRACT_TEMPLATE, HIRING_ORDER_TEMPLATE, EMPLOYMENT_APPLICATION_TEMPLATE, fillTemplate } from '../services/templates.js';
+import QRCode from 'qrcode';
+import { CONTRACT_TEMPLATE, HIRING_ORDER_TEMPLATE, EMPLOYMENT_APPLICATION_TEMPLATE, SIGNATURE_SHEET_TEMPLATE, fillTemplate } from '../services/templates.js';
 import { storageService } from '../services/storage.service.js';
+import { pdfService } from '../services/pdf.service.js';
 import { Logger } from '../lib/logger.js';
 
 const router = express.Router();
@@ -151,11 +153,12 @@ router.post('/documents/generate', async (req, res) => {
         };
 
         // ─── Date helpers ──────────────────────────────────────────────────
-        const MONTHS_RU = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-            'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+        const MONTHS_RU = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+        const MONTHS_KZ = ['қаңтарда', 'ақпанда', 'наурызда', 'сәуірде', 'мамырда', 'маусымда', 'шілдеде', 'тамызда', 'қыркүйекте', 'қазанда', 'қарашада', 'желтоқсанда'];
         const now = new Date();
         const contractDay = String(now.getDate()).padStart(2, '0');
         const contractMonth = MONTHS_RU[now.getMonth()];
+        const contractMonthKz = MONTHS_KZ[now.getMonth()];
         const contractYear = now.getFullYear();
         const dateRu = `${contractDay} ${contractMonth} ${contractYear}`;
 
@@ -173,24 +176,38 @@ router.post('/documents/generate', async (req, res) => {
                 contract_number: contractNum,
                 contract_day: contractDay,
                 contract_month: contractMonth,
+                contract_month_kz: contractMonthKz,
                 contract_year: String(contractYear),
+                
                 // Employer
-                employer_name: EMPLOYER.name,
+                employer_name: EMPLOYER.name, // e.g. "Жасмин"
+                employer_director: EMPLOYER.director, // e.g. "Карабаева Г.Е."
                 employer_bin: EMPLOYER.bin,
-                employer_director: EMPLOYER.director,
-                employer_address: EMPLOYER.address,
+                employer_bic: 'CASPKZKA',
                 employer_bank: EMPLOYER.bank,
+                employer_bank_kz: '«Kaspi Bank» АҚ',
+                employer_address: EMPLOYER.address,
+                employer_address_kz: 'Алматы қ., Сәтбаев к-сі, 30/8, кеңсе 139',
                 employer_iban: EMPLOYER.iban,
+
                 // Employee
                 full_name: emp.full_name,
                 iin: emp.iin || '__________',
-                id_number: emp.id_number || '__________',
+                id_card_number: emp.id_card_number || '__________',
+                id_card_issue_date: emp.id_card_issue_date ? new Date(emp.id_card_issue_date).toLocaleDateString('ru-RU') : '__________',
+                id_card_issued_by: emp.id_card_issued_by || '__________',
+                id_card_issued_by_kz: emp.id_card_issued_by || '__________',
+                registered_address: emp.registered_address || emp.address || '__________',
+                phone: emp.phone || '__________',
+                email: emp.email || '__________',
                 address: emp.address || 'не указан',
                 iban: emp.iban || 'не указан',
-                position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ',
+                
+                // Job Details
+                position: emp.role === 'rf' ? 'Региональный менеджер / Өңірлік менеджер' : 'Менеджер ПВЗ / ТҚО менеджері',
                 pvz_address: emp.pvz_address || 'не указан',
                 start_date: dateRu,
-                base_rate: emp.base_rate ? Number(emp.base_rate).toLocaleString('ru-RU') : '0',
+                base_rate: emp.base_rate ? Number(emp.base_rate).toLocaleString('ru-RU') + ' (восемьдесят пять тысяч)' : '85 000 (восемьдесят пять тысяч)',
             });
         } else if (type === 'order_hiring') {
             const contractRes = await query(
@@ -225,19 +242,28 @@ router.post('/documents/generate', async (req, res) => {
             return res.status(400).json({ error: 'Unsupported document type' });
         }
 
-        // Save generated HTML to S3 so it can be re-read later
-        const htmlKey = `documents/${employeeId}/${type}_${Date.now()}.html`;
-        await storageService.uploadFile(Buffer.from(htmlContent, 'utf-8'), 'text/html', htmlKey);
+        // Generate PDF from HTML using Puppeteer
+        let pdfBuffer;
+        try {
+            pdfBuffer = await pdfService.generatePdfFromHtml(htmlContent);
+        } catch (pdfErr) {
+            Logger.error('[Docs] Error generating PDF from HTML:', pdfErr);
+            return res.status(500).json({ error: 'Failed to render PDF from document template' });
+        }
+
+        // Save generated PDF to S3
+        const pdfKey = `documents/${employeeId}/${type}_${Date.now()}.pdf`;
+        await storageService.uploadFile(pdfBuffer, 'application/pdf', pdfKey);
 
         const docResult = await query(`
             INSERT INTO documents (employee_id, type, status, scan_url, created_at)
             VALUES ($1, $2, 'draft', $3, NOW())
             RETURNING *
-        `, [employeeId, type, htmlKey]);
+        `, [employeeId, type, pdfKey]);
 
         res.status(201).json({
             document: docResult.rows[0],
-            content: htmlContent
+            content: htmlContent // keep returning HTML if frontend needs basic preview
         });
 
     } catch (err) {
@@ -287,6 +313,7 @@ router.post('/documents/:id/sign', async (req, res) => {
 
         // Also update employee status to 'active' if it was 'signing'
         const docType = result.rows[0].type;
+        const doc = result.rows[0];
         if (['contract', 'order_hiring'].includes(docType)) {
             await query(`
                 UPDATE employees 
@@ -296,7 +323,42 @@ router.post('/documents/:id/sign', async (req, res) => {
             `, [id]);
         }
 
-        res.json(result.rows[0]);
+        // Generate Signature Sheet PDF
+        try {
+            const empQuery = await query('SELECT * FROM employees WHERE id = $1', [doc.employee_id]);
+            if (empQuery.rows.length > 0) {
+                const emp = empQuery.rows[0];
+                const qrUrl = 'https://pvz.alemlab.com/verify/' + doc.id; // Or sigex portal link
+                const qrCodeBase64 = await QRCode.toDataURL(qrUrl);
+                
+                const sigSheetHtml = fillTemplate(SIGNATURE_SHEET_TEMPLATE, {
+                    document_name: docType === 'contract' ? 'Трудовой договор' : (docType === 'order_hiring' ? 'Приказ о приеме на работу' : 'Заявление'),
+                    document_uuid: doc.external_id || doc.id,
+                    employer_name: 'Жасмин',
+                    employer_bin: '910 729 401 967',
+                    employer_sign_date: new Date().toLocaleDateString('ru-RU') + ' ' + new Date().toLocaleTimeString('ru-RU'),
+                    employer_cert_info: 'ТОО / ИП «Жасмин», сертификат GOST',
+                    employee_name: emp.full_name,
+                    employee_iin: emp.iin || '__________',
+                    employee_sign_date: new Date(doc.signed_at).toLocaleDateString('ru-RU') + ' ' + new Date(doc.signed_at).toLocaleTimeString('ru-RU'),
+                    employee_cert_info: `ИИН ${emp.iin || '__________'}, сертификат RSA (eGov QR)`,
+                    qr_code_base64: qrCodeBase64
+                });
+
+                const sheetBuffer = await pdfService.generatePdfFromHtml(sigSheetHtml);
+                const sheetKey = `documents/${doc.employee_id}/signature_sheet_${doc.id}_${Date.now()}.pdf`;
+                await storageService.uploadFile(sheetBuffer, 'application/pdf', sheetKey);
+                
+                await query(`
+                    INSERT INTO documents (employee_id, type, status, scan_url, created_at)
+                    VALUES ($1, 'signature_sheet', 'signed', $2, NOW())
+                `, [doc.employee_id, sheetKey]);
+            }
+        } catch (sheetErr) {
+            Logger.error('[Docs] Failed to generate signature sheet:', sheetErr);
+        }
+
+        res.json(doc);
     } catch (err) {
         console.error('Error signing document:', err);
         res.status(500).json({ error: 'Internal server error' });

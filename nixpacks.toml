@@ -2,7 +2,7 @@
 providers = ["node"]
 
 [phases.setup]
-nixPkgs = ["nodejs", "npm", "python3"]
+nixPkgs = ["nodejs", "npm", "python3", "chromium", "nss", "freetype", "harfbuzz"]
 
 [phases.install]
 cmds = ["npm install"]
