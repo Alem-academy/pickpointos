@@ -53,6 +53,10 @@ export interface Employee {
     hired_at: string | null;
     created_at: string;
     iban?: string; // KZ IBAN
+    id_card_number?: string;
+    id_card_issued_by?: string;
+    id_card_issue_date?: string;
+    registered_address?: string;
     onboarding_checklist?: Record<string, boolean>;
     rejection_reason?: string | null; // Reason for revision status
     emergency_contacts?: EmergencyContact[]; // Array of emergency contacts

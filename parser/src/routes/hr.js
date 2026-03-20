@@ -122,7 +122,7 @@ router.get('/employees', authenticateToken, async (req, res) => {
 // POST /employees - Create new employee
 router.post('/employees', async (req, res) => {
     try {
-        const { iin, full_name, phone, email, role, main_pvz_id, status, address, base_rate, probation_until, hired_at, iban, emergency_contacts } = req.body;
+        const { iin, full_name, phone, email, role, main_pvz_id, status, address, base_rate, probation_until, hired_at, iban, emergency_contacts, id_card_number, id_card_issued_by, id_card_issue_date, registered_address } = req.body;
 
         // Basic validation
         if (!iin || !full_name || !role) {
@@ -132,9 +132,10 @@ router.post('/employees', async (req, res) => {
         const result = await query(`
             INSERT INTO employees (
                 iin, full_name, phone, email, role, main_pvz_id, status,
-                address, base_rate, probation_until, hired_at, iban, emergency_contacts
+                address, base_rate, probation_until, hired_at, iban, emergency_contacts,
+                id_card_number, id_card_issued_by, id_card_issue_date, registered_address
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
             RETURNING *
         `, [
             iin,
@@ -149,7 +150,11 @@ router.post('/employees', async (req, res) => {
             probation_until || null,
             hired_at || null,
             iban || null,
-            emergency_contacts ? JSON.stringify(emergency_contacts) : null
+            emergency_contacts ? JSON.stringify(emergency_contacts) : null,
+            id_card_number || null,
+            id_card_issued_by || null,
+            id_card_issue_date || null,
+            registered_address || null
         ]);
 
         res.status(201).json(result.rows[0]);
@@ -226,6 +231,32 @@ router.patch('/employees/:id/status', async (req, res) => {
         if (req.body.emergency_contacts !== undefined) {
             sql += `, emergency_contacts = $${paramIdx++}`;
             params.push(req.body.emergency_contacts ? JSON.stringify(req.body.emergency_contacts) : null);
+        }
+
+        // Handle legal fields updates
+        if (req.body.id_card_number !== undefined) {
+            sql += `, id_card_number = $${paramIdx++}`;
+            params.push(req.body.id_card_number);
+        }
+        if (req.body.id_card_issued_by !== undefined) {
+            sql += `, id_card_issued_by = $${paramIdx++}`;
+            params.push(req.body.id_card_issued_by);
+        }
+        if (req.body.id_card_issue_date !== undefined) {
+            sql += `, id_card_issue_date = $${paramIdx++}`;
+            params.push(req.body.id_card_issue_date);
+        }
+        if (req.body.registered_address !== undefined) {
+            sql += `, registered_address = $${paramIdx++}`;
+            params.push(req.body.registered_address);
+        }
+        if (req.body.iban !== undefined) {
+            sql += `, iban = $${paramIdx++}`;
+            params.push(req.body.iban);
+        }
+        if (req.body.address !== undefined) {
+            sql += `, address = $${paramIdx++}`;
+            params.push(req.body.address);
         }
 
         sql += ` WHERE id = $2 RETURNING *`;
