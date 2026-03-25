@@ -32,7 +32,7 @@ export interface Employer {
 export interface Document {
     id: string;
     employee_id: string;
-    type: 'contract' | 'order' | 'application' | 'id_main' | 'id_register' | 'id_scan' | 'cert_075' | 'photo' | 'bank_details' | 'cert_tb' | 'address_cert' | 'other';
+    type: 'contract' | 'order_hiring' | 'application' | 'vacation_application' | 'vacation_order' | 'termination_order' | 'employment_certificate' | 'id_main' | 'id_register' | 'id_scan' | 'cert_075' | 'photo' | 'bank_details' | 'cert_tb' | 'address_cert' | 'other';
     status: 'draft' | 'sent_to_employee' | 'signed' | 'rejected' | 'archived';
     scan_url?: string;
     thumbnail_url?: string; // lightweight resized thumbnail for grid display
