@@ -1,4 +1,4 @@
-import { Users, FileText, CheckCircle, AlertCircle, Clock, TrendingUp } from 'lucide-react';
+import { Users, FileText, CheckCircle, Clock, TrendingUp } from 'lucide-react';
 
 interface HRStatsCardsProps {
     totalEmployees?: number;

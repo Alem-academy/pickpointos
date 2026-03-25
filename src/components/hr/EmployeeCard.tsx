@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { 'react';
 import { User, MapPin, Phone, Mail, ChevronRight, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
