@@ -376,8 +376,8 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                             </button>
                                         )}
 
-                                        {/* Delete Button - Show for all uploaded documents */}
-                                        {['id_main', 'id_register', 'photo', 'cert_075', 'bank_details', 'cert_tb', 'address_cert', 'other'].includes(doc.type) && (
+                                        {/* Delete Button - Show for all UPLOADED documents (not generated) */}
+                                        {['id_main', 'id_register', 'id_scan', 'photo', 'cert_075', 'bank_details', 'cert_tb', 'address_cert', 'other'].includes(doc.type) && (
                                             <button
                                                 onClick={() => handleDeleteDocument(doc.id, doc.type)}
                                                 className="flex flex-1 justify-center items-center gap-1 rounded bg-red-50 text-red-600 px-2 py-1.5 text-xs font-medium hover:bg-red-100 transition-colors"
