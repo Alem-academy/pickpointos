@@ -150,13 +150,16 @@ router.post('/documents/generate', async (req, res) => {
 
         let htmlContent = '';
 
-        // ─── Employer constants ───────────────────────────────────────────
+        // ─── Employer constants (from PDF templates - ИП «Жасмин») ───────────────────────────────────────────
         const EMPLOYER = {
-            name: 'AlemLab PickPoint',
+            name: 'ИП «Жасмин»',
+            short_name: 'Жасмин',
             bin: '230540009760',
-            director: 'Жалелов А.К.',
-            address: 'г. Алматы, ул. Байзакова 280',
+            director_name: 'Карабаева Г.Е.',
+            director_name_dative: 'Карабаевой Г.Е.',
+            address: 'г. Алматы',
             bank: 'АО «Kaspi Bank»',
+            bik: 'CASPKZKA',
             iban: 'KZ54722S000009084425',
         };
 
@@ -186,16 +189,17 @@ router.post('/documents/generate', async (req, res) => {
                 contract_month: contractMonth,
                 contract_month_kz: contractMonthKz,
                 contract_year: String(contractYear),
-                
+
                 // Employer
-                employer_name: EMPLOYER.name, // e.g. "Жасмин"
-                employer_director: EMPLOYER.director, // e.g. "Карабаева Г.Е."
+                employer_name: EMPLOYER.name,
+                employer_short_name: EMPLOYER.short_name,
+                employer_director: EMPLOYER.director_name,
                 employer_bin: EMPLOYER.bin,
-                employer_bic: 'CASPKZKA',
+                employer_bic: EMPLOYER.bik,
                 employer_bank: EMPLOYER.bank,
                 employer_bank_kz: '«Kaspi Bank» АҚ',
                 employer_address: EMPLOYER.address,
-                employer_address_kz: 'Алматы қ., Сәтбаев к-сі, 30/8, кеңсе 139',
+                employer_address_kz: 'Алматы қ.',
                 employer_iban: EMPLOYER.iban,
 
                 // Employee
@@ -210,7 +214,7 @@ router.post('/documents/generate', async (req, res) => {
                 email: emp.email || '__________',
                 address: emp.address || 'не указан',
                 iban: emp.iban || 'не указан',
-                
+
                 // Job Details
                 position: emp.role === 'rf' ? 'Региональный менеджер / Өңірлік менеджер' : 'Менеджер ПВЗ / ТҚО менеджері',
                 pvz_address: emp.pvz_address || 'не указан',
@@ -222,29 +226,41 @@ router.post('/documents/generate', async (req, res) => {
                 `SELECT id, created_at FROM documents WHERE employee_id = $1 AND type = 'contract' ORDER BY created_at DESC LIMIT 1`,
                 [employeeId]
             );
-            const existingNum = contractRes.rows.length > 0 ? `ТД-001/${yearShort}` : '_______';
+            const existingNum = contractRes.rows.length > 0 ? `ТД-${String(seq).padStart(3, '0')}/${yearShort}` : '_______';
             const existingDate = contractRes.rows.length > 0
                 ? new Date(contractRes.rows[0].created_at).toLocaleDateString('ru-RU') : '_______';
 
             htmlContent = fillTemplate(HIRING_ORDER_TEMPLATE, {
                 order_number: `П-${String(seq).padStart(3, '0')}/${yearShort}`,
+                order_day: contractDay,
+                order_month_kz: contractMonthKz,
+                order_year: String(contractYear),
                 contract_number: existingNum,
-                date: existingDate,
+                contract_date: existingDate,
                 full_name: emp.full_name,
-                iin: emp.iin || '__________',
-                position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ',
+                start_day: contractDay,
+                start_month_kz: contractMonthKz,
+                start_year: String(contractYear),
                 pvz_address: emp.pvz_address || 'не указан',
-                start_date: dateRu,
-                base_rate: emp.base_rate ? Number(emp.base_rate).toLocaleString('ru-RU') : '0',
+                employer_name: EMPLOYER.name,
+                employer_short_name: EMPLOYER.short_name,
+                employer_director: EMPLOYER.director_name,
+                sign_day: contractDay,
+                sign_month_kz: contractMonthKz,
+                sign_year: String(contractYear),
             });
         } else if (type === 'application') {
             htmlContent = fillTemplate(EMPLOYMENT_APPLICATION_TEMPLATE, {
                 full_name: emp.full_name,
-                iin: emp.iin || '__________',
-                phone: emp.phone || '_____________',
-                position: emp.role === 'rf' ? 'Регионального менеджера' : 'Менеджера ПВЗ',
-                pvz_address: emp.pvz_address || '_____________',
-                date: dateRu,
+                address: emp.address || '__________',
+                registered_address: emp.registered_address || emp.address || '__________',
+                phone: emp.phone || '__________',
+                start_day: contractDay,
+                start_month_kz: contractMonthKz,
+                start_year: String(contractYear),
+                employer_name: EMPLOYER.name,
+                employer_director_dative: EMPLOYER.director_name_dative,
+                date: `${contractDay}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(contractYear).slice(-2)}`,
             });
         } else if (type === 'vacation_application') {
             // Заявление на отпуск

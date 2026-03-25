@@ -18,40 +18,46 @@ export const HIRING_ORDER_TEMPLATE = `
         .signature-block { margin-top: 50px; display: flex; justify-content: space-between; }
         .sign-box { border-top: 1px solid black; padding-top: 10px; width: 45%; }
         .center { text-align: center; }
+        .kz-text { font-style: italic; }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="bold">ТОО «AlemLab PickPoint»</div>
-        <div>г. Алматы</div>
+        <div>
+            <p class="bold">«{{employer_short_name}}»</p>
+            <p>Жеке Кәсіпкер</p>
+            <p class="bold">Индивидуальный предприниматель «{{employer_short_name}}»</p>
+        </div>
+        <div style="text-align: right;">
+            <p class="bold">БҰЙРЫҚ</p>
+            <p class="bold">ПРИКАЗ</p>
+            <p>«{{order_day}}» {{order_month_kz}} {{order_year}} жыл</p>
+            <p>№ {{order_number}}</p>
+            <p>Алматы қаласы / город Алматы</p>
+        </div>
     </div>
 
-    <h1>ПРИКАЗ № {{order_number}}</h1>
-    <h2 class="center" style="font-size: 14px; margin-bottom: 30px; font-weight: normal;">О приеме на работу</h2>
+    <h1 style="font-size: 16px; margin-top: 30px;">О приеме на работу</h1>
 
     <div class="section">
-        <p>В соответствии с Трудовым договором № {{contract_number}} от «{{date}}» года,</p>
-        <p class="bold center" style="margin: 30px 0; font-size: 16px;">ПРИКАЗЫВАЮ:</p>
-        <p>1. Принять <strong>{{full_name}}</strong> (ИИН {{iin}}) на работу в ТОО «AlemLab PickPoint».</p>
-        <p>2. Назначить на должность: <strong>{{position}}</strong>.</p>
-        <p>3. Определить место работы: структурное подразделение (ПВЗ) по адресу <strong>{{pvz_address}}</strong>.</p>
-        <p>4. Установить дату начала работы: <strong>{{start_date}}</strong>.</p>
-        <p>5. Установить должностной оклад в размере <strong>{{base_rate}} тенге</strong> в месяц, до удержания налогов.</p>
-        <p>6. Установить испытательный срок продолжительностью 3 (три) месяца.</p>
-        <p>7. Контроль за исполнением настоящего приказа оставляю за собой.</p>
+        <p>В соответствии со статьей 34 Трудового кодекса Республики Казахстан от 23 ноября 2015 года № 414-V и условиями трудового договора <strong>ПРИКАЗЫВАЮ:</strong></p>
+        <p>Принять <strong>{{full_name}}</strong> с «{{start_day}}» {{start_month_kz}} {{start_year}} года в должности менеджера по работе с клиентами с местом работы по адресу <strong>{{pvz_address}}</strong>, с испытательным сроком на три месяца с момента заключения трудового договора и с оплатой труда согласно трудовому договору № {{contract_number}} от {{contract_date}}.</p>
+        <p><strong>Основание:</strong> трудовой договор от «{{contract_date}}» № {{contract_number}}.</p>
     </div>
 
     <div class="signature-block">
         <div class="sign-box">
-            <p class="bold">Директор ТОО «AlemLab PickPoint»:</p>
-            <br><br>
-            <p>_________________ (Подпись)</p>
+            <p class="bold">{{employer_name}}</p>
+            <p>Директор</p>
+            <br>
+            <p>_________________ (подпись)</p>
+            <p>{{employer_director}}</p>
         </div>
         <div class="sign-box">
-            <p class="bold">С приказом ознакомлен(а):</p>
-            <p>{{full_name}}</p>
+            <p class="bold">С приказом ознакомлен(-а):</p>
             <br><br>
-            <p>_________________ (Подпись)</p>
+            <p>«{{sign_day}}» {{sign_month_kz}} {{sign_year}} г.</p>
+            <p>_________________ ({{full_name}})</p>
         </div>
     </div>
 </body>
@@ -70,31 +76,31 @@ export const EMPLOYMENT_APPLICATION_TEMPLATE = `
         .body-text { margin-bottom: 40px; text-indent: 30px; text-align: justify; }
         .signature-block { display: flex; justify-content: space-between; margin-top: 50px; }
         .bold { font-weight: bold; }
+        .address-block { margin-bottom: 20px; }
     </style>
 </head>
 <body>
     <div class="header-block">
-        <p>Директору ТОО «AlemLab PickPoint»</p>
-        <p>от гражданина(ки) Республики Казахстан</p>
-        <p class="bold">{{full_name}}</p>
-        <p>ИИН: {{iin}}</p>
-        <p>Моб. тел: {{phone}}</p>
+        <p>Директору {{employer_name}}</p>
+        <p class="bold">{{employer_director_dative}}</p>
+        <p>от {{full_name}}</p>
+        <p>Проживающий по адресу: {{address}}</p>
+        <p>Зарегистрированный по адресу: {{registered_address}}</p>
+        <p>Тел: {{phone}}</p>
     </div>
 
     <div class="title">ЗАЯВЛЕНИЕ</div>
 
     <div class="body-text">
-        Прошу принять меня на работу в товарищество с ограниченной ответственностью «AlemLab PickPoint» на должность <strong>{{position}}</strong>
-        в пункт выдачи заказов по адресу <strong>{{pvz_address}}</strong>.
-    </div>
-    <div class="body-text">
-        С условиями труда, правилами внутреннего трудового распорядка, должностной инструкцией,
-        а также с условием установления испытательного срока продолжительностью 3 (три) месяца согласен(на).
+        Прошу Вас принять меня на работу с «{{start_day}}» {{start_month_kz}} {{start_year}} года на должность менеджера по работе с клиентами.
     </div>
 
     <div class="signature-block">
-        <div>«{{date}}» года</div>
-        <div>Подпись: _________________</div>
+        <div>{{date}}</div>
+        <div>
+            <p>подпись</p>
+            <p>{{full_name}}</p>
+        </div>
     </div>
 </body>
 </html>
