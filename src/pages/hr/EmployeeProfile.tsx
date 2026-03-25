@@ -10,6 +10,7 @@ import { TerminationModal } from "@/components/hr/TerminationModal";
 import { OnboardingTab } from "@/components/hr/profile/OnboardingTab";
 import { DisciplineTab } from "@/components/hr/profile/DisciplineTab";
 import { EmployeeHero } from "@/components/hr/profile/EmployeeHero";
+import { ProfileCompleteness } from "@/components/hr/ProfileCompleteness";
 
 function parseIIN(iin: string | undefined) {
     if (!iin || iin.length !== 12) return null;
@@ -354,7 +355,9 @@ export default function EmployeeProfile() {
                                         <div className="rounded-lg bg-indigo-50 p-2 text-indigo-600">
                                             <UserX className="h-5 w-5" />
                                         </div>
-                                        <h3 className="font-bold text-lg">Личные данные</h3>
+                                        <ProfileCompleteness employee={employee} documents={employeeDocs} />
+
+                    <h3 className="font-bold text-lg">Личные данные</h3>
                                     </div>
                                     {!isEditingData && (
                                         <button onClick={handleEditDataClick} className="text-xs flex items-center gap-1 text-primary hover:text-primary/80 font-semibold transition-colors bg-slate-50 hover:bg-slate-100 px-2.5 py-1.5 rounded-lg shadow-sm border">
