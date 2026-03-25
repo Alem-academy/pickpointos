@@ -6,7 +6,7 @@ interface HRStatsCardsProps {
     newCandidates?: number;
     documentsPending?: number;
     documentsSigned?: number;
-    onboardingProgress?: number;
+    
 }
 
 export function HRStatsCards({
@@ -15,7 +15,7 @@ export function HRStatsCards({
     newCandidates = 0,
     documentsPending = 0,
     documentsSigned = 0,
-    onboardingProgress = 0
+    
 }: HRStatsCardsProps) {
     const stats = [
         {
