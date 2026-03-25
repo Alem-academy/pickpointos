@@ -2,7 +2,16 @@ import express from 'express';
 import multer from 'multer';
 import { query } from '../lib/db.js';
 import QRCode from 'qrcode';
-import { CONTRACT_TEMPLATE, HIRING_ORDER_TEMPLATE, EMPLOYMENT_APPLICATION_TEMPLATE, SIGNATURE_SHEET_TEMPLATE, fillTemplate } from '../services/templates.js';
+import { 
+    CONTRACT_TEMPLATE, 
+    HIRING_ORDER_TEMPLATE, 
+    EMPLOYMENT_APPLICATION_TEMPLATE,
+    VACATION_APPLICATION_TEMPLATE,
+    VACATION_ORDER_TEMPLATE,
+    TERMINATION_ORDER_TEMPLATE,
+    EMPLOYMENT_CERTIFICATE_TEMPLATE,
+    fillTemplate 
+} from '../services/templates.js';
 import { storageService } from '../services/storage.service.js';
 import { Logger } from '../lib/logger.js';
 
@@ -235,6 +244,77 @@ router.post('/documents/generate', async (req, res) => {
                 phone: emp.phone || '_____________',
                 position: emp.role === 'rf' ? 'Регионального менеджера' : 'Менеджера ПВЗ',
                 pvz_address: emp.pvz_address || '_____________',
+                date: dateRu,
+            });
+        } else if (type === 'vacation_application') {
+            // Заявление на отпуск
+            const { vacationDays = 14, vacationStart, vacationEnd } = req.body;
+            const vacStart = vacationStart ? new Date(vacationStart) : now;
+            const vacEnd = vacationEnd ? new Date(vacationEnd) : new Date(vacStart.getTime() + vacationDays * 24 * 60 * 60 * 1000);
+            
+            htmlContent = fillTemplate(VACATION_APPLICATION_TEMPLATE, {
+                full_name: emp.full_name,
+                iin: emp.iin || '__________',
+                position: emp.role === 'rf' ? 'Регионального менеджера' : 'Менеджера ПВЗ',
+                vacation_days: String(vacationDays),
+                vacation_start: vacStart.toLocaleDateString('ru-RU'),
+                vacation_end: vacEnd.toLocaleDateString('ru-RU'),
+                date: dateRu,
+            });
+        } else if (type === 'vacation_order') {
+            // Приказ на отпуск
+            const { vacationDays = 14, vacationStart, vacationEnd } = req.body;
+            const vacStart = vacationStart ? new Date(vacationStart) : now;
+            const vacEnd = vacationEnd ? new Date(vacationEnd) : new Date(vacStart.getTime() + vacationDays * 24 * 60 * 60 * 1000);
+            
+            // Generate order number
+            const orderCntRes = await query(
+                `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type LIKE '%order%'`, [employeeId]
+            );
+            const orderSeq = parseInt(orderCntRes.rows[0].count, 10) + 1;
+            
+            htmlContent = fillTemplate(VACATION_ORDER_TEMPLATE, {
+                order_number: `ОТ-${String(orderSeq).padStart(3, '0')}/${yearShort}`,
+                full_name: emp.full_name,
+                iin: emp.iin || '__________',
+                position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ',
+                vacation_days: String(vacationDays),
+                vacation_start: vacStart.toLocaleDateString('ru-RU'),
+                vacation_end: vacEnd.toLocaleDateString('ru-RU'),
+                date: dateRu,
+            });
+        } else if (type === 'termination_order') {
+            // Приказ об увольнении
+            const { terminationDate, terminationReason = 'по собственному желанию', contractNumber, contractDate } = req.body;
+            const termDate = terminationDate ? new Date(terminationDate) : now;
+            
+            // Generate order number
+            const orderCntRes = await query(
+                `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type LIKE '%order%'`, [employeeId]
+            );
+            const orderSeq = parseInt(orderCntRes.rows[0].count, 10) + 1;
+            
+            htmlContent = fillTemplate(TERMINATION_ORDER_TEMPLATE, {
+                order_number: `УВ-${String(orderSeq).padStart(3, '0')}/${yearShort}`,
+                contract_number: contractNumber || '_______',
+                contract_date: contractDate || '_______',
+                full_name: emp.full_name,
+                iin: emp.iin || '__________',
+                position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ',
+                termination_date: termDate.toLocaleDateString('ru-RU'),
+                termination_reason: terminationReason,
+                date: dateRu,
+            });
+        } else if (type === 'employment_certificate') {
+            // Справка с места работы
+            const { salary = 85000 } = req.body;
+            
+            htmlContent = fillTemplate(EMPLOYMENT_CERTIFICATE_TEMPLATE, {
+                full_name: emp.full_name,
+                iin: emp.iin || '__________',
+                position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ',
+                start_date: emp.hired_at ? new Date(emp.hired_at).toLocaleDateString('ru-RU') : '_______',
+                salary: Number(salary).toLocaleString('ru-RU'),
                 date: dateRu,
             });
         } else {

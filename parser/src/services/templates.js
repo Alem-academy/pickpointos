@@ -1,5 +1,8 @@
 export { CONTRACT_TEMPLATE } from './contract_template.js';
 
+// ============================================
+// ПРИКАЗЫ И ЗАЯВЛЕНИЯ (Март 2024 - Актуальные шаблоны)
+// ============================================
 
 export const HIRING_ORDER_TEMPLATE = `
 <!DOCTYPE html>
@@ -25,12 +28,10 @@ export const HIRING_ORDER_TEMPLATE = `
 
     <h1>ПРИКАЗ № {{order_number}}</h1>
     <h2 class="center" style="font-size: 14px; margin-bottom: 30px; font-weight: normal;">О приеме на работу</h2>
-    
+
     <div class="section">
         <p>В соответствии с Трудовым договором № {{contract_number}} от «{{date}}» года,</p>
-        
         <p class="bold center" style="margin: 30px 0; font-size: 16px;">ПРИКАЗЫВАЮ:</p>
-        
         <p>1. Принять <strong>{{full_name}}</strong> (ИИН {{iin}}) на работу в ТОО «AlemLab PickPoint».</p>
         <p>2. Назначить на должность: <strong>{{position}}</strong>.</p>
         <p>3. Определить место работы: структурное подразделение (ПВЗ) по адресу <strong>{{pvz_address}}</strong>.</p>
@@ -81,19 +82,207 @@ export const EMPLOYMENT_APPLICATION_TEMPLATE = `
     </div>
 
     <div class="title">ЗАЯВЛЕНИЕ</div>
-    
+
     <div class="body-text">
-        Прошу принять меня на работу в товарищество с ограниченной ответственностью «AlemLab PickPoint» на должность <strong>{{position}}</strong> 
+        Прошу принять меня на работу в товарищество с ограниченной ответственностью «AlemLab PickPoint» на должность <strong>{{position}}</strong>
         в пункт выдачи заказов по адресу <strong>{{pvz_address}}</strong>.
     </div>
     <div class="body-text">
-        С условиями труда, правилами внутреннего трудового распорядка, должностной инструкцией, 
+        С условиями труда, правилами внутреннего трудового распорядка, должностной инструкцией,
         а также с условием установления испытательного срока продолжительностью 3 (три) месяца согласен(на).
     </div>
 
     <div class="signature-block">
         <div>«{{date}}» года</div>
         <div>Подпись: _________________</div>
+    </div>
+</body>
+</html>
+`;
+
+// ============================================
+// НОВЫЕ ШАБЛОНЫ (Март 2024)
+// ============================================
+
+// Заявление на отпуск
+export const VACATION_APPLICATION_TEMPLATE = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: 'Times New Roman', Times, serif; line-height: 1.5; padding: 60px; font-size: 14px; color: #000; }
+        .header-block { margin-left: 50%; width: 50%; margin-bottom: 50px; text-align: left; }
+        .title { text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 30px; letter-spacing: 2px; }
+        .body-text { margin-bottom: 40px; text-indent: 30px; text-align: justify; }
+        .signature-block { display: flex; justify-content: space-between; margin-top: 50px; }
+        .bold { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header-block">
+        <p>Директору ТОО «AlemLab PickPoint»</p>
+        <p>от {{position}}</p>
+        <p class="bold">{{full_name}}</p>
+        <p>ИИН: {{iin}}</p>
+    </div>
+
+    <div class="title">ЗАЯВЛЕНИЕ</div>
+
+    <div class="body-text">
+        Прошу предоставить мне ежегодный оплачиваемый трудовой отпуск продолжительностью <strong>{{vacation_days}} календарных дней</strong>
+        с «{{vacation_start}}» по «{{vacation_end}}».
+    </div>
+
+    <div class="signature-block">
+        <div>«{{date}}» года</div>
+        <div>Подпись: _________________</div>
+    </div>
+</body>
+</html>
+`;
+
+// Приказ на отпуск
+export const VACATION_ORDER_TEMPLATE = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: 'Times New Roman', Times, serif; line-height: 1.5; padding: 40px; font-size: 14px; color: #000; }
+        h1 { text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 20px; }
+        .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
+        .section { margin-bottom: 15px; text-align: justify; }
+        .bold { font-weight: bold; }
+        .signature-block { margin-top: 50px; display: flex; justify-content: space-between; }
+        .sign-box { border-top: 1px solid black; padding-top: 10px; width: 45%; }
+        .center { text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="bold">ТОО «AlemLab PickPoint»</div>
+        <div>г. Алматы</div>
+    </div>
+
+    <h1>ПРИКАЗ № {{order_number}}</h1>
+    <h2 class="center" style="font-size: 14px; margin-bottom: 30px; font-weight: normal;">О предоставлении отпуска</h2>
+
+    <div class="section">
+        <p class="bold center" style="margin: 30px 0; font-size: 16px;">ПРИКАЗЫВАЮ:</p>
+        <p>1. Предоставить <strong>{{full_name}}</strong> (ИИН {{iin}}), {{position}}, ежегодный оплачиваемый трудовой отпуск.</p>
+        <p>2. Продолжительность отпуска: <strong>{{vacation_days}} календарных дней</strong>.</p>
+        <p>3. Период отпуска: с «{{vacation_start}}» по «{{vacation_end}}».</p>
+        <p>4. Выплатить отпускные в соответствии с трудовым законодательством Республики Казахстан.</p>
+        <p>5. Контроль за исполнением настоящего приказа оставляю за собой.</p>
+    </div>
+
+    <div class="signature-block">
+        <div class="sign-box">
+            <p class="bold">Директор ТОО «AlemLab PickPoint»:</p>
+            <br><br>
+            <p>_________________ (Подпись)</p>
+        </div>
+        <div class="sign-box">
+            <p class="bold">С приказом ознакомлен(а):</p>
+            <p>{{full_name}}</p>
+            <br><br>
+            <p>_________________ (Подпись)</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
+
+// Приказ об увольнении
+export const TERMINATION_ORDER_TEMPLATE = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: 'Times New Roman', Times, serif; line-height: 1.5; padding: 40px; font-size: 14px; color: #000; }
+        h1 { text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 20px; }
+        .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
+        .section { margin-bottom: 15px; text-align: justify; }
+        .bold { font-weight: bold; }
+        .signature-block { margin-top: 50px; display: flex; justify-content: space-between; }
+        .sign-box { border-top: 1px solid black; padding-top: 10px; width: 45%; }
+        .center { text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="bold">ТОО «AlemLab PickPoint»</div>
+        <div>г. Алматы</div>
+    </div>
+
+    <h1>ПРИКАЗ № {{order_number}}</h1>
+    <h2 class="center" style="font-size: 14px; margin-bottom: 30px; font-weight: normal;">О прекращении трудового договора</h2>
+
+    <div class="section">
+        <p class="bold center" style="margin: 30px 0; font-size: 16px;">ПРИКАЗЫВАЮ:</p>
+        <p>1. Прекратить трудовой договор № {{contract_number}} от «{{contract_date}}» с <strong>{{full_name}}</strong> (ИИН {{iin}}), {{position}}.</p>
+        <p>2. Дата увольнения: <strong>{{termination_date}}</strong>.</p>
+        <p>3. Основание увольнения: <strong>{{termination_reason}}</strong>.</p>
+        <p>4. Произвести полный расчет с работником в соответствии с трудовым законодательством Республики Казахстан.</p>
+        <p>5. Выдать трудовую книжку и иные документы, связанные с работой.</p>
+        <p>6. Контроль за исполнением настоящего приказа оставляю за собой.</p>
+    </div>
+
+    <div class="signature-block">
+        <div class="sign-box">
+            <p class="bold">Директор ТОО «AlemLab PickPoint»:</p>
+            <br><br>
+            <p>_________________ (Подпись)</p>
+        </div>
+        <div class="sign-box">
+            <p class="bold">С приказом ознакомлен(а):</p>
+            <p>{{full_name}}</p>
+            <br><br>
+            <p>_________________ (Подпись)</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
+
+// Справка с места работы
+export const EMPLOYMENT_CERTIFICATE_TEMPLATE = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: 'Times New Roman', Times, serif; line-height: 1.5; padding: 40px; font-size: 14px; color: #000; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .title { text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 20px; }
+        .content { text-align: justify; margin-bottom: 40px; }
+        .footer { margin-top: 60px; }
+        .bold { font-weight: bold; }
+        .signature-line { border-top: 1px solid black; padding-top: 5px; margin-top: 40px; display: inline-block; min-width: 200px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <p class="bold">ТОО «AlemLab PickPoint»</p>
+        <p>г. Алматы</p>
+    </div>
+
+    <div class="title">СПРАВКА</div>
+
+    <div class="content">
+        <p>Выдана <strong>{{full_name}}</strong> (ИИН {{iin}}) в том, что он(а) действительно работает в ТОО «AlemLab PickPoint» 
+        в должности <strong>{{position}}</strong> с «{{start_date}}» года по настоящее время.</p>
+        <p>Среднемесячная заработная плата составляет <strong>{{salary}} тенге</strong>.</p>
+        <p>Справка выдана по месту требования.</p>
+    </div>
+
+    <div class="footer">
+        <p>«{{date}}» года</p>
+        <br><br>
+        <p class="bold">Директор ТОО «AlemLab PickPoint»</p>
+        <div class="signature-line">_________________ (Подпись)</div>
     </div>
 </body>
 </html>
