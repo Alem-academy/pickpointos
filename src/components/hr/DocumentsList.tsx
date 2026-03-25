@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api, type Document } from '@/services/api';
-import { FileText, Loader2, PenTool, CheckCircle, Plus, Upload, Eye, Image, XCircle, Trash2, Briefcase } from 'lucide-react';
+import { FileText, Loader2, PenTool, CheckCircle, Plus, Upload, Eye, Image, XCircle, Trash2, Briefcase, Plane, Award, UserX } from 'lucide-react';
 import { SigexSignModal } from '../SigexSignModal';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { cn } from '@/lib/utils';
