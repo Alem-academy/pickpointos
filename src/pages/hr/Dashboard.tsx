@@ -3,6 +3,8 @@ import { Users, UserPlus, FileText, ArrowUpRight, ArrowDownRight, Briefcase, Tre
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useHRStats } from "@/hooks/use-queries";
+// HRStatsCards ready for integration
+// import { HRStatsCards } from "@/components/hr/HRStatsCards";
 
 export default function HRDashboard() {
     const navigate = useNavigate();

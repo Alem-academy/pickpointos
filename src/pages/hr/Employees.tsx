@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Plus, Mail, Phone, MapPin, MoreHorizontal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+// import { EmployeeCard } from "@/components/hr/EmployeeCard"; // Ready for card view integration
 import { useEmployees } from "@/hooks/use-queries";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTable } from "@/components/ui/data-table";
