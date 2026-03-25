@@ -7,7 +7,7 @@
 ---
 
 **Project:** PVZ HR System
-**Generated:** 2026-03-25 14:43:52
+**Generated:** 2026-03-25 18:35:05
 **Category:** Analytics Dashboard
 
 ---
@@ -163,11 +163,11 @@
 
 ### Page Pattern
 
-**Pattern Name:** Lead Magnet + Form
+**Pattern Name:** Real-Time / Operations Landing
 
-- **Conversion Strategy:** Form fields ≤ 3 for best conversion. Offer valuable lead magnet preview. Show form submission progress.
-- **CTA Placement:** Form CTA: Submit button
-- **Section Order:** 1. Hero (benefit headline), 2. Lead magnet preview (ebook cover, checklist, etc), 3. Form (minimal fields), 4. CTA submit
+- **Conversion Strategy:** For ops/security/iot products. Demo or sandbox link. Trust signals.
+- **CTA Placement:** Primary CTA in nav + After metrics
+- **Section Order:** 1. Hero (product + live preview or status), 2. Key metrics/indicators, 3. How it works, 4. CTA (Start trial / Contact)
 
 ---
 
