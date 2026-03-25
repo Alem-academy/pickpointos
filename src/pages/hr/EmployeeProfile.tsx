@@ -251,12 +251,12 @@ export default function EmployeeProfile() {
     return (
         <div className="bg-slate-50/50 min-h-screen pb-12">
             {/* Top Bar with Quick Actions */}
-            <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-sm border-b border-slate-200">
+            <div className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm">
                 <div className="max-w-7xl mx-auto px-6 py-3">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <button onClick={() => navigate('/hr/employees')} className="text-slate-400 hover:text-slate-600 transition-colors">
-                                ← Назад к списку
+                            <button onClick={() => navigate('/hr/employees')} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Назад
                             </button>
                             <div className="h-4 w-px bg-slate-200" />
                             <span className="text-sm font-medium text-slate-600">{employee?.full_name}</span>
