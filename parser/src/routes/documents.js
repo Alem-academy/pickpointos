@@ -384,7 +384,7 @@ router.post('/documents/generate', async (req, res) => {
     }
 });
 
-// GET /documents/:id/content - Get signed URL to re-read a generated document
+// GET /documents/:id/content - Get document content (HTML or signed URL)
 router.get('/documents/:id/content', async (req, res) => {
     try {
         const { id } = req.params;
@@ -396,12 +396,28 @@ router.get('/documents/:id/content', async (req, res) => {
         if (!doc.scan_url) {
             return res.status(404).json({ error: 'No content stored for this document' });
         }
+        
+        // Get signed URL
         const signedUrl = doc.scan_url.startsWith('http')
             ? doc.scan_url
             : await storageService.getFileUrl(doc.scan_url);
-        res.json({ scan_url: signedUrl });
+        
+        // Try to fetch content directly from storage
+        try {
+            const axios = require('axios');
+            const response = await axios.get(signedUrl, { responseType: 'text' });
+            res.json({ 
+                scan_url: signedUrl,
+                content: response.data,
+                type: doc.scan_url.endsWith('.pdf') ? 'pdf' : 'html'
+            });
+        } catch (fetchErr) {
+            // If fetch fails, return just the URL
+            Logger.warn('Could not fetch document content, returning URL only:', fetchErr.message);
+            res.json({ scan_url: signedUrl });
+        }
     } catch (err) {
-        console.error('Error fetching document content:', err);
+        Logger.error('Error fetching document content:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
