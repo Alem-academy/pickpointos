@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, AlertCircle, FileText, FileCheck, FileEdit, Plane, UserX, Award, Image, IdCard } from 'lucide-react';
+import { CheckCircle2, AlertCircle, FileText, FileCheck, FileEdit, Plane, UserX, Award, Image, IdCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface DocumentChecklistProps {
