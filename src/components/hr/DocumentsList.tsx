@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { api, type Document } from '@/services/api';
 import { FileText, Loader2, PenTool, CheckCircle, Plus, Upload, Eye, Image, XCircle, Trash2 } from 'lucide-react';
 import { SigexSignModal } from '../SigexSignModal';
+import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { cn } from '@/lib/utils';
 
 interface DocumentsListProps {
@@ -14,9 +15,9 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     const [documents, setDocuments] = useState<Document[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
-    const [isGenerating, setIsGenerating] = useState<string | null>(null); // 'contract' | 'order' | 'application' | null
+    const [isGenerating, setIsGenerating] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
-    const [previewContent, setPreviewContent] = useState<string | null>(null);
+    const [previewDoc, setPreviewDoc] = useState<{ content: string; type: string; title: string } | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [signingDoc, setSigningDoc] = useState<Document | null>(null);
 
@@ -64,7 +65,11 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
         try {
             const docType = type === 'order' ? 'order_hiring' : type;
             const { content } = await api.generateDocument(employeeId, docType, type === 'contract' ? ibanInput : undefined);
-            setPreviewContent(content);
+            
+            // Show preview with new modal
+            const docTitle = type === 'contract' ? 'Трудовой договор' : type === 'order' ? 'Приказ о приеме' : 'Заявление на прием';
+            setPreviewDoc({ content, type: docType, title: docTitle });
+            
             await loadDocuments();
             if (isIbanModalOpen) {
                 setIsIbanModalOpen(false);
@@ -191,7 +196,6 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
 
     const handlePreview = async (doc: Document) => {
         if (doc.scan_url) {
-            // Strip S3 query params before checking extension
             const urlPath = doc.scan_url.split('?')[0];
             if (/\.pdf$/i.test(urlPath)) {
                 window.open(doc.scan_url, '_blank');
@@ -199,16 +203,18 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                 setPreviewUrl(doc.scan_url);
             }
         } else if (['contract', 'order_hiring', 'application'].includes(doc.type)) {
-            // Generated doc saved as HTML — fetch its content from backend
             try {
                 const res = await api.getDocumentContent(doc.id);
                 if (res.scan_url) {
-                    // It's now stored as HTML file — open inline
                     const r = await fetch(res.scan_url);
                     const html = await r.text();
-                    setPreviewContent(html);
+                    const docType = doc.type as string;
+                    const docTitle = docType === 'contract' ? 'Трудовой договор' : docType === 'order' || docType === 'order_hiring' ? 'Приказ о приеме' : 'Заявление на прием';
+                    setPreviewDoc({ content: html, type: doc.type, title: docTitle });
                 } else if (res.content) {
-                    setPreviewContent(res.content);
+                    const docType = doc.type as string;
+                    const docTitle = docType === 'contract' ? 'Трудовой договор' : docType === 'order' || docType === 'order_hiring' ? 'Приказ о приеме' : 'Заявление на прием';
+                    setPreviewDoc({ content: res.content, type: doc.type, title: docTitle });
                 }
             } catch (err) {
                 console.error('Could not fetch document content', err);
@@ -395,46 +401,15 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                 )}
             </div>
 
-            {previewContent && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-                    <div className="flex max-h-[90vh] w-full max-w-4xl flex-col rounded-2xl bg-white shadow-2xl">
-                        <div className="flex items-center justify-between border-b p-4">
-                            <h3 className="font-semibold">Предпросмотр документа</h3>
-                            <button
-                                onClick={() => setPreviewContent(null)}
-                                className="rounded-full p-1 hover:bg-slate-100"
-                            >
-                                <span className="sr-only">Закрыть</span>
-                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-                        <div className="flex-1 overflow-auto p-8 bg-slate-50">
-                            <div
-                                className="mx-auto max-w-[210mm] min-h-[297mm] bg-white p-[20mm] shadow-sm text-sm"
-                                dangerouslySetInnerHTML={{ __html: previewContent }}
-                            />
-                        </div>
-                        <div className="flex justify-end gap-2 border-t p-4">
-                            <button
-                                onClick={() => setPreviewContent(null)}
-                                className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-slate-50"
-                            >
-                                Закрыть
-                            </button>
-                            <button
-                                onClick={() => {
-                                    // If we had the doc ID here we could sign it directly
-                                    setPreviewContent(null);
-                                }}
-                                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                            >
-                                OK
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            {/* Document Preview Modal */}
+            {previewDoc && (
+                <DocumentPreviewModal
+                    isOpen={!!previewDoc}
+                    onClose={() => setPreviewDoc(null)}
+                    title={previewDoc.title}
+                    content={previewDoc.content}
+                    documentType={previewDoc.type}
+                />
             )}
 
             {previewUrl && (
