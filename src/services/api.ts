@@ -15,6 +15,20 @@ export interface PVZ {
 export type EmployeeRole = 'admin' | 'hr' | 'rf' | 'employee' | 'financier';
 export type EmployeeStatus = 'new' | 'review' | 'revision' | 'signing' | 'active' | 'fired';
 
+
+export interface Employer {
+    id: string;
+    name_full: string;
+    name_short: string;
+    bin?: string;
+    iin?: string;
+    director_name: string;
+    address_legal: string;
+    bank_name?: string;
+    bik?: string;
+    iban?: string;
+}
+
 export interface Document {
     id: string;
     employee_id: string;
@@ -36,6 +50,9 @@ export interface EmergencyContact {
 }
 
 export interface Employee {
+    employer_id?: string;
+    employer_name?: string;
+    employer_short_name?: string;
     id: string;
     iin: string;
     full_name: string;

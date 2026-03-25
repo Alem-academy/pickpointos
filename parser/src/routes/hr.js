@@ -57,6 +57,7 @@ router.get('/employees/by-iin/:iin', async (req, res) => {
                    p.name as main_pvz_name, p.address as main_pvz_address
             FROM employees e
             LEFT JOIN pvz_points p ON e.main_pvz_id = p.id
+            LEFT JOIN employers emp ON e.employer_id = emp.id
             WHERE e.iin = $1
         `, [iin]);
 
@@ -122,7 +123,7 @@ router.get('/employees', authenticateToken, async (req, res) => {
 // POST /employees - Create new employee
 router.post('/employees', async (req, res) => {
     try {
-        const { iin, full_name, phone, email, role, main_pvz_id, status, address, base_rate, probation_until, hired_at, iban, emergency_contacts, id_card_number, id_card_issued_by, id_card_issue_date, registered_address } = req.body;
+        const { iin, full_name, phone, email, role, main_pvz_id, status, address, base_rate, probation_until, hired_at, iban, emergency_contacts, id_card_number, id_card_issued_by, id_card_issue_date, registered_address, employer_id } = req.body;
 
         // Basic validation
         if (!iin || !full_name || !role) {
@@ -133,9 +134,9 @@ router.post('/employees', async (req, res) => {
             INSERT INTO employees (
                 iin, full_name, phone, email, role, main_pvz_id, status,
                 address, base_rate, probation_until, hired_at, iban, emergency_contacts,
-                id_card_number, id_card_issued_by, id_card_issue_date, registered_address
+                id_card_number, id_card_issued_by, id_card_issue_date, registered_address, employer_id
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
             RETURNING *
         `, [
             iin,
@@ -154,7 +155,8 @@ router.post('/employees', async (req, res) => {
             id_card_number || null,
             id_card_issued_by || null,
             id_card_issue_date || null,
-            registered_address || null
+            registered_address || null,
+            employer_id || null
         ]);
 
         res.status(201).json(result.rows[0]);
@@ -170,9 +172,11 @@ router.get('/employees/:id', async (req, res) => {
         const { id } = req.params;
 
         const result = await query(`
-            SELECT e.*, p.name as main_pvz_name, p.address as main_pvz_address
+            SELECT e.*, p.name as main_pvz_name, p.address as main_pvz_address,
+                   emp.name_full as employer_name, emp.name_short as employer_short_name
             FROM employees e
             LEFT JOIN pvz_points p ON e.main_pvz_id = p.id
+            LEFT JOIN employers emp ON e.employer_id = emp.id
             WHERE e.id = $1
         `, [id]);
 
@@ -382,6 +386,18 @@ router.get('/motivation/bonuses', async (req, res) => {
         res.json(bonuses);
     } catch (err) {
         Logger.error('Error calculating bonuses:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+// GET /employers - List all active legal entities
+router.get('/employers', async (req, res) => {
+    try {
+        const result = await query('SELECT id, name_full, name_short, bin, iin, director_name, address_legal, bank_name, bik, iban FROM employers WHERE is_active = TRUE ORDER BY name_full');
+        res.json(result.rows);
+    } catch (err) {
+        Logger.error('Error fetching employers:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

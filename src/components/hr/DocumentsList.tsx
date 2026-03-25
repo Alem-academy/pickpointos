@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api, type Document } from '@/services/api';
-import { FileText, Loader2, PenTool, CheckCircle, Plus, Upload, Eye, Image, XCircle, Trash2 } from 'lucide-react';
+import { FileText, Loader2, PenTool, CheckCircle, Plus, Upload, Eye, Image, XCircle, Trash2, Briefcase } from 'lucide-react';
 import { SigexSignModal } from '../SigexSignModal';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     const [previewDoc, setPreviewDoc] = useState<{ content: string; type: string; title: string } | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [signingDoc, setSigningDoc] = useState<Document | null>(null);
+    const [employerName, setEmployerName] = useState('');
 
     // IBAN Modal State
     const [isIbanModalOpen, setIsIbanModalOpen] = useState(false);
@@ -54,6 +55,14 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     useEffect(() => {
         loadDocuments();
     }, [loadDocuments]);
+
+    // Load employer info
+    useEffect(() => {
+        api.getEmployee(employeeId).then(emp => {
+            setEmployerName(emp.employer_name || 'ИП «Жасмин» (по умолчанию)');
+        }).catch(console.error);
+    }, [employeeId]);
+
 
     const handleGenerate = async (type: 'contract' | 'order' | 'application', bypassModal = false) => {
         if (type === 'contract' && !bypassModal) {
@@ -234,6 +243,15 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
 
     return (
         <div className="space-y-6">
+            {/* Employer Badge */}
+            <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg flex items-start gap-3">
+                <Briefcase className="h-5 w-5 text-blue-600 mt-0.5" />
+                <div>
+                    <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Юрлицо для документов</p>
+                    <p className="text-sm font-medium text-blue-900">{employerName}</p>
+                </div>
+            </div>
+
             <div className="flex items-center justify-between">
                 <h3 className="font-semibold">Документы сотрудника</h3>
                 <div className="flex gap-2">

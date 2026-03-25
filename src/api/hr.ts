@@ -1,5 +1,7 @@
 import axiosInstance from './client';
 import type { Employee, Document } from '../services/api';
+import type { Employer } from '../services/api';
+
 
 export const hrApi = {
     async getEmployees(filters?: { status?: string; pvzId?: string; search?: string }): Promise<Employee[]> {
@@ -43,7 +45,7 @@ export const hrApi = {
         return res.data;
     },
 
-    async updateEmployee(id: string, data: Partial<Employee>): Promise<Employee> {
+    async updateEmployee(id: string, data: Partial<Employee> & { employer_id?: string }): Promise<Employee> {
         const res = await axiosInstance.patch(`/employees/${id}/status`, data);
         return res.data;
     },
@@ -70,6 +72,12 @@ export const hrApi = {
 
     async getDisciplineRecords(employeeId?: string): Promise<any[]> {
         const res = await axiosInstance.get('/discipline', { params: { employeeId } });
+        return res.data;
+    },
+
+    
+    async getEmployers(): Promise<Employer[]> {
+        const res = await axiosInstance.get('/employers');
         return res.data;
     },
 

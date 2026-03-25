@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { api, type Employee } from "@/services/api";
+import { api, type Employee, type Employer } from "@/services/api";
 import { DocumentsList } from "@/components/hr/DocumentsList";
-import { Clock, CheckCircle2, FileWarning, Briefcase, UserX, Save, CreditCard, Plus, Calendar, Edit2, Trash2, Loader2, MapPin, Phone } from "lucide-react";
+import { Clock, CheckCircle2, FileWarning, Briefcase, UserX, Save, CreditCard, Plus, Calendar, Edit2, Trash2, Loader2, MapPin, Phone, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TransferModal } from "@/components/hr/TransferModal";
 import { TerminationModal } from "@/components/hr/TerminationModal";
@@ -83,6 +83,9 @@ export default function EmployeeProfile() {
     const [editIdCardIssueDate, setEditIdCardIssueDate] = useState('');
     const [editRegisteredAddress, setEditRegisteredAddress] = useState('');
     const [isSavingData, setIsSavingData] = useState(false);
+    const [employers, setEmployers] = useState<Employer[]>([]);
+    const [editEmployerId, setEditEmployerId] = useState('');
+    const [isEditingEmployer, setIsEditingEmployer] = useState(false);
 
     const handleEditDataClick = () => {
         setEditIban(employee?.iban || '');
@@ -91,6 +94,7 @@ export default function EmployeeProfile() {
         setEditIdCardIssuedBy(employee?.id_card_issued_by || '');
         setEditIdCardIssueDate(employee?.id_card_issue_date ? new Date(employee.id_card_issue_date).toISOString().split('T')[0] : '');
         setEditRegisteredAddress(employee?.registered_address || '');
+        setEditEmployerId(employee?.employer_id || '');
         setIsEditingData(true);
     };
 
@@ -105,7 +109,8 @@ export default function EmployeeProfile() {
                 id_card_number: editIdCardNumber,
                 id_card_issued_by: editIdCardIssuedBy,
                 id_card_issue_date: editIdCardIssueDate || null,
-                registered_address: editRegisteredAddress
+                registered_address: editRegisteredAddress,
+                employer_id: editEmployerId || null
             } as any);
             const updated = await api.getEmployee(employee.id);
             setEmployee(updated);
@@ -165,6 +170,11 @@ export default function EmployeeProfile() {
         };
         loadEmployee();
     }, [id]);
+
+    // Load employers list
+    useEffect(() => {
+        api.getEmployers().then(setEmployers).catch(console.error);
+    }, []);
 
     const handleTransfer = async (pvzId: string, date: string, comment: string) => {
         if (!employee) return;
@@ -535,11 +545,35 @@ export default function EmployeeProfile() {
                             {/* БЛОК РАБОЧАЯ ИНФОРМАЦИЯ */}
                             <div className="flex flex-col gap-6">
                                 <div className="rounded-2xl border bg-card p-6 shadow-sm flex-1">
-                                    <div className="mb-5 flex items-center gap-3 border-b pb-4">
-                                        <div className="rounded-lg bg-blue-50 p-2 text-blue-600">
-                                            <Briefcase className="h-5 w-5" />
+                                    <div className="mb-5 flex items-center justify-between border-b pb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="rounded-lg bg-blue-50 p-2 text-blue-600">
+                                                <Briefcase className="h-5 w-5" />
+                                            </div>
+                                            <h3 className="font-bold text-lg">Рабочая информация</h3>
                                         </div>
-                                        <h3 className="font-bold text-lg">Рабочая информация</h3>
+                                        {isEditingEmployer && (
+                                            <button 
+                                                onClick={async () => {
+                                                    if (!employee) return;
+                                                    try {
+                                                        await api.updateEmployee(employee.id, {
+                                                            status: employee.status,
+                                                            employer_id: editEmployerId || null
+                                                        } as any);
+                                                        const updated = await api.getEmployee(employee.id);
+                                                        setEmployee(updated);
+                                                        setIsEditingEmployer(false);
+                                                    } catch (err) {
+                                                        console.error(err);
+                                                        alert('Ошибка при сохранении');
+                                                    }
+                                                }}
+                                                className="text-xs flex items-center gap-1 text-emerald-600 hover:text-emerald-700 font-semibold bg-emerald-50 px-2.5 py-1.5 rounded-md border border-emerald-200"
+                                            >
+                                                <Save className="h-3.5 w-3.5" /> Сохранить
+                                            </button>
+                                        )}
                                     </div>
                                     <div className="space-y-5">
                                         <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
@@ -548,6 +582,39 @@ export default function EmployeeProfile() {
                                                 {employee.role === 'rf' ? 'Региональный менеджер / РФ' : 'Менеджер ПВЗ'}
                                             </p>
                                         </div>
+
+                                        <div>
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider flex items-center gap-1.5">
+                                                    <FileText className="h-3 w-3" /> Юрлицо
+                                                </p>
+                                                {!isEditingEmployer && (
+                                                    <button 
+                                                        onClick={() => { setIsEditingEmployer(true); setEditEmployerId(employee?.employer_id || ''); }}
+                                                        className="text-[10px] text-primary hover:text-primary/80 font-semibold"
+                                                    >
+                                                        Изменить
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {isEditingEmployer ? (
+                                                <select 
+                                                    value={editEmployerId} 
+                                                    onChange={(e) => setEditEmployerId(e.target.value)}
+                                                    className="w-full text-sm px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-white"
+                                                >
+                                                    <option value="">Выберите юрлицо...</option>
+                                                    {employers.map(emp => (
+                                                        <option key={emp.id} value={emp.id}>{emp.name_full}</option>
+                                                    ))}
+                                                </select>
+                                            ) : (
+                                                <p className="font-semibold text-foreground bg-muted/30 p-2.5 rounded-lg border border-transparent">
+                                                    {employee.employer_name || 'Не назначено'}
+                                                </p>
+                                            )}
+                                        </div>
+
                                         <div>
                                             <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1.5 flex items-center gap-1.5"><MapPin className="h-3 w-3" /> Основной ПВЗ</p>
                                             <p className="font-semibold text-foreground bg-muted/30 p-2.5 rounded-lg border border-transparent">{employee.main_pvz_name || 'Не назначен'}</p>
