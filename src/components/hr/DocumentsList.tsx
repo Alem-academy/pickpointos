@@ -218,6 +218,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                 }
             } catch (err) {
                 console.error('Could not fetch document content', err);
+                alert('Ошибка загрузки документа: ' + (err as Error).message);
             }
         }
     };
