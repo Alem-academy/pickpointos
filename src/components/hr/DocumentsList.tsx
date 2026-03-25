@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api, type Document } from '@/services/api';
+import { DocumentChecklist } from './DocumentChecklist';
 import { FileText, Loader2, PenTool, CheckCircle, Plus, Upload, Eye, Image, XCircle, Trash2, Briefcase, Plane, Award, UserX, FileCheck } from 'lucide-react';
 import { SigexSignModal } from '../SigexSignModal';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
@@ -347,6 +348,8 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                     </div>
                 </div>
             </div>
+
+            <DocumentChecklist documents={documents} onGenerate={(type: string) => handleGenerate(type as any, true)} onUpload={() => setShowUploadModal(true)} />
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {documents.length === 0 ? (
