@@ -2,8 +2,7 @@ import { User, MapPin, Phone, Mail, ChevronRight, AlertCircle } from 'lucide-rea
 import { cn } from '@/lib/utils';
 
 interface EmployeeCardProps {
-    // id: string; // Unused
-    fullName: string;
+        fullName: string;
     role: string;
     status: 'new' | 'review' | 'revision' | 'signing' | 'active' | 'fired';
     pvzName?: string;
@@ -14,7 +13,6 @@ interface EmployeeCardProps {
 }
 
 export function EmployeeCard({
-    id,
     fullName,
     role,
     status,
