@@ -204,30 +204,44 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     };
 
     const handlePreview = async (doc: Document) => {
-        if (doc.scan_url) {
-            const urlPath = doc.scan_url.split('?')[0];
-            if (/\.pdf$/i.test(urlPath)) {
-                window.open(doc.scan_url, '_blank');
-            } else {
-                setPreviewUrl(doc.scan_url);
-            }
-        } else if (['contract', 'order_hiring', 'application'].includes(doc.type)) {
+        // Always fetch content via API for HTML documents
+        if (['contract', 'order_hiring', 'application', 'vacation_application', 'vacation_order', 'termination_order', 'employment_certificate'].includes(doc.type)) {
             try {
                 const res = await api.getDocumentContent(doc.id);
-                if (res.scan_url) {
+                const docType = doc.type as string;
+                const docTitle = docType === 'contract' ? 'Трудовой договор' 
+                    : docType === 'order' || docType === 'order_hiring' ? 'Приказ о приеме' 
+                    : docType === 'application' ? 'Заявление на прием'
+                    : docType === 'vacation_application' ? 'Заявление на отпуск'
+                    : docType === 'vacation_order' ? 'Приказ на отпуск'
+                    : docType === 'termination_order' ? 'Приказ об увольнении'
+                    : 'Документ';
+                
+                if (res.content) {
+                    // Backend returned content directly
+                    setPreviewDoc({ content: res.content, type: doc.type, title: docTitle });
+                } else if (res.scan_url) {
+                    // Fallback: fetch from URL
                     const r = await fetch(res.scan_url);
                     const html = await r.text();
-                    const docType = doc.type as string;
-                    const docTitle = docType === 'contract' ? 'Трудовой договор' : docType === 'order' || docType === 'order_hiring' ? 'Приказ о приеме' : 'Заявление на прием';
                     setPreviewDoc({ content: html, type: doc.type, title: docTitle });
-                } else if (res.content) {
-                    const docType = doc.type as string;
-                    const docTitle = docType === 'contract' ? 'Трудовой договор' : docType === 'order' || docType === 'order_hiring' ? 'Приказ о приеме' : 'Заявление на прием';
-                    setPreviewDoc({ content: res.content, type: doc.type, title: docTitle });
+                } else {
+                    alert('Документ не найден или пуст');
                 }
             } catch (err) {
                 console.error('Could not fetch document content', err);
                 alert('Ошибка загрузки документа: ' + (err as Error).message);
+            }
+        } else if (doc.scan_url) {
+            // For uploaded scans (ID cards, photos, etc.)
+            const urlPath = doc.scan_url.split('?')[0];
+            if (/\.pdf$/i.test(urlPath)) {
+                window.open(doc.scan_url, '_blank');
+            } else if (/\.(jpg|jpeg|png|gif|webp)$/i.test(urlPath)) {
+                setPreviewUrl(doc.scan_url);
+            } else {
+                // Unknown type, try to open in new tab
+                window.open(doc.scan_url, '_blank');
             }
         }
     };
