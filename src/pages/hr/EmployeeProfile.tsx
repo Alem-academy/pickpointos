@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api, type Employee } from "@/services/api";
 import { DocumentsList } from "@/components/hr/DocumentsList";
-import { Edit2, Save, Loader2, Briefcase, CreditCard, MapPin, Calendar, User, Phone, Mail, IdCard } from "lucide-react";
+import { Edit2, Save, Loader2, User, Phone, Mail, IdCard, Calendar, MapPin, Briefcase, CreditCard, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TransferModal } from "@/components/hr/TransferModal";
 import { TerminationModal } from "@/components/hr/TerminationModal";
@@ -59,6 +59,7 @@ export default function EmployeeProfile() {
 
     const handleEdit = () => {
         setEditData({
+            full_name: employee?.full_name || '',
             phone: employee?.phone || '',
             email: employee?.email || '',
             iban: employee?.iban || '',
@@ -67,7 +68,8 @@ export default function EmployeeProfile() {
             registered_address: employee?.registered_address || '',
             id_card_number: employee?.id_card_number || '',
             id_card_issued_by: employee?.id_card_issued_by || '',
-            id_card_issue_date: employee?.id_card_issue_date ? new Date(employee.id_card_issue_date).toISOString().split('T')[0] : ''
+            id_card_issue_date: employee?.id_card_issue_date ? new Date(employee.id_card_issue_date).toISOString().split('T')[0] : '',
+            probation_until: employee?.probation_until ? new Date(employee.probation_until).toISOString().split('T')[0] : ''
         });
         setIsEditing(true);
     };
@@ -102,7 +104,7 @@ export default function EmployeeProfile() {
                             <div className="h-5 w-px bg-slate-200" />
                             <div>
                                 <h1 className="text-lg font-bold text-slate-900">{employee.full_name}</h1>
-                                <p className="text-xs text-slate-500 mt-0.5">{employee.iin} • {employee.phone}</p>
+                                <p className="text-xs text-slate-500 mt-0.5">ИИН: {employee.iin}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
@@ -120,59 +122,93 @@ export default function EmployeeProfile() {
                 </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="bg-white border-b border-slate-200">
-                <div className="max-w-7xl mx-auto px-6 py-3">
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wide mr-2">Быстрые действия:</span>
-                        <button onClick={() => setActiveTab('documents')} className="px-3 py-1.5 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-md">📄 Договор</button>
-                        <button onClick={() => setActiveTab('documents')} className="px-3 py-1.5 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-md">📄 Приказ</button>
-                        <button onClick={() => setActiveTab('documents')} className="px-3 py-1.5 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-md">📄 Заявление</button>
-                        <button onClick={() => setActiveTab('documents')} className="px-3 py-1.5 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-md">📤 Загрузить</button>
-                    </div>
-                </div>
-            </div>
-
             {/* Content */}
             <div className="max-w-7xl mx-auto px-6 py-6">
                 <div className="grid grid-cols-12 gap-6 mb-6">
-                    {/* Personal Data */}
+                    {/* Personal Information */}
                     <div className="col-span-12 lg:col-span-6">
-                        <div className="bg-white rounded-lg border border-slate-200 p-5">
-                            <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4 flex items-center gap-2"><User className="w-4 h-4" /> Личные данные</h2>
-                            <div className="space-y-3">
+                        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                            <div className="bg-slate-50 px-5 py-3 border-b border-slate-200">
+                                <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide flex items-center gap-2"><User className="w-4 h-4" /> Личная информация</h2>
+                            </div>
+                            <div className="p-5 space-y-0.5">
                                 {isEditing ? (
                                     <>
-                                        <div><label className="block text-xs font-medium text-slate-600 mb-1">Телефон</label><input value={editData.phone} onChange={e => setEditData({...editData, phone: e.target.value})} className="w-full px-3 py-2 border rounded-md text-sm" /></div>
-                                        <div><label className="block text-xs font-medium text-slate-600 mb-1">Email</label><input value={editData.email} onChange={e => setEditData({...editData, email: e.target.value})} className="w-full px-3 py-2 border rounded-md text-sm" /></div>
-                                        <div><label className="block text-xs font-medium text-slate-600 mb-1">IBAN</label><input value={editData.iban} onChange={e => setEditData({...editData, iban: e.target.value.toUpperCase()})} className="w-full px-3 py-2 border rounded-md text-sm" /></div>
+                                        <EditField label="ФИО" value={editData.full_name} onChange={v => setEditData({...editData, full_name: v})} />
+                                        <EditField label="Телефон" value={editData.phone} onChange={v => setEditData({...editData, phone: v})} />
+                                        <EditField label="Email" value={editData.email} onChange={v => setEditData({...editData, email: v})} />
+                                        <EditField label="IBAN" value={editData.iban} onChange={v => setEditData({...editData, iban: v.toUpperCase()})} />
+                                        <EditField label="Адрес прописки" value={editData.registered_address} onChange={v => setEditData({...editData, registered_address: v})} />
+                                        <EditField label="Фактический адрес" value={editData.address} onChange={v => setEditData({...editData, address: v})} />
+                                        <EditField label="Номер УДЛ" value={editData.id_card_number} onChange={v => setEditData({...editData, id_card_number: v})} />
+                                        <EditField label="Кем выдан" value={editData.id_card_issued_by} onChange={v => setEditData({...editData, id_card_issued_by: v})} />
+                                        <EditField label="Дата выдачи УДЛ" type="date" value={editData.id_card_issue_date} onChange={v => setEditData({...editData, id_card_issue_date: v})} />
                                     </>
                                 ) : (
                                     <>
-                                        <InfoRow icon={<Calendar className="w-4 h-4" />} label="Дата рождения" value={iinInfo?.birthDate} extra={iinInfo ? `${iinInfo.age} лет, ${iinInfo.gender}` : ''} />
+                                        <InfoRow icon={<User className="w-4 h-4" />} label="ФИО" value={employee.full_name} />
+                                        {iinInfo && <InfoRow icon={<Calendar className="w-4 h-4" />} label="Дата рождения" value={iinInfo.birthDate} extra={`${iinInfo.age} лет, ${iinInfo.gender}`} />}
                                         <InfoRow icon={<Phone className="w-4 h-4" />} label="Телефон" value={employee.phone} />
                                         <InfoRow icon={<Mail className="w-4 h-4" />} label="Email" value={employee.email} />
                                         <InfoRow icon={<IdCard className="w-4 h-4" />} label="IBAN" value={employee.iban} />
+                                        <InfoRow icon={<MapPin className="w-4 h-4" />} label="Адрес прописки" value={employee.registered_address} />
+                                        <InfoRow icon={<MapPin className="w-4 h-4" />} label="Фактический адрес" value={employee.address} />
+                                        <InfoRow icon={<IdCard className="w-4 h-4" />} label="Номер УДЛ" value={employee.id_card_number} />
+                                        <InfoRow icon={<IdCard className="w-4 h-4" />} label="Кем выдан" value={employee.id_card_issued_by} />
+                                        <InfoRow icon={<Calendar className="w-4 h-4" />} label="Дата выдачи УДЛ" value={employee.id_card_issue_date ? new Date(employee.id_card_issue_date).toLocaleDateString('ru-RU') : undefined} />
                                     </>
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    {/* Work Data */}
+                    {/* Work Information */}
                     <div className="col-span-12 lg:col-span-6">
-                        <div className="bg-white rounded-lg border border-slate-200 p-5">
-                            <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4 flex items-center gap-2"><Briefcase className="w-4 h-4" /> Рабочие данные</h2>
-                            <div className="space-y-3">
-                                <InfoRow icon={<Briefcase className="w-4 h-4" />} label="Должность" value={employee.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ'} />
-                                <InfoRow icon={<MapPin className="w-4 h-4" />} label="ПВЗ" value={employee.main_pvz_name} />
-                                <InfoRow icon={<Briefcase className="w-4 h-4" />} label="Юрлицо" value={employee.employer_name || 'Не назначено'} />
-                                <InfoRow icon={<CreditCard className="w-4 h-4" />} label="Ставка" value={employee.base_rate ? `${employee.base_rate.toLocaleString()} ₸` : 'Не установлена'} />
-                                <InfoRow icon={<Calendar className="w-4 h-4" />} label="Дата найма" value={employee.hired_at ? new Date(employee.hired_at).toLocaleDateString('ru-RU') : 'Не нанят'} />
+                        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                            <div className="bg-slate-50 px-5 py-3 border-b border-slate-200">
+                                <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide flex items-center gap-2"><Briefcase className="w-4 h-4" /> Рабочая информация</h2>
+                            </div>
+                            <div className="p-5 space-y-0.5">
+                                {isEditing ? (
+                                    <>
+                                        <EditField label="Ставка (тенге)" type="number" value={editData.base_rate} onChange={v => setEditData({...editData, base_rate: v})} />
+                                        <EditField label="Окончание испытательного срока" type="date" value={editData.probation_until} onChange={v => setEditData({...editData, probation_until: v})} />
+                                    </>
+                                ) : (
+                                    <>
+                                        <InfoRow icon={<Briefcase className="w-4 h-4" />} label="Должность" value={employee.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ'} />
+                                        <InfoRow icon={<MapPin className="w-4 h-4" />} label="Основной ПВЗ" value={employee.main_pvz_name} extra={employee.main_pvz_address} />
+                                        <InfoRow icon={<Briefcase className="w-4 h-4" />} label="Юрлицо" value={employee.employer_name || 'Не назначено'} />
+                                        <InfoRow icon={<CreditCard className="w-4 h-4" />} label="Ставка" value={employee.base_rate ? `${employee.base_rate.toLocaleString()} ₸` : 'Не установлена'} />
+                                        <InfoRow icon={<Calendar className="w-4 h-4" />} label="Дата найма" value={employee.hired_at ? new Date(employee.hired_at).toLocaleDateString('ru-RU') : 'Не нанят'} />
+                                        <InfoRow icon={<Calendar className="w-4 h-4" />} label="Испытательный срок" value={employee.probation_until ? `до ${new Date(employee.probation_until).toLocaleDateString('ru-RU')}` : undefined} />
+                                        <InfoRow icon={<Calendar className="w-4 h-4" />} label="Дата создания" value={new Date(employee.created_at).toLocaleDateString('ru-RU')} />
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
                 </div>
+
+                {/* Emergency Contacts */}
+                {employee.emergency_contacts && employee.emergency_contacts.length > 0 && (
+                    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden mb-6">
+                        <div className="bg-slate-50 px-5 py-3 border-b border-slate-200">
+                            <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide flex items-center gap-2"><Users className="w-4 h-4" /> Экстренные контакты</h2>
+                        </div>
+                        <div className="p-5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {employee.emergency_contacts.map((contact: any, idx: number) => (
+                                    <div key={idx} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                        <p className="text-sm font-semibold text-slate-900">{contact.name}</p>
+                                        <p className="text-xs text-slate-500 mt-1">{contact.relationship}</p>
+                                        <p className="text-sm text-slate-700 mt-1">{contact.phone}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Tabs */}
                 <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
@@ -196,14 +232,24 @@ export default function EmployeeProfile() {
 }
 
 function InfoRow({ icon, label, value, extra }: { icon: any; label: string; value: string | null | undefined; extra?: string }) {
+    if (!value) return null;
     return (
-        <div className="flex items-start gap-3 py-1.5">
-            <div className="text-slate-400 mt-0.5">{icon}</div>
+        <div className="flex items-start gap-3 py-2.5 border-b border-slate-100 last:border-0">
+            <div className="text-slate-400 mt-0.5 w-4">{icon}</div>
             <div className="flex-1">
                 <p className="text-xs text-slate-500 font-medium">{label}</p>
-                <p className="text-sm font-semibold text-slate-900 mt-0.5">{value || '—'}</p>
+                <p className="text-sm font-semibold text-slate-900 mt-0.5">{value}</p>
                 {extra && <p className="text-xs text-slate-400 mt-0.5">{extra}</p>}
             </div>
+        </div>
+    );
+}
+
+function EditField({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+    return (
+        <div className="py-2.5 border-b border-slate-100 last:border-0">
+            <label className="block text-xs text-slate-500 font-medium mb-1">{label}</label>
+            <input type={type} value={value} onChange={e => onChange(e.target.value)} className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
         </div>
     );
 }
