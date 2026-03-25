@@ -309,6 +309,42 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                         {isGenerating === 'application' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
                         Заявление
                     </button>
+
+                    {/* Vacation and other document buttons */}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                            onClick={() => handleGenerate('vacation_application')}
+                            disabled={!!isGenerating}
+                            className="flex items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-sm font-medium text-purple-700 hover:bg-purple-100 disabled:opacity-50"
+                        >
+                            {isGenerating === 'vacation_application' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plane className="h-4 w-4" />}
+                            Заявление на отпуск
+                        </button>
+                        <button
+                            onClick={() => handleGenerate('vacation_order')}
+                            disabled={!!isGenerating}
+                            className="flex items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-sm font-medium text-purple-700 hover:bg-purple-100 disabled:opacity-50"
+                        >
+                            {isGenerating === 'vacation_order' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileCheck className="h-4 w-4" />}
+                            Приказ на отпуск
+                        </button>
+                        <button
+                            onClick={() => handleGenerate('employment_certificate')}
+                            disabled={!!isGenerating}
+                            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                        >
+                            {isGenerating === 'employment_certificate' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Award className="h-4 w-4" />}
+                            Справка с места работы
+                        </button>
+                        <button
+                            onClick={() => handleGenerate('termination_order')}
+                            disabled={!!isGenerating}
+                            className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+                        >
+                            {isGenerating === 'termination_order' ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserX className="h-4 w-4" />}
+                            Приказ об увольнении
+                        </button>
+                    </div>
                 </div>
             </div>
 
