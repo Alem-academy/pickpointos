@@ -2,32 +2,14 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api, type Employee } from "@/services/api";
 import { DocumentsList } from "@/components/hr/DocumentsList";
-import {
-    ArrowLeft,
-    MapPin,
-    Phone,
-    Mail,
-    Calendar,
-    Briefcase,
-    ArrowRight,
-    UserX,
-    FileWarning,
-    Edit2,
-    Save,
-    Plus,
-    Trash2,
-    Loader2,
-    CreditCard,
-    MessageCircle,
-    CheckCircle2,
-    Clock
-} from "lucide-react";
+import { Clock, CheckCircle2, FileWarning, Briefcase, UserX, Save, CreditCard, Plus, Calendar, Edit2, Trash2, Loader2, MapPin, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TransferModal } from "@/components/hr/TransferModal";
 import { TerminationModal } from "@/components/hr/TerminationModal";
 
 import { OnboardingTab } from "@/components/hr/profile/OnboardingTab";
 import { DisciplineTab } from "@/components/hr/profile/DisciplineTab";
+import { EmployeeHero } from "@/components/hr/profile/EmployeeHero";
 
 function parseIIN(iin: string | undefined) {
     if (!iin || iin.length !== 12) return null;
@@ -72,24 +54,6 @@ function getEmergencyContacts(contacts: any): { name: string, phone: string, rel
     }
     return [];
 }
-
-const STATUS_LABELS = {
-    new: 'Новый',
-    review: 'На проверке',
-    revision: 'Доработка',
-    signing: 'Подписание',
-    active: 'Активен',
-    fired: 'Уволен',
-} as const;
-
-const STATUS_COLORS = {
-    new: 'text-blue-600 bg-blue-50 border-blue-200',
-    review: 'text-amber-600 bg-amber-50 border-amber-200',
-    revision: 'text-orange-600 bg-orange-50 border-orange-200',
-    signing: 'text-purple-600 bg-purple-50 border-purple-200',
-    active: 'text-emerald-600 bg-emerald-50 border-emerald-200',
-    fired: 'text-slate-600 bg-slate-50 border-slate-200',
-} as const;
 
 type Tab = 'general' | 'documents' | 'history' | 'discipline';
 
@@ -253,102 +217,16 @@ export default function EmployeeProfile() {
 
     return (
         <div className="bg-slate-50/50 min-h-screen pb-12">
-            {/* Hero Banner Section */}
-            <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 pb-12 pt-8 px-8 text-white relative overflow-hidden">
-                {/* Background decorative elements */}
-                <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-white/5 blur-3xl"></div>
-                <div className="absolute bottom-0 left-20 w-60 h-60 rounded-full bg-blue-500/10 blur-3xl"></div>
-                
-                <div className="max-w-5xl relative z-10">
-                    <button
-                        onClick={() => navigate('/hr/employees')}
-                        className="mb-8 flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white transition-colors"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Назад к списку
-                    </button>
+            {/* Hero Section */}
+            <EmployeeHero 
+                employee={employee}
+                photoUrl={photoUrl}
+                onEdit={handleEditDataClick}
+            />
 
-                    <div className="flex flex-col md:flex-row items-start justify-between gap-6">
-                        <div className="flex items-start gap-6">
-                            {/* Avatar */}
-                            <div className="relative">
-                                {photoUrl ? (
-                                    <div className="h-28 w-28 rounded-2xl overflow-hidden border-4 border-white/10 shadow-xl bg-slate-800">
-                                        <img src={photoUrl} alt="Employee" className="w-full h-full object-cover" />
-                                    </div>
-                                ) : (
-                                    <div className="flex h-28 w-28 items-center justify-center rounded-2xl border-4 border-white/10 bg-gradient-to-br from-indigo-500 to-blue-600 text-4xl font-black text-white shadow-xl">
-                                        {employee.full_name.charAt(0)}
-                                    </div>
-                                )}
-                                <div className="absolute -bottom-3 -right-3">
-                                    <span className={cn("rounded-lg border-2 border-slate-900 px-3 py-1 text-xs font-bold shadow-sm", STATUS_COLORS[employee.status])}>
-                                        {STATUS_LABELS[employee.status]}
-                                    </span>
-                                </div>
-                            </div>
-                            
-                            {/* Name & Quick Links */}
-                            <div className="pt-2">
-                                <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-2">{employee.full_name}</h1>
-                                
-                                <div className="flex flex-wrap items-center gap-3 text-slate-300 text-sm mb-4">
-                                    <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-full font-medium">
-                                        <Briefcase className="h-4 w-4 text-blue-400" />
-                                        {employee.role === 'rf' ? 'Региональный менеджер / РФ' : 'Менеджер ПВЗ'}
-                                    </span>
-                                    {employee.main_pvz_name && (
-                                        <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-full font-medium">
-                                            <MapPin className="h-4 w-4 text-emerald-400" />
-                                            {employee.main_pvz_name}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="flex flex-wrap gap-2 text-sm">
-                                    <a href={`https://wa.me/${employee.phone?.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 bg-green-500/20 text-green-300 hover:bg-green-500/30 px-3 py-1.5 rounded-lg font-medium transition-colors border border-green-500/20">
-                                        <MessageCircle className="h-4 w-4" /> WhatsApp
-                                    </a>
-                                    <a href={`tel:${employee.phone}`} className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg font-medium transition-colors">
-                                        <Phone className="h-4 w-4 text-slate-300" /> {employee.phone}
-                                    </a>
-                                    {employee.email && (
-                                        <a href={`mailto:${employee.email}`} className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg font-medium transition-colors">
-                                            <Mail className="h-4 w-4 text-slate-300" /> Отправить письмо
-                                        </a>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex flex-row md:flex-col gap-3 mt-4 md:mt-0">
-                            {employee.status === 'active' && (
-                                <>
-                                    <button
-                                        onClick={() => setShowTransferModal(true)}
-                                        className="flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-slate-900 hover:bg-slate-100 transition-colors shadow-sm"
-                                    >
-                                        <ArrowRight className="h-4 w-4" />
-                                        Оформить перевод
-                                    </button>
-                                    <button
-                                        onClick={() => setShowTerminationModal(true)}
-                                        className="flex items-center justify-center gap-2 rounded-xl bg-red-500/10 border border-red-500/20 px-5 py-2.5 text-sm font-bold text-red-400 hover:bg-red-500/20 transition-colors"
-                                    >
-                                        <UserX className="h-4 w-4" />
-                                        Оформить увольнение
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Content Wrapper */}
-            <div className="max-w-5xl mx-auto px-8 -mt-6 relative z-20">
-                {/* Stats Widget (KPI/Overview) */}
+            {/* Main Content */}
+            <div className="mx-auto max-w-5xl px-6">
+                {/* Stats Widget */}
                 <div className="bg-white rounded-2xl shadow-sm border p-4 mb-6 flex flex-wrap gap-4 md:gap-8 justify-between items-center">
                     <div className="flex items-center gap-3">
                         <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
