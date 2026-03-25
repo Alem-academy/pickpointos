@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api, type Document } from '@/services/api';
 import { FileText, Loader2, PenTool, CheckCircle, Plus, Upload, Eye, Image, XCircle, Trash2, Briefcase } from 'lucide-react';
+import { getDocumentLabel } from '@/lib/documentTypes';
 import { SigexSignModal } from '../SigexSignModal';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { cn } from '@/lib/utils';
@@ -64,7 +65,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     }, [employeeId]);
 
 
-    const handleGenerate = async (type: 'contract' | 'order' | 'application', bypassModal = false) => {
+    const handleGenerate = async (type: 'contract' | 'order_hiring' | 'application' | 'vacation_application' | 'vacation_order' | 'termination_order' | 'employment_certificate', bypassModal = false) => {
         if (type === 'contract' && !bypassModal) {
             setIsIbanModalOpen(true);
             return;
@@ -72,11 +73,11 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
 
         setIsGenerating(type);
         try {
-            const docType = type === 'order' ? 'order_hiring' : type;
+            const docType = type === 'order_hiring' ? 'order_hiring' : type;
             const { content } = await api.generateDocument(employeeId, docType, type === 'contract' ? ibanInput : undefined);
             
             // Show preview with new modal
-            const docTitle = type === 'contract' ? 'Трудовой договор' : type === 'order' ? 'Приказ о приеме' : 'Заявление на прием';
+            const docTitle = type === 'contract' ? 'Трудовой договор' : type === 'order_hiring' ? 'Приказ о приеме' : type === 'application' ? 'Заявление на прием' : type === 'vacation_application' ? 'Заявление на отпуск' : type === 'vacation_order' ? 'Приказ на отпуск' : type === 'termination_order' ? 'Приказ об увольнении' : 'Документ';
             setPreviewDoc({ content, type: docType, title: docTitle });
             
             await loadDocuments();
@@ -294,11 +295,11 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                         Трудовой договор
                     </button>
                     <button
-                        onClick={() => handleGenerate('order')}
+                        onClick={() => handleGenerate('order_hiring')}
                         disabled={!!isGenerating}
                         className="flex items-center gap-2 rounded-lg border border-primary bg-primary/5 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
                     >
-                        {isGenerating === 'order' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                        {isGenerating === 'order_hiring' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
                         Приказ о приеме
                     </button>
                     <button
@@ -338,7 +339,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                         />
                                     ) : (
                                         <div className="flex h-full w-full items-center justify-center bg-slate-50 text-slate-400">
-                                            {doc.type === 'contract' || doc.type === 'order' || doc.type === 'application'
+                                            {doc.type === 'contract' || doc.type === 'order_hiring' || doc.type === 'application'
                                                 ? <FileText className="h-12 w-12 opacity-50" />
                                                 : <Image className="h-12 w-12 opacity-50" />
                                             }
@@ -358,7 +359,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                     <div className="mb-2">
                                         <h4 className="font-bold text-sm leading-tight line-clamp-2">
                                             {doc.type === 'contract' ? 'Трудовой договор' :
-                                                doc.type === 'order' ? 'Приказ о приеме' :
+                                                doc.type === 'order_hiring' ? 'Приказ о приеме' :
                                                     doc.type === 'application' ? 'Заявление на прием' :
                                                         doc.type === 'id_main' ? 'Уд. личности (Лиц.)' :
                                                             doc.type === 'id_register' ? 'Уд. личности (Оборот)' :
@@ -396,7 +397,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                             </button>
                                         )}
 
-                                        {doc.status !== 'signed' && doc.type !== 'contract' && doc.type !== 'order' && doc.type !== 'application' && (
+                                        {doc.status !== 'signed' && doc.type !== 'contract' && doc.type !== 'order_hiring' && doc.type !== 'application' && (
                                             <button
                                                 onClick={() => handleRejectDocument(doc.id)}
                                                 disabled={isRejecting === doc.id}
