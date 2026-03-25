@@ -12,6 +12,7 @@ import operationsRoutes from './routes/operations.js';
 import documentsRoutes from './routes/documents.js';
 import analyticsRoutes from './routes/analytics.js';
 import authRoutes from './routes/auth.js';
+import templatesRoutes from './routes/templates.js';
 
 // dotenv configured in ./config/env.js
 
@@ -107,6 +108,7 @@ app.use('/api/finance', financeRoutes);
 app.use('/api', operationsRoutes);
 app.use('/api', documentsRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api', templatesRoutes);
 
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.

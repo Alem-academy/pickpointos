@@ -83,6 +83,8 @@ export default function EmployeeProfile() {
     const [editIdCardIssueDate, setEditIdCardIssueDate] = useState('');
     const [editRegisteredAddress, setEditRegisteredAddress] = useState('');
     const [isSavingData, setIsSavingData] = useState(false);
+    const [editIbanInput, setEditIbanInput] = useState('');
+    const [isSavingIban, setIsSavingIban] = useState(false);
     const [employers, setEmployers] = useState<Employer[]>([]);
     const [editEmployerId, setEditEmployerId] = useState('');
     const [isEditingEmployer, setIsEditingEmployer] = useState(false);
@@ -120,6 +122,26 @@ export default function EmployeeProfile() {
             alert('Ошибка при сохранении данных');
         } finally {
             setIsSavingData(false);
+        }
+    };
+
+    
+    const handleSaveIban = async () => {
+        if (!employee || !editIbanInput.trim()) return;
+        setIsSavingIban(true);
+        try {
+            await api.updateEmployee(employee.id, {
+                status: employee.status,
+                iban: editIbanInput.trim().toUpperCase()
+            } as any);
+            const updated = await api.getEmployee(employee.id);
+            setEmployee(updated);
+            setEditIbanInput('');
+        } catch (err) {
+            console.error(err);
+            alert('Ошибка при сохранении IBAN');
+        } finally {
+            setIsSavingIban(false);
         }
     };
 
@@ -395,9 +417,42 @@ export default function EmployeeProfile() {
                                             <div>
                                                 <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1.5 flex items-center gap-1.5"><CreditCard className="h-3 w-3" /> IBAN</p>
                                                 {employee.iban ? (
-                                                    <p className="font-mono bg-indigo-50/50 border-indigo-100 text-indigo-700 px-2 py-1.5 rounded-md border inline-block text-sm font-semibold break-all">{employee.iban}</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="font-mono bg-indigo-50/50 border-indigo-100 text-indigo-700 px-3 py-1.5 rounded-md border inline-block text-sm font-semibold">
+                                                            {employee.iban}
+                                                        </p>
+                                                        <button 
+                                                            onClick={() => { setEditIbanInput(employee.iban || ''); }} 
+                                                            className="text-xs text-primary hover:text-primary/80 font-semibold"
+                                                        >
+                                                            Изменить
+                                                        </button>
+                                                    </div>
+                                                ) : editIbanInput ? (
+                                                    <div className="flex items-center gap-2 col-span-2 bg-slate-50 p-3 rounded-lg border">
+                                                        <input 
+                                                            value={editIbanInput} 
+                                                            onChange={(e) => setEditIbanInput(e.target.value.toUpperCase())} 
+                                                            placeholder="KZ..." 
+                                                            className="flex-1 text-sm px-3 py-2 border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none uppercase font-mono"
+                                                            autoFocus
+                                                        />
+                                                        <button 
+                                                            disabled={isSavingIban || !editIbanInput.trim()} 
+                                                            onClick={handleSaveIban} 
+                                                            className="px-3 py-2 text-xs bg-emerald-600 text-white rounded-md font-semibold hover:bg-emerald-700 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                        >
+                                                            {isSavingIban ? 'Сохранение...' : 'Сохранить'}
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => setEditIbanInput('')} 
+                                                            className="px-3 py-2 text-xs border rounded-md font-semibold hover:bg-slate-100 text-slate-600 transition-colors"
+                                                        >
+                                                            Отмена
+                                                        </button>
+                                                    </div>
                                                 ) : (
-                                                    <button onClick={handleEditDataClick} className="text-xs font-semibold text-primary/80 hover:text-primary bg-primary/5 px-2 py-1.5 rounded border border-primary/20 border-dashed inline-flex items-center gap-1">
+                                                    <button onClick={() => setEditIbanInput('KZ')} className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded border border-emerald-200 inline-flex items-center gap-1 transition-colors">
                                                         <Plus className="h-3 w-3" /> Добавить IBAN
                                                     </button>
                                                 )}

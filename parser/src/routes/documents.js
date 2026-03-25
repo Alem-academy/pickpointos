@@ -125,7 +125,7 @@ router.get('/documents/stats', async (req, res) => {
     }
 });
 
-// POST /documents/generate - Generate a new document (Contract)
+// POST /documents/generate - Generate a new document with employer data
 router.post('/documents/generate', async (req, res) => {
     try {
         const { employeeId, type, iban } = req.body;
@@ -135,11 +135,22 @@ router.post('/documents/generate', async (req, res) => {
             await query('UPDATE employees SET iban = $1 WHERE id = $2', [iban, employeeId]);
         }
 
-        // Fetch employee data
+        // Fetch employee data WITH employer requisites
         const empResult = await query(`
-            SELECT e.*, p.name as pvz_name, p.address as pvz_address 
-            FROM employees e 
-            LEFT JOIN pvz_points p ON e.main_pvz_id = p.id 
+            SELECT e.*, p.name as pvz_name, p.address as pvz_address,
+                   emp.name_full as employer_name,
+                   emp.name_short as employer_short_name,
+                   emp.bin as employer_bin,
+                   emp.iin as employer_iin,
+                   emp.director_name as employer_director,
+                   emp.director_name_dative as employer_director_dative,
+                   emp.address_legal as employer_address,
+                   emp.bank_name as employer_bank,
+                   emp.bik as employer_bik,
+                   emp.iban as employer_iban
+            FROM employees e
+            LEFT JOIN pvz_points p ON e.main_pvz_id = p.id
+            LEFT JOIN employers emp ON e.employer_id = emp.id
             WHERE e.id = $1
         `, [employeeId]);
 
@@ -148,20 +159,20 @@ router.post('/documents/generate', async (req, res) => {
         }
         const emp = empResult.rows[0];
 
-        let htmlContent = '';
-
-        // ─── Employer constants (from PDF templates - ИП «Жасмин») ───────────────────────────────────────────
-        const EMPLOYER = {
-            name: 'ИП «Жасмин»',
-            short_name: 'Жасмин',
-            bin: '230540009760',
-            director_name: 'Карабаева Г.Е.',
-            director_name_dative: 'Карабаевой Г.Е.',
-            address: 'г. Алматы',
-            bank: 'АО «Kaspi Bank»',
-            bik: 'CASPKZKA',
-            iban: 'KZ54722S000009084425',
+        // Use employer from DB, or fallback to defaults (ИП «Жасмин»)
+        const employer = {
+            name: emp.employer_name || 'ИП «Жасмин»',
+            short_name: emp.employer_short_name || 'Жасмин',
+            bin: emp.employer_bin || emp.employer_iin || '910729401967',
+            director_name: emp.employer_director || 'Карабаева Г.Е.',
+            director_name_dative: emp.employer_director_dative || 'Карабаевой Г.Е.',
+            address: emp.employer_address || 'г. Алматы',
+            bank: emp.employer_bank || 'АО «Kaspi Bank»',
+            bik: emp.employer_bik || 'CASPKZKA',
+            iban: emp.employer_iban || 'KZ54722S000009084425',
         };
+
+        let htmlContent = '';
 
         // ─── Date helpers ──────────────────────────────────────────────────
         const MONTHS_RU = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
@@ -191,16 +202,16 @@ router.post('/documents/generate', async (req, res) => {
                 contract_year: String(contractYear),
 
                 // Employer
-                employer_name: EMPLOYER.name,
-                employer_short_name: EMPLOYER.short_name,
-                employer_director: EMPLOYER.director_name,
-                employer_bin: EMPLOYER.bin,
-                employer_bic: EMPLOYER.bik,
-                employer_bank: EMPLOYER.bank,
+                employer_name: employer.name,
+                employer_short_name: employer.short_name,
+                employer_director: employer.director_name,
+                employer_bin: employer.bin,
+                employer_bic: employer.bik,
+                employer_bank: employer.bank,
                 employer_bank_kz: '«Kaspi Bank» АҚ',
-                employer_address: EMPLOYER.address,
+                employer_address: employer.address,
                 employer_address_kz: 'Алматы қ.',
-                employer_iban: EMPLOYER.iban,
+                employer_iban: employer.iban,
 
                 // Employee
                 full_name: emp.full_name,
@@ -242,9 +253,9 @@ router.post('/documents/generate', async (req, res) => {
                 start_month_kz: contractMonthKz,
                 start_year: String(contractYear),
                 pvz_address: emp.pvz_address || 'не указан',
-                employer_name: EMPLOYER.name,
-                employer_short_name: EMPLOYER.short_name,
-                employer_director: EMPLOYER.director_name,
+                employer_name: employer.name,
+                employer_short_name: employer.short_name,
+                employer_director: employer.director_name,
                 sign_day: contractDay,
                 sign_month_kz: contractMonthKz,
                 sign_year: String(contractYear),
@@ -258,8 +269,8 @@ router.post('/documents/generate', async (req, res) => {
                 start_day: contractDay,
                 start_month_kz: contractMonthKz,
                 start_year: String(contractYear),
-                employer_name: EMPLOYER.name,
-                employer_director_dative: EMPLOYER.director_name_dative,
+                employer_name: employer.name,
+                employer_director_dative: employer.director_name_dative,
                 date: `${contractDay}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(contractYear).slice(-2)}`,
             });
         } else if (type === 'vacation_application') {
@@ -267,7 +278,7 @@ router.post('/documents/generate', async (req, res) => {
             const { vacationDays = 14, vacationStart, vacationEnd } = req.body;
             const vacStart = vacationStart ? new Date(vacationStart) : now;
             const vacEnd = vacationEnd ? new Date(vacationEnd) : new Date(vacStart.getTime() + vacationDays * 24 * 60 * 60 * 1000);
-            
+
             htmlContent = fillTemplate(VACATION_APPLICATION_TEMPLATE, {
                 full_name: emp.full_name,
                 iin: emp.iin || '__________',
@@ -276,19 +287,20 @@ router.post('/documents/generate', async (req, res) => {
                 vacation_start: vacStart.toLocaleDateString('ru-RU'),
                 vacation_end: vacEnd.toLocaleDateString('ru-RU'),
                 date: dateRu,
+                employer_name: employer.name,
             });
         } else if (type === 'vacation_order') {
             // Приказ на отпуск
             const { vacationDays = 14, vacationStart, vacationEnd } = req.body;
             const vacStart = vacationStart ? new Date(vacationStart) : now;
             const vacEnd = vacationEnd ? new Date(vacationEnd) : new Date(vacStart.getTime() + vacationDays * 24 * 60 * 60 * 1000);
-            
+
             // Generate order number
             const orderCntRes = await query(
                 `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type LIKE '%order%'`, [employeeId]
             );
             const orderSeq = parseInt(orderCntRes.rows[0].count, 10) + 1;
-            
+
             htmlContent = fillTemplate(VACATION_ORDER_TEMPLATE, {
                 order_number: `ОТ-${String(orderSeq).padStart(3, '0')}/${yearShort}`,
                 full_name: emp.full_name,
@@ -298,18 +310,20 @@ router.post('/documents/generate', async (req, res) => {
                 vacation_start: vacStart.toLocaleDateString('ru-RU'),
                 vacation_end: vacEnd.toLocaleDateString('ru-RU'),
                 date: dateRu,
+                employer_name: employer.name,
+                employer_address: employer.address,
             });
         } else if (type === 'termination_order') {
             // Приказ об увольнении
             const { terminationDate, terminationReason = 'по собственному желанию', contractNumber, contractDate } = req.body;
             const termDate = terminationDate ? new Date(terminationDate) : now;
-            
+
             // Generate order number
             const orderCntRes = await query(
                 `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type LIKE '%order%'`, [employeeId]
             );
             const orderSeq = parseInt(orderCntRes.rows[0].count, 10) + 1;
-            
+
             htmlContent = fillTemplate(TERMINATION_ORDER_TEMPLATE, {
                 order_number: `УВ-${String(orderSeq).padStart(3, '0')}/${yearShort}`,
                 contract_number: contractNumber || '_______',
@@ -320,11 +334,13 @@ router.post('/documents/generate', async (req, res) => {
                 termination_date: termDate.toLocaleDateString('ru-RU'),
                 termination_reason: terminationReason,
                 date: dateRu,
+                employer_name: employer.name,
+                employer_address: employer.address,
             });
         } else if (type === 'employment_certificate') {
             // Справка с места работы
             const { salary = 85000 } = req.body;
-            
+
             htmlContent = fillTemplate(EMPLOYMENT_CERTIFICATE_TEMPLATE, {
                 full_name: emp.full_name,
                 iin: emp.iin || '__________',
@@ -332,6 +348,8 @@ router.post('/documents/generate', async (req, res) => {
                 start_date: emp.hired_at ? new Date(emp.hired_at).toLocaleDateString('ru-RU') : '_______',
                 salary: Number(salary).toLocaleString('ru-RU'),
                 date: dateRu,
+                employer_name: employer.name,
+                employer_address: employer.address,
             });
         } else {
             return res.status(400).json({ error: 'Unsupported document type' });

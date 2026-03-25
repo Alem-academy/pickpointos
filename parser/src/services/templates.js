@@ -127,7 +127,7 @@ export const VACATION_APPLICATION_TEMPLATE = `
 </head>
 <body>
     <div class="header-block">
-        <p>Директору ТОО «AlemLab PickPoint»</p>
+        <p>Директору {{employer_name}}</p>
         <p>от {{position}}</p>
         <p class="bold">{{full_name}}</p>
         <p>ИИН: {{iin}}</p>
@@ -167,8 +167,8 @@ export const VACATION_ORDER_TEMPLATE = `
 </head>
 <body>
     <div class="header">
-        <div class="bold">ТОО «AlemLab PickPoint»</div>
-        <div>г. Алматы</div>
+        <div class="bold">{{employer_name}}</div>
+        <div>{{employer_address}}</div>
     </div>
 
     <h1>ПРИКАЗ № {{order_number}}</h1>
@@ -185,7 +185,7 @@ export const VACATION_ORDER_TEMPLATE = `
 
     <div class="signature-block">
         <div class="sign-box">
-            <p class="bold">Директор ТОО «AlemLab PickPoint»:</p>
+            <p class="bold">Директор {{employer_name}}:</p>
             <br><br>
             <p>_________________ (Подпись)</p>
         </div>
@@ -219,8 +219,8 @@ export const TERMINATION_ORDER_TEMPLATE = `
 </head>
 <body>
     <div class="header">
-        <div class="bold">ТОО «AlemLab PickPoint»</div>
-        <div>г. Алматы</div>
+        <div class="bold">{{employer_name}}</div>
+        <div>{{employer_address}}</div>
     </div>
 
     <h1>ПРИКАЗ № {{order_number}}</h1>
@@ -238,7 +238,7 @@ export const TERMINATION_ORDER_TEMPLATE = `
 
     <div class="signature-block">
         <div class="sign-box">
-            <p class="bold">Директор ТОО «AlemLab PickPoint»:</p>
+            <p class="bold">Директор {{employer_name}}:</p>
             <br><br>
             <p>_________________ (Подпись)</p>
         </div>
@@ -271,14 +271,14 @@ export const EMPLOYMENT_CERTIFICATE_TEMPLATE = `
 </head>
 <body>
     <div class="header">
-        <p class="bold">ТОО «AlemLab PickPoint»</p>
-        <p>г. Алматы</p>
+        <p class="bold">{{employer_name}}</p>
+        <p>{{employer_address}}</p>
     </div>
 
     <div class="title">СПРАВКА</div>
 
     <div class="content">
-        <p>Выдана <strong>{{full_name}}</strong> (ИИН {{iin}}) в том, что он(а) действительно работает в ТОО «AlemLab PickPoint» 
+        <p>Выдана <strong>{{full_name}}</strong> (ИИН {{iin}}) в том, что он(а) действительно работает в {{employer_name}}
         в должности <strong>{{position}}</strong> с «{{start_date}}» года по настоящее время.</p>
         <p>Среднемесячная заработная плата составляет <strong>{{salary}} тенге</strong>.</p>
         <p>Справка выдана по месту требования.</p>
@@ -287,7 +287,7 @@ export const EMPLOYMENT_CERTIFICATE_TEMPLATE = `
     <div class="footer">
         <p>«{{date}}» года</p>
         <br><br>
-        <p class="bold">Директор ТОО «AlemLab PickPoint»</p>
+        <p class="bold">Директор {{employer_name}}</p>
         <div class="signature-line">_________________ (Подпись)</div>
     </div>
 </body>

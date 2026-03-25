@@ -7,6 +7,7 @@ import HRDashboard from '@/pages/hr/Dashboard';
 import RFDashboard from '@/pages/rf/Dashboard';
 import NewHire from '@/pages/rf/NewHire';
 import Applications from '@/pages/hr/Applications';
+import Templates from '@/pages/hr/Templates';
 
 const router = createBrowserRouter([
     {
@@ -17,10 +18,11 @@ const router = createBrowserRouter([
         element: <Layout />,
         children: [
             {
-                element: <ProtectedRoute allowedRoles={['hr']} />,
+                element: <ProtectedRoute allowedRoles={['hr', 'admin']} />,
                 children: [
                     { path: '/hr', element: <HRDashboard /> },
                     { path: '/hr/applications', element: <Applications /> },
+                    { path: '/hr/templates', element: <Templates /> },
                 ],
             },
             {

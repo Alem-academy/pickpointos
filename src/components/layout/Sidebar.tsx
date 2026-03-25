@@ -12,7 +12,8 @@ import {
     Clock,
     Receipt,
     LogOut,
-    ShieldAlert
+    ShieldAlert,
+    FileCode
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -50,6 +51,7 @@ export function Sidebar() {
             { to: "/hr/applications", icon: FileText, label: "Заявки" },
             { to: "/hr/employees", icon: Users, label: "Сотрудники" },
             { to: "/hr/new-employee", icon: UserPlus, label: "Новый сотрудник" },
+            { to: "/hr/templates", icon: FileCode, label: "Шаблоны" },
             { to: "/operations/new-pvz", icon: Building2, label: "Новый ПВЗ" },
         ];
 
