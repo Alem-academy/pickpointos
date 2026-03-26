@@ -79,9 +79,16 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
         finally { setIsUploading(false); }
     };
 
-    const handleDelete = async (docId: string, docType: string) => {
+    const handleDelete = async (docId: string, docType: string, docStatus?: string) => {
         const docName = DOCUMENT_TYPES[docType]?.label || 'Документ';
-        if (!confirm(`Удалить "${docName}"?`)) return;
+        
+        // Check if document is fully signed (both parties)
+        if (docStatus === 'signed') {
+            alert('❌ Нельзя удалить подписанный документ!\n\nПодписанные документы хранятся в архиве.\nЕсли документ был подписан ошибочно, создайте новый с правильными данными.');
+            return;
+        }
+        
+        if (!confirm(`Удалить "${docName}"?\n\n⚠️ Это действие необратимо.`)) return;
         try { await api.deleteDocument(docId); await loadDocuments(); if (onStatusChange) onStatusChange(); }
         catch (err) { console.error(err); alert('Ошибка удаления'); }
     };
@@ -126,6 +133,9 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                         <button onClick={() => setPreviewDoc({ content: '', type: doc.type, title: docConfig.label })} className="p-2 text-slate-400 hover:text-slate-600 transition-colors" title="Просмотр">
                                             <Eye className="h-4 w-4" />
                                         </button>
+                                        <button onClick={() => handleDelete(doc.id, doc.type, doc.status)} className="p-2 text-slate-400 hover:text-red-600 transition-colors" title="Удалить" disabled={doc.status === 'signed'}>
+                                            <Trash2 className={cn("h-4 w-4", doc.status === 'signed' ? 'opacity-30 cursor-not-allowed' : '')} />
+                                        </button>
                                     </div>
                                 </div>
                             );
@@ -164,8 +174,8 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                         <button onClick={() => window.open(doc.scan_url, '_blank')} className="p-2 text-slate-400 hover:text-slate-600 transition-colors" title="Открыть">
                                             <Eye className="h-4 w-4" />
                                         </button>
-                                        <button onClick={() => handleDelete(doc.id, doc.type)} className="p-2 text-slate-400 hover:text-red-600 transition-colors" title="Удалить">
-                                            <Trash2 className="h-4 w-4" />
+                                        <button onClick={() => handleDelete(doc.id, doc.type, doc.status)} className="p-2 text-slate-400 hover:text-red-600 transition-colors" title="Удалить" disabled={doc.status === 'signed'}>
+                                            <Trash2 className={cn("h-4 w-4", doc.status === 'signed' ? 'opacity-30 cursor-not-allowed' : '')} />
                                         </button>
                                     </div>
                                 </div>
