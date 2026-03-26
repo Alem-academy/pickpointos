@@ -197,15 +197,19 @@ export default function EmployeeProfile() {
                             <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide flex items-center gap-2"><Users className="w-4 h-4" /> Экстренные контакты</h2>
                         </div>
                         <div className="p-5">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {employee.emergency_contacts.map((contact: any, idx: number) => (
-                                    <div key={idx} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                                        <p className="text-sm font-semibold text-slate-900">{contact.name}</p>
-                                        <p className="text-xs text-slate-500 mt-1">{contact.relationship}</p>
-                                        <p className="text-sm text-slate-700 mt-1">{contact.phone}</p>
-                                    </div>
-                                ))}
-                            </div>
+                            {employee.emergency_contacts && Array.isArray(employee.emergency_contacts) && employee.emergency_contacts.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {employee.emergency_contacts.map((contact: any, idx: number) => (
+                                        <div key={idx} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                            <p className="text-sm font-semibold text-slate-900">{contact.name}</p>
+                                            <p className="text-xs text-slate-500 mt-1">{contact.relationship}</p>
+                                            <p className="text-sm text-slate-700 mt-1">{contact.phone}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-slate-500 text-center py-4">Экстренные контакты не указаны</p>
+                            )}
                         </div>
                     </div>
                 )}
