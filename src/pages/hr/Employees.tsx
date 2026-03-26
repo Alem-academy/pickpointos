@@ -72,7 +72,7 @@ export default function Employees() {
                     <p className="text-slate-500 mt-1">Управление командой и найм</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Button onClick={() => navigate('/hr/employees/new')}>
+                    <Button onClick={() => navigate('/hr/new-employee')}>
                         <Plus className="mr-2 h-4 w-4" />
                         Добавить
                     </Button>
