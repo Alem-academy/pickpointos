@@ -57,35 +57,47 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
         const docConfig = DOCUMENT_TYPES[doc.type] || { label: doc.type };
         
         console.log('👁️ Preview clicked:', doc.id, doc.type, docConfig.label);
+        console.log('📝 Document scan_url:', doc.scan_url);
         
-        // For all documents, try to fetch content and show in modal
         try {
             console.log('📡 Fetching document content...');
-            const { content, scan_url } = await api.getDocumentContent(doc.id);
-            console.log('📥 Received:', { hasContent: !!content, hasUrl: !!scan_url });
+            const response = await api.getDocumentContent(doc.id);
+            console.log('📥 API Response:', { 
+                hasContent: !!response.content, 
+                hasUrl: !!response.scan_url,
+                type: response.type 
+            });
             
-            // For HTML documents with content, show in modal
-            if (content) {
+            // Always try to show content in modal for HTML files
+            if (response.content) {
                 console.log('✅ Showing content in modal');
-                setPreviewDoc({ content, type: doc.type, title: docConfig.label });
+                setPreviewDoc({ content: response.content, type: doc.type, title: docConfig.label });
             } 
-            // For HTML without content (old bug), try to open URL
-            else if (scan_url && doc.scan_url?.endsWith('.html')) {
-                console.log('🔗 HTML without content, fetching...');
-                // Refetch to get content
-                const retry = await api.getDocumentContent(doc.id);
-                if (retry.content) {
-                    setPreviewDoc({ content: retry.content, type: doc.type, title: docConfig.label });
-                } else {
-                    window.open(scan_url, '_blank');
+            // For HTML files without content, fetch directly and show in modal
+            else if (doc.scan_url?.endsWith('.html') && response.scan_url) {
+                console.log('📄 HTML file, fetching content directly...');
+                try {
+                    const contentResponse = await fetch(response.scan_url);
+                    const contentText = await contentResponse.text();
+                    
+                    if (contentText && contentText.trim().startsWith('<')) {
+                        console.log('✅ Fetched HTML content, showing in modal');
+                        setPreviewDoc({ content: contentText, type: doc.type, title: docConfig.label });
+                    } else {
+                        console.log('⚠️ Not HTML content, opening URL');
+                        window.open(response.scan_url, '_blank');
+                    }
+                } catch (fetchErr) {
+                    console.error('❌ Failed to fetch HTML:', fetchErr.message);
+                    window.open(response.scan_url, '_blank');
                 }
             }
-            // For PDFs, open in new window
-            else if (scan_url) {
-                console.log('🔗 Opening URL:', scan_url);
-                window.open(scan_url, '_blank');
+            // For PDFs or when all else fails, open in new window
+            else if (response.scan_url) {
+                console.log('🔗 Opening URL in new window:', response.scan_url);
+                window.open(response.scan_url, '_blank');
             } else {
-                console.error('❌ No content or URL');
+                console.error('❌ No content or URL available');
                 alert('Не удалось загрузить содержимое документа');
             }
         } catch (err) {
