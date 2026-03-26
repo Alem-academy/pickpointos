@@ -56,22 +56,28 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     const handlePreview = async (doc: Document) => {
         const docConfig = DOCUMENT_TYPES[doc.type] || { label: doc.type };
         
+        console.log('👁️ Preview clicked:', doc.id, doc.type, docConfig.label);
+        
         // For all documents, try to fetch content and show in modal
         try {
+            console.log('📡 Fetching document content...');
             const { content, scan_url } = await api.getDocumentContent(doc.id);
+            console.log('📥 Received:', { hasContent: !!content, hasUrl: !!scan_url });
             
             // Prefer content, fallback to opening URL
             if (content) {
+                console.log('✅ Showing content in modal');
                 setPreviewDoc({ content, type: doc.type, title: docConfig.label });
             } else if (scan_url) {
-                // For PDFs or when content not available, open in new window
+                console.log('🔗 Opening URL:', scan_url);
                 window.open(scan_url, '_blank');
             } else {
+                console.error('❌ No content or URL');
                 alert('Не удалось загрузить содержимое документа');
             }
         } catch (err) {
-            console.error('Preview error:', err);
-            alert('Ошибка при загрузке документа');
+            console.error('❌ Preview error:', err);
+            alert('Ошибка при загрузке документа: ' + (err.message || 'Неизвестная ошибка'));
         }
     };
 
