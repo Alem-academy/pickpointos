@@ -92,6 +92,15 @@ router.get('/employees/by-iin/:iin', async (req, res) => {
 
         // JSONB fields are parsed automatically by node-postgres
         const employee = result.rows[0];
+        
+        // Parse emergency_contacts if it's a string
+        if (employee.emergency_contacts && typeof employee.emergency_contacts === 'string') {
+            try {
+                employee.emergency_contacts = JSON.parse(employee.emergency_contacts);
+            } catch (e) {
+                employee.emergency_contacts = [];
+            }
+        }
 
         res.json({ found: true, employee });
     } catch (err) {
@@ -135,8 +144,17 @@ router.get('/employees', authenticateToken, async (req, res) => {
 
         const result = await query(sql, params);
 
-        // JSONB is automatically parsed by node-postgres
-        const employees = result.rows;
+        // JSONB is automatically parsed by node-postgres, but handle string case
+        const employees = result.rows.map(emp => {
+            if (emp.emergency_contacts && typeof emp.emergency_contacts === 'string') {
+                try {
+                    emp.emergency_contacts = JSON.parse(emp.emergency_contacts);
+                } catch (e) {
+                    emp.emergency_contacts = [];
+                }
+            }
+            return emp;
+        });
 
         res.json(employees);
     } catch (err) {
@@ -209,8 +227,15 @@ router.get('/employees/:id', async (req, res) => {
             return res.status(404).json({ error: 'Employee not found' });
         }
 
-        // JSONB is parsed automatically by node-postgres
+        // JSONB is parsed automatically by node-postgres, but handle string case
         const employee = result.rows[0];
+        if (employee.emergency_contacts && typeof employee.emergency_contacts === 'string') {
+            try {
+                employee.emergency_contacts = JSON.parse(employee.emergency_contacts);
+            } catch (e) {
+                employee.emergency_contacts = [];
+            }
+        }
 
         res.json(employee);
     } catch (err) {

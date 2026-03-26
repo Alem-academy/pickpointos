@@ -21,7 +21,7 @@ const DOCUMENT_TYPES: any = {
     employment_certificate: { label: 'Справка с места работы', icon: Award, color: 'slate', category: 'generated' },
     id_main: { label: 'Удостоверение личности (лиц.)', icon: IdCard, color: 'indigo', category: 'uploaded' },
     id_register: { label: 'Удостоверение личности (обор.)', icon: IdCard, color: 'indigo', category: 'uploaded' },
-    id_scan: { label: 'Скан удостоверения', icon: IdCard, color: 'indigo', category: 'uploaded' },
+    id_scan: { label: 'Скан документа', icon: IdCard, color: 'indigo', category: 'uploaded' },
     photo: { label: 'Фотография 3×4', icon: Image, color: 'pink', category: 'uploaded' },
     cert_075: { label: 'Медсправка 075/у', icon: Stethoscope, color: 'green', category: 'uploaded' },
     cert_tb: { label: 'Справка тубдиспансер', icon: Stethoscope, color: 'green', category: 'uploaded' },
