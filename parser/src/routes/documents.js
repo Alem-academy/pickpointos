@@ -126,6 +126,7 @@ router.get('/documents/stats', async (req, res) => {
 });
 
 // POST /documents/generate - Generate a new document with employer data
+// Employer is automatically selected based on employee's main_pvz_id
 router.post('/documents/generate', async (req, res) => {
     try {
         const { employeeId, type, iban } = req.body;
@@ -136,8 +137,9 @@ router.post('/documents/generate', async (req, res) => {
         }
 
         // Fetch employee data WITH employer requisites
+        // Employer is determined by the PVZ where the employee works
         const empResult = await query(`
-            SELECT e.*, p.name as pvz_name, p.address as pvz_address,
+            SELECT e.*, p.name as pvz_name, p.address as pvz_address, p.employer_id as pvz_employer_id,
                    emp.name_full as employer_name,
                    emp.name_short as employer_short_name,
                    emp.bin as employer_bin,
@@ -150,7 +152,7 @@ router.post('/documents/generate', async (req, res) => {
                    emp.iban as employer_iban
             FROM employees e
             LEFT JOIN pvz_points p ON e.main_pvz_id = p.id
-            LEFT JOIN employers emp ON e.employer_id = emp.id
+            LEFT JOIN employers emp ON (e.employer_id = emp.id OR p.employer_id = emp.id)
             WHERE e.id = $1
         `, [employeeId]);
 
@@ -159,14 +161,15 @@ router.post('/documents/generate', async (req, res) => {
         }
         const emp = empResult.rows[0];
 
-        // Use employer from DB, or fallback to defaults (ИП «Жасмин»)
+        // Use employer from DB (based on PVZ), or fallback to defaults (ИП «Жасмин»)
+        // Data from: Матрица реквизитов - Лист1 (1).csv
         const employer = {
-            name: emp.employer_name || 'ИП «Жасмин»',
+            name: emp.employer_name || 'Индивидуальный предприниматель «Жасмин»',
             short_name: emp.employer_short_name || 'Жасмин',
             bin: emp.employer_bin || emp.employer_iin || '910729401967',
             director_name: emp.employer_director || 'Карабаева Г.Е.',
             director_name_dative: emp.employer_director_dative || 'Карабаевой Г.Е.',
-            address: emp.employer_address || 'г. Алматы',
+            address: emp.employer_address || 'г.Алматы, Бурундайская, дом 93 А',
             bank: emp.employer_bank || 'АО «Kaspi Bank»',
             bik: emp.employer_bik || 'CASPKZKA',
             iban: emp.employer_iban || 'KZ54722S000009084425',

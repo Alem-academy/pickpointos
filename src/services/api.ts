@@ -23,10 +23,12 @@ export interface Employer {
     bin?: string;
     iin?: string;
     director_name: string;
+    director_name_dative?: string;
     address_legal: string;
     bank_name?: string;
     bik?: string;
     iban?: string;
+    is_active?: boolean;
 }
 
 export interface Document {
@@ -64,6 +66,7 @@ export interface Employee {
     current_pvz_id: string | null;
     main_pvz_name?: string;
     main_pvz_address?: string;
+    main_pvz_employer_id?: string; // Employer ID from PVZ
     base_rate?: number;
     probation_until?: string;
     address?: string;

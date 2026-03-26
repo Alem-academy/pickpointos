@@ -5,10 +5,35 @@ import { Logger } from '../lib/logger.js';
 
 const router = express.Router();
 
-// GET /pvz - List all PVZ points
+// GET /employers - List all employers (legal entities)
+router.get('/employers', async (req, res) => {
+    try {
+        const result = await query(`
+            SELECT id, name_full, name_short, bin, iin, director_name, 
+                   director_name_dative, address_legal, bank_name, bik, iban
+            FROM employers
+            WHERE is_active = TRUE
+            ORDER BY name_full
+        `);
+        res.json(result.rows);
+    } catch (err) {
+        Logger.error('Error fetching employers:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// GET /pvz - List all PVZ points with employer info
 router.get('/pvz', async (req, res) => {
     try {
-        const result = await query('SELECT id, name, address, brand FROM pvz_points ORDER BY name');
+        const result = await query(`
+            SELECT p.id, p.name, p.address, p.brand, p.wb_id, p.region_id,
+                   emp.id as employer_id,
+                   emp.name_full as employer_name,
+                   emp.name_short as employer_short_name
+            FROM pvz_points p
+            LEFT JOIN employers emp ON p.employer_id = emp.id
+            ORDER BY p.name
+        `);
         res.json(result.rows);
     } catch (err) {
         Logger.error('Error fetching PVZ:', err);

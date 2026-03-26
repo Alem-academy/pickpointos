@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS transfers CASCADE;
 DROP TABLE IF EXISTS documents CASCADE;
 DROP TABLE IF EXISTS employees CASCADE;
 DROP TABLE IF EXISTS pvz_points CASCADE;
+DROP TABLE IF EXISTS employers CASCADE;
 DROP TABLE IF EXISTS import_mappings CASCADE;
 
 DROP TYPE IF EXISTS expense_status CASCADE;
@@ -48,6 +49,25 @@ CREATE TABLE pvz_points (
     brand VARCHAR(50) NOT NULL, -- e.g., 'Wildberries'
     area_sqm DECIMAL(10, 2), -- Квадратура (TZ 5.3)
     landlord_id UUID, -- Placeholder for Phase 2
+    employer_id UUID REFERENCES employers(id), -- Юрлицо ПВЗ (с 2026-03-26)
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Employers (Юридические лица / ИП)
+CREATE TABLE employers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name_full VARCHAR(255) NOT NULL,        -- Полное название (ИП «Жасмин», ТОО «PVZ.kz»)
+    name_short VARCHAR(100),                 -- Краткое название (Жасмин, PVZ.kz)
+    bin VARCHAR(12) UNIQUE,                  -- БИН юрлица
+    iin VARCHAR(12),                         -- ИИН ИП
+    director_name VARCHAR(255),              -- Директор (ТОО) или сам ИП
+    director_name_dative VARCHAR(255),       -- Директор в дательном падеже
+    address_legal TEXT,                      -- Юридический адрес
+    bank_name VARCHAR(255),                  -- Банк
+    bik VARCHAR(50),                         -- БИК банка
+    iban VARCHAR(20),                        -- Расчетный счет
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -63,16 +83,17 @@ CREATE TABLE employees (
     role employee_role NOT NULL DEFAULT 'employee',
     status employee_status NOT NULL DEFAULT 'new',
     password_hash VARCHAR(255), -- For Auth
-    
+
     -- Relations
     main_pvz_id UUID REFERENCES pvz_points(id), -- Основной ПВЗ (TZ 3.33)
     current_pvz_id UUID REFERENCES pvz_points(id), -- Текущий ПВЗ (для временных переводов)
     manager_rf_id UUID REFERENCES employees(id), -- Руководитель РФ
-    
+    employer_id UUID REFERENCES employers(id), -- Юрлицо (авто из ПВЗ через триггер)
+
     -- Financials & Legal
     base_rate DECIMAL(10, 2), -- Ставка
     probation_until DATE, -- Испытательный срок
-    
+
     -- Meta
     hired_at TIMESTAMP WITH TIME ZONE,
     fired_at TIMESTAMP WITH TIME ZONE,
@@ -139,6 +160,8 @@ CREATE TABLE financial_transactions (
 -- Indexes for performance
 CREATE INDEX idx_employees_main_pvz ON employees(main_pvz_id);
 CREATE INDEX idx_employees_iin ON employees(iin);
+CREATE INDEX idx_employees_employer ON employees(employer_id);
+CREATE INDEX idx_pvz_employer ON pvz_points(employer_id);
 CREATE INDEX idx_documents_employee ON documents(employee_id);
 CREATE INDEX idx_transfers_employee ON transfers(employee_id);
 CREATE INDEX idx_transactions_pvz_date ON financial_transactions(pvz_id, transaction_date);
