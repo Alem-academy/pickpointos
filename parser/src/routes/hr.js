@@ -267,6 +267,26 @@ router.get('/employees/:id/transfers', async (req, res) => {
     }
 });
 
+// GET /employees/:id/activity - Get employee activity log
+router.get('/employees/:id/activity', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { limit = 50 } = req.query;
+
+        const result = await query(`
+            SELECT * FROM employee_activity_logs
+            WHERE employee_id = $1
+            ORDER BY created_at DESC
+            LIMIT $2
+        `, [id, parseInt(limit)]);
+
+        res.json(result.rows);
+    } catch (err) {
+        Logger.error('Error fetching activity:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // PATCH /employees/:id/status - Update employee status
 router.patch('/employees/:id/status', async (req, res) => {
     try {

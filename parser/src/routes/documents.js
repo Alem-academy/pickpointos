@@ -2,18 +2,19 @@ import express from 'express';
 import multer from 'multer';
 import { query } from '../lib/db.js';
 import QRCode from 'qrcode';
-import { 
-    CONTRACT_TEMPLATE, 
-    HIRING_ORDER_TEMPLATE, 
+import {
+    CONTRACT_TEMPLATE,
+    HIRING_ORDER_TEMPLATE,
     EMPLOYMENT_APPLICATION_TEMPLATE,
     VACATION_APPLICATION_TEMPLATE,
     VACATION_ORDER_TEMPLATE,
     TERMINATION_ORDER_TEMPLATE,
     EMPLOYMENT_CERTIFICATE_TEMPLATE,
-    fillTemplate 
+    fillTemplate
 } from '../services/templates.js';
 import { storageService } from '../services/storage.service.js';
 import { Logger } from '../lib/logger.js';
+import { logDocumentGenerated } from '../lib/activityLogger.js';
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -375,6 +376,9 @@ router.post('/documents/generate', async (req, res) => {
             VALUES ($1, $2, 'draft', $3, NOW())
             RETURNING *
         `, [employeeId, type, htmlKey]);
+
+        // Log activity
+        await logDocumentGenerated(employeeId, type, docResult.rows[0].id, req.user);
 
         res.status(201).json({
             document: docResult.rows[0],

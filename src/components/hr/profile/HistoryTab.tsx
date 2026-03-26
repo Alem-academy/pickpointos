@@ -1,39 +1,18 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/services/api';
-import { Loader2, MoveRight, FileText, Calendar, User } from 'lucide-react';
+import { Loader2, MoveRight, FileText, Calendar, User, CheckCircle, XCircle, Edit2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface TransferRecord {
+interface ActivityLog {
     id: string;
     employee_id: string;
-    from_pvz_id: string | null;
-    to_pvz_id: string;
-    from_pvz_name?: string;
-    to_pvz_name?: string;
-    start_date: string;
-    end_date?: string;
-    reason?: string;
-    initiated_by?: string;
-    created_at: string;
-}
-
-interface StatusChange {
-    id: string;
-    employee_id: string;
-    old_status?: string;
-    new_status: string;
-    changed_at: string;
-    changed_by?: string;
-}
-
-interface HistoryItem {
-    id: string;
-    type: 'transfer' | 'status_change' | 'document';
-    date: string;
+    action_type: string;
+    action_category: string;
     title: string;
     description: string;
-    icon: any;
-    color: string;
+    metadata: any;
+    performed_by_name: string;
+    created_at: string;
 }
 
 interface HistoryTabProps {
@@ -42,62 +21,59 @@ interface HistoryTabProps {
 }
 
 export function HistoryTab({ employeeId, hiredAt }: HistoryTabProps) {
-    const [history, setHistory] = useState<HistoryItem[]>([]);
+    const [activities, setActivities] = useState<ActivityLog[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        loadHistory();
+        loadActivities();
     }, [employeeId]);
 
-    const loadHistory = async () => {
+    const loadActivities = async () => {
         try {
             setIsLoading(true);
             
-            // Load transfers
-            const transfersRes = await api.get(`/employees/${employeeId}/transfers`);
-            const transfers: TransferRecord[] = transfersRes.data || [];
+            // Load activity logs
+            const activitiesRes = await api.get(`/employees/${employeeId}/activity`);
+            const activities: ActivityLog[] = activitiesRes.data || [];
             
-            // Load employee to get current status
-            const employeeRes = await api.get(`/employees/${employeeId}`);
-            const employee = employeeRes.data;
-            
-            // Build history timeline
-            const historyItems: HistoryItem[] = [];
-            
-            // Add hiring event
-            if (hiredAt) {
-                historyItems.push({
-                    id: 'hired',
-                    type: 'status_change',
-                    date: hiredAt,
-                    title: 'Принят на работу',
-                    description: employee.main_pvz_name ? `ПВЗ: ${employee.main_pvz_name}` : 'Сотрудник',
-                    icon: User,
-                    color: 'bg-emerald-100 text-emerald-600'
-                });
-            }
-            
-            // Add transfers
-            transfers.forEach(transfer => {
-                historyItems.push({
-                    id: transfer.id,
-                    type: 'transfer',
-                    date: transfer.start_date,
-                    title: 'Перевод на другой ПВЗ',
-                    description: `${transfer.from_pvz_name || 'Не указан'} → ${transfer.to_pvz_name || 'Не указан'}`,
-                    icon: MoveRight,
-                    color: 'bg-blue-100 text-blue-600'
-                });
-            });
-            
-            // Sort by date (newest first)
-            historyItems.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-            
-            setHistory(historyItems);
+            setActivities(activities);
         } catch (err) {
-            console.error('Failed to load history:', err);
+            console.error('Failed to load activities:', err);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const getIconForAction = (actionType: string) => {
+        switch (actionType) {
+            case 'document_generated':
+            case 'document_signed':
+            case 'document_deleted':
+                return FileText;
+            case 'transfer':
+                return MoveRight;
+            case 'status_changed':
+                return Edit2;
+            case 'hired':
+                return User;
+            default:
+                return Calendar;
+        }
+    };
+
+    const getColorForAction = (actionType: string) => {
+        switch (actionType) {
+            case 'document_generated':
+            case 'document_signed':
+                return 'bg-blue-100 text-blue-600';
+            case 'transfer':
+                return 'bg-purple-100 text-purple-600';
+            case 'status_changed':
+                return 'bg-amber-100 text-amber-600';
+            case 'hired':
+                return 'bg-emerald-100 text-emerald-600';
+            default:
+                return 'bg-slate-100 text-slate-600';
         }
     };
 
@@ -109,12 +85,12 @@ export function HistoryTab({ employeeId, hiredAt }: HistoryTabProps) {
         );
     }
 
-    if (history.length === 0) {
+    if (activities.length === 0) {
         return (
             <div className="text-center py-12">
                 <Calendar className="h-12 w-12 text-slate-300 mx-auto mb-4" />
                 <p className="text-slate-500 font-medium">История пуста</p>
-                <p className="text-slate-400 text-sm mt-1">Здесь будут отображаться переводы и изменения статуса</p>
+                <p className="text-slate-400 text-sm mt-1">Здесь будут отображаться все действия с сотрудником</p>
             </div>
         );
     }
@@ -125,18 +101,18 @@ export function HistoryTab({ employeeId, hiredAt }: HistoryTabProps) {
                 {/* Timeline line */}
                 <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-slate-200" />
                 
-                {/* History items */}
+                {/* Activity items */}
                 <div className="space-y-6">
-                    {history.map((item, index) => {
-                        const Icon = item.icon;
-                        const isLast = index === history.length - 1;
+                    {activities.map((activity, index) => {
+                        const Icon = getIconForAction(activity.action_type);
+                        const color = getColorForAction(activity.action_type);
                         
                         return (
-                            <div key={item.id} className="relative flex gap-4">
+                            <div key={activity.id} className="relative flex gap-4">
                                 {/* Icon */}
                                 <div className={cn(
                                     "relative z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-4 border-white shadow-sm",
-                                    item.color
+                                    color
                                 )}>
                                     <Icon className="h-6 w-6" />
                                 </div>
@@ -144,16 +120,23 @@ export function HistoryTab({ employeeId, hiredAt }: HistoryTabProps) {
                                 {/* Content */}
                                 <div className="flex-1 pt-2">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <h3 className="text-sm font-bold text-slate-900">{item.title}</h3>
+                                        <h3 className="text-sm font-bold text-slate-900">{activity.title}</h3>
                                         <span className="text-xs text-slate-500">
-                                            {new Date(item.date).toLocaleDateString('ru-RU', {
+                                            {new Date(activity.created_at).toLocaleDateString('ru-RU', {
                                                 day: 'numeric',
                                                 month: 'long',
-                                                year: 'numeric'
+                                                year: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
                                             })}
                                         </span>
                                     </div>
-                                    <p className="text-sm text-slate-600">{item.description}</p>
+                                    <p className="text-sm text-slate-600 mb-1">{activity.description}</p>
+                                    {activity.performed_by_name && (
+                                        <p className="text-xs text-slate-400">
+                                            HR: {activity.performed_by_name}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         );
