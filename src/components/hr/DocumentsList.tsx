@@ -77,7 +77,8 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
             }
         } catch (err) {
             console.error('❌ Preview error:', err);
-            alert('Ошибка при загрузке документа: ' + (err.message || 'Неизвестная ошибка'));
+            const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка';
+            alert('Ошибка при загрузке документа: ' + errorMessage);
         }
     };
 
