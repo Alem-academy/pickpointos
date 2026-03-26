@@ -1,6 +1,5 @@
 import axiosInstance from './client';
-import type { Employee, Document } from '../services/api';
-import type { Employer } from '../services/api';
+import type { Employee, Document, Employer, ActivityLog } from '../services/api';
 
 
 export const hrApi = {
@@ -78,6 +77,11 @@ export const hrApi = {
     
     async getEmployers(): Promise<Employer[]> {
         const res = await axiosInstance.get('/employers');
+        return res.data;
+    },
+
+    async getEmployeeActivity(employeeId: string): Promise<ActivityLog[]> {
+        const res = await axiosInstance.get(`/employees/${employeeId}/activity`);
         return res.data;
     },
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '@/services/api';
+import { hrApi } from '@/api/hr';
 import { Loader2, MoveRight, FileText, Calendar, User, Edit2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -30,11 +30,10 @@ export function HistoryTab({ employeeId }: HistoryTabProps) {
     const loadActivities = async () => {
         try {
             setIsLoading(true);
-            
-            // Load activity logs
-            const activitiesRes = await (api as any).get(`/employees/${employeeId}/activity`);
-            const activities: ActivityLog[] = activitiesRes.data || [];
-            
+
+            // Load activity logs using hrApi
+            const activities: ActivityLog[] = await hrApi.getEmployeeActivity(employeeId);
+
             setActivities(activities);
         } catch (err) {
             console.error('Failed to load activities:', err);

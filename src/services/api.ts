@@ -31,6 +31,18 @@ export interface Employer {
     is_active?: boolean;
 }
 
+export interface ActivityLog {
+    id: string;
+    employee_id: string;
+    action_type: string;
+    action_category: string;
+    title: string;
+    description: string;
+    metadata: any;
+    performed_by_name: string;
+    created_at: string;
+}
+
 export interface Document {
     id: string;
     employee_id: string;
