@@ -64,11 +64,24 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
             const { content, scan_url } = await api.getDocumentContent(doc.id);
             console.log('📥 Received:', { hasContent: !!content, hasUrl: !!scan_url });
             
-            // Prefer content, fallback to opening URL
+            // For HTML documents with content, show in modal
             if (content) {
                 console.log('✅ Showing content in modal');
                 setPreviewDoc({ content, type: doc.type, title: docConfig.label });
-            } else if (scan_url) {
+            } 
+            // For HTML without content (old bug), try to open URL
+            else if (scan_url && doc.scan_url?.endsWith('.html')) {
+                console.log('🔗 HTML without content, fetching...');
+                // Refetch to get content
+                const retry = await api.getDocumentContent(doc.id);
+                if (retry.content) {
+                    setPreviewDoc({ content: retry.content, type: doc.type, title: docConfig.label });
+                } else {
+                    window.open(scan_url, '_blank');
+                }
+            }
+            // For PDFs, open in new window
+            else if (scan_url) {
                 console.log('🔗 Opening URL:', scan_url);
                 window.open(scan_url, '_blank');
             } else {

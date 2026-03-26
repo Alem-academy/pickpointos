@@ -405,28 +405,30 @@ router.get('/documents/:id/content', async (req, res) => {
             ? doc.scan_url
             : await storageService.getFileUrl(doc.scan_url);
 
-        // For HTML files, try to fetch content directly
-        try {
-            const axios = require('axios');
-            const response = await axios.get(signedUrl, { responseType: 'text', timeout: 5000 });
-            
-            // Check if content is HTML
-            const isHTML = response.data && (response.data.trim().startsWith('<') || doc.scan_url.endsWith('.html'));
-            
-            res.json({
-                scan_url: signedUrl,
-                content: isHTML ? response.data : null,
-                type: isHTML ? 'html' : 'pdf'
-            });
-        } catch (fetchErr) {
-            // If fetch fails, return just the URL for client-side viewing
-            Logger.warn('Could not fetch document content, returning URL only:', fetchErr.message);
-            res.json({ 
-                scan_url: signedUrl,
-                content: null,
-                type: doc.scan_url.endsWith('.html') ? 'html' : 'pdf'
-            });
+        // For HTML files, fetch content and return it
+        if (doc.scan_url.endsWith('.html')) {
+            try {
+                const axios = require('axios');
+                const response = await axios.get(signedUrl, { responseType: 'text', timeout: 5000 });
+                
+                res.json({
+                    scan_url: signedUrl,
+                    content: response.data,
+                    type: 'html'
+                });
+                return;
+            } catch (fetchErr) {
+                // If fetch fails, log and fall through to return URL only
+                Logger.warn('Could not fetch HTML content, returning URL only:', fetchErr.message);
+            }
         }
+        
+        // For PDFs or if HTML fetch failed, return just the URL
+        res.json({ 
+            scan_url: signedUrl,
+            content: null,
+            type: doc.scan_url.endsWith('.html') ? 'html' : 'pdf'
+        });
     } catch (err) {
         Logger.error('Error fetching document content:', err);
         res.status(500).json({ error: 'Internal server error' });
