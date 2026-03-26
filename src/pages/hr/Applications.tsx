@@ -33,7 +33,7 @@ export default function Applications() {
         fetch();
     }, [loadEmployees]);
 
-    const handleStatusUpdate = async (id: string, newStatus: string) => {
+    const handleStatusUpdate = async (id: string, newStatus: string, comment?: string) => {
         // If status is 'signing', redirect to employee details for onboarding
         if (newStatus === 'signing') {
             window.location.href = `/hr/employees/${id}`;
@@ -48,6 +48,12 @@ export default function Applications() {
         }
 
         try {
+            // Send comment if provided (for revision)
+            if (newStatus === 'revision' && comment) {
+                // TODO: Add comment to API call when backend supports it
+                console.log('Revision comment:', comment);
+            }
+            
             await api.updateEmployeeStatus(id, newStatus);
             loadEmployees();
             if (selectedCandidate) setSelectedCandidate(null); // Close modal
@@ -164,7 +170,7 @@ export default function Applications() {
                     onClose={() => setSelectedCandidate(null)}
                     onApprove={() => handleStatusUpdate(selectedCandidate.id, 'signing')}
                     onReject={() => handleStatusUpdate(selectedCandidate.id, 'fired')}
-                    onRevision={selectedCandidate.status !== 'revision' ? () => handleStatusUpdate(selectedCandidate.id, 'revision') : undefined}
+                    onRevision={selectedCandidate.status !== 'revision' ? (comment: string) => handleStatusUpdate(selectedCandidate.id, 'revision', comment) : undefined}
                 />
             )}
         </div>

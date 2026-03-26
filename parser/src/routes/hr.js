@@ -2,6 +2,7 @@ import express from 'express';
 import { query } from '../lib/db.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { Logger } from '../lib/logger.js';
+import { logStatusChange, logHired } from '../lib/activityLogger.js';
 
 const router = express.Router();
 
@@ -291,10 +292,18 @@ router.get('/employees/:id/activity', async (req, res) => {
 router.patch('/employees/:id/status', async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        const { status, revision_comment } = req.body;
 
         if (!status) {
             return res.status(400).json({ error: 'Status is required' });
+        }
+
+        // Validate revision comment
+        if (status === 'revision' && (!revision_comment || !revision_comment.trim())) {
+            return res.status(400).json({ 
+                error: 'Revision comment is required',
+                message: 'Пожалуйста, укажите что нужно исправить'
+            });
         }
 
         // Prepare update query
@@ -316,9 +325,10 @@ router.patch('/employees/:id/status', async (req, res) => {
         }
 
         // Handle rejection reason if status is revision
-        if (req.body.rejection_reason !== undefined) {
+        if (status === 'revision') {
+            // Save revision comment
             sql += `, rejection_reason = $${paramIdx++}`;
-            params.push(req.body.rejection_reason);
+            params.push(revision_comment);
         } else if (status === 'active' || status === 'signing') {
             // Clear rejection reason if moving forward
             sql += `, rejection_reason = NULL`;

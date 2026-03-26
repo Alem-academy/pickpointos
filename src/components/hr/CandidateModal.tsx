@@ -1,17 +1,32 @@
+import { useState } from 'react';
 import { X, FileText, User, CreditCard, Building, Calendar, Phone, CheckCircle, Mail, MapPin, FileWarning } from "lucide-react";
 import type { Employee } from "@/services/api";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { RevisionModal } from './RevisionModal';
 
 interface CandidateModalProps {
     candidate: Employee;
     onClose: () => void;
     onApprove: () => void;
     onReject: () => void;
-    onRevision?: () => void;
+    onRevision?: (comment: string) => void;
 }
 
 export function CandidateModal({ candidate, onClose, onApprove, onReject, onRevision }: CandidateModalProps) {
+    const [showRevisionModal, setShowRevisionModal] = useState(false);
+
+    const handleRevisionClick = () => {
+        setShowRevisionModal(true);
+    };
+
+    const handleRevisionConfirm = (comment: string) => {
+        if (onRevision) {
+            onRevision(comment);
+        }
+        setShowRevisionModal(false);
+    };
+
     if (!candidate) return null;
 
     return (
@@ -115,7 +130,7 @@ export function CandidateModal({ candidate, onClose, onApprove, onReject, onRevi
                                 variant="outline"
                                 size="lg"
                                 className="border-orange-200 text-orange-600 hover:bg-orange-50 font-semibold gap-2"
-                                onClick={onRevision}
+                                onClick={handleRevisionClick}
                                 title="Отправить документы на доработку (кандидат должен загрузить документы заново)"
                             >
                                 <FileWarning className="h-4 w-4" />
@@ -133,6 +148,14 @@ export function CandidateModal({ candidate, onClose, onApprove, onReject, onRevi
                     </div>
                 </div>
             </div>
+
+            {/* Revision Modal with mandatory comment */}
+            <RevisionModal
+                isOpen={showRevisionModal}
+                onClose={() => setShowRevisionModal(false)}
+                onConfirm={handleRevisionConfirm}
+                employeeName={candidate.full_name}
+            />
         </div>
     );
 }
