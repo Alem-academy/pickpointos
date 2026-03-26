@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/services/api';
-import { Loader2, MoveRight, FileText, Calendar, User, CheckCircle, XCircle, Edit2 } from 'lucide-react';
+import { Loader2, MoveRight, FileText, Calendar, User, Edit2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ActivityLog {
@@ -17,10 +17,9 @@ interface ActivityLog {
 
 interface HistoryTabProps {
     employeeId: string;
-    hiredAt?: string;
 }
 
-export function HistoryTab({ employeeId, hiredAt }: HistoryTabProps) {
+export function HistoryTab({ employeeId }: HistoryTabProps) {
     const [activities, setActivities] = useState<ActivityLog[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -33,7 +32,7 @@ export function HistoryTab({ employeeId, hiredAt }: HistoryTabProps) {
             setIsLoading(true);
             
             // Load activity logs
-            const activitiesRes = await api.get(`/employees/${employeeId}/activity`);
+            const activitiesRes = await (api as any).get(`/employees/${employeeId}/activity`);
             const activities: ActivityLog[] = activitiesRes.data || [];
             
             setActivities(activities);
@@ -103,7 +102,7 @@ export function HistoryTab({ employeeId, hiredAt }: HistoryTabProps) {
                 
                 {/* Activity items */}
                 <div className="space-y-6">
-                    {activities.map((activity, index) => {
+                    {activities.map((activity) => {
                         const Icon = getIconForAction(activity.action_type);
                         const color = getColorForAction(activity.action_type);
                         

@@ -224,7 +224,7 @@ export default function EmployeeProfile() {
                     </div>
                     <div className="p-6">
                         {activeTab === 'documents' && <DocumentsList employeeId={id!} employeeStatus={employee.status} onStatusChange={() => {}} />}
-                        {activeTab === 'history' && <HistoryTab employeeId={id!} hiredAt={employee.hired_at || undefined} />}
+                        {activeTab === 'history' && <HistoryTab employeeId={id!} />}
                         {activeTab === 'discipline' && <DisciplineTab employeeId={id!} hiredAt={employee.hired_at || new Date().toISOString()} />}
                     </div>
                 </div>

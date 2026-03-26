@@ -64,8 +64,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
             const response = await api.getDocumentContent(doc.id);
             console.log('📥 API Response:', { 
                 hasContent: !!response.content, 
-                hasUrl: !!response.scan_url,
-                type: response.type 
+                hasUrl: !!response.scan_url
             });
             
             // Always try to show content in modal for HTML files
@@ -87,7 +86,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                         console.log('⚠️ Not HTML content, opening URL');
                         window.open(response.scan_url, '_blank');
                     }
-                } catch (fetchErr) {
+                } catch (fetchErr: any) {
                     console.error('❌ Failed to fetch HTML:', fetchErr.message);
                     window.open(response.scan_url, '_blank');
                 }
@@ -100,7 +99,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                 console.error('❌ No content or URL available');
                 alert('Не удалось загрузить содержимое документа');
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('❌ Preview error:', err);
             const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка';
             alert('Ошибка при загрузке документа: ' + errorMessage);
