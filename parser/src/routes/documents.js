@@ -504,6 +504,50 @@ router.post('/documents/:id/sign', async (req, res) => {
     }
 });
 
+// DELETE /documents/:id - Delete a document
+router.delete('/documents/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // First check if document exists and get its status
+        const checkResult = await query('SELECT * FROM documents WHERE id = $1', [id]);
+        if (checkResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Document not found' });
+        }
+        
+        const doc = checkResult.rows[0];
+        
+        // Prevent deletion of signed documents
+        if (doc.status === 'signed') {
+            return res.status(403).json({ 
+                error: 'Cannot delete signed document',
+                message: 'Подписанные документы нельзя удалить. Они хранятся в архиве.'
+            });
+        }
+        
+        // Delete from storage (S3) if scan_url exists
+        if (doc.scan_url && !doc.scan_url.startsWith('http')) {
+            try {
+                await storageService.deleteFile(doc.scan_url);
+                Logger.info('[Docs] Deleted file from storage:', doc.scan_url);
+            } catch (storageErr) {
+                Logger.warn('[Docs] Failed to delete from storage:', storageErr.message);
+                // Continue with DB deletion anyway
+            }
+        }
+        
+        // Delete from database
+        await query('DELETE FROM documents WHERE id = $1', [id]);
+        
+        Logger.info('[Docs] Document deleted:', id);
+        res.json({ success: true, message: 'Document deleted successfully' });
+        
+    } catch (err) {
+        Logger.error('[Docs] Delete failed:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // --- Mappings ---
 
 router.post('/mappings', async (req, res) => {

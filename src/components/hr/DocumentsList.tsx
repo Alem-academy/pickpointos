@@ -56,27 +56,22 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     const handlePreview = async (doc: Document) => {
         const docConfig = DOCUMENT_TYPES[doc.type] || { label: doc.type };
         
-        // For generated documents, try to fetch content from backend
-        if (docConfig.category === 'generated') {
-            try {
-                const { content, scan_url } = await api.getDocumentContent(doc.id);
-                if (content) {
-                    setPreviewDoc({ content, type: doc.type, title: docConfig.label });
-                } else if (scan_url) {
-                    // Open in new window if content not available
-                    window.open(scan_url, '_blank');
-                } else {
-                    alert('Не удалось загрузить содержимое документа');
-                }
-            } catch (err) {
-                console.error('Preview error:', err);
-                alert('Ошибка при загрузке документа');
+        // For all documents, try to fetch content and show in modal
+        try {
+            const { content, scan_url } = await api.getDocumentContent(doc.id);
+            
+            // Prefer content, fallback to opening URL
+            if (content) {
+                setPreviewDoc({ content, type: doc.type, title: docConfig.label });
+            } else if (scan_url) {
+                // For PDFs or when content not available, open in new window
+                window.open(scan_url, '_blank');
+            } else {
+                alert('Не удалось загрузить содержимое документа');
             }
-        } else {
-            // For uploaded documents, open scan URL directly
-            if (doc.scan_url) {
-                window.open(doc.scan_url, '_blank');
-            }
+        } catch (err) {
+            console.error('Preview error:', err);
+            alert('Ошибка при загрузке документа');
         }
     };
 
@@ -212,22 +207,104 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                 </div>
             </div>
 
-            {/* Generate Buttons */}
-            <div>
-                <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3">Сформировать документ</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {[
-                        { type: 'contract', label: 'Договор', color: 'blue' },
-                        { type: 'order_hiring', label: 'Приказ', color: 'emerald' },
-                        { type: 'application', label: 'Заявление', color: 'amber' },
-                        { type: 'vacation_application', label: 'Отпуск', color: 'purple' }
-                    ].map(btn => (
-                        <button key={btn.type} onClick={() => handleGenerate(btn.type)} disabled={!!isGenerating} className={cn("flex flex-col items-center justify-center gap-1 p-3 rounded-lg border-2 transition-all", isGenerating === btn.type ? `border-${btn.color}-300 bg-${btn.color}-50` : `border-slate-200 hover:border-${btn.color}-300 hover:bg-${btn.color}-50`)}>
-                            {isGenerating === btn.type ? <Loader2 className="h-5 w-5 animate-spin" /> : <span className="text-lg">+</span>}
-                            <span className="text-xs font-medium">{btn.label}</span>
-                        </button>
-                    ))}
+            {/* Generate Buttons - Redesigned */}
+            <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl p-5 border border-primary/20">
+                <div className="flex items-center gap-2 mb-4">
+                    <FileText className="h-5 w-5 text-primary" />
+                    <h3 className="text-base font-bold text-slate-900">Сформировать документ</h3>
                 </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <button
+                        onClick={() => handleGenerate('contract')}
+                        disabled={!!isGenerating}
+                        className={cn(
+                            "flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all hover:shadow-md",
+                            isGenerating === 'contract'
+                                ? "border-primary bg-primary/10"
+                                : "border-slate-200 bg-white hover:border-primary/50 hover:bg-primary/5"
+                        )}
+                    >
+                        {isGenerating === 'contract' ? (
+                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        ) : (
+                            <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                                <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                        )}
+                        <span className="text-sm font-medium text-slate-900">Трудовой договор</span>
+                    </button>
+
+                    <button
+                        onClick={() => handleGenerate('order_hiring')}
+                        disabled={!!isGenerating}
+                        className={cn(
+                            "flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all hover:shadow-md",
+                            isGenerating === 'order_hiring'
+                                ? "border-primary bg-primary/10"
+                                : "border-slate-200 bg-white hover:border-primary/50 hover:bg-primary/5"
+                        )}
+                    >
+                        {isGenerating === 'order_hiring' ? (
+                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        ) : (
+                            <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                                <svg className="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                        )}
+                        <span className="text-sm font-medium text-slate-900">Приказ о приеме</span>
+                    </button>
+
+                    <button
+                        onClick={() => handleGenerate('application')}
+                        disabled={!!isGenerating}
+                        className={cn(
+                            "flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all hover:shadow-md",
+                            isGenerating === 'application'
+                                ? "border-primary bg-primary/10"
+                                : "border-slate-200 bg-white hover:border-primary/50 hover:bg-primary/5"
+                        )}
+                    >
+                        {isGenerating === 'application' ? (
+                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        ) : (
+                            <div className="h-8 w-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                                <svg className="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                            </div>
+                        )}
+                        <span className="text-sm font-medium text-slate-900">Заявление</span>
+                    </button>
+
+                    <button
+                        onClick={() => handleGenerate('vacation_application')}
+                        disabled={!!isGenerating}
+                        className={cn(
+                            "flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all hover:shadow-md",
+                            isGenerating === 'vacation_application'
+                                ? "border-primary bg-primary/10"
+                                : "border-slate-200 bg-white hover:border-primary/50 hover:bg-primary/5"
+                        )}
+                    >
+                        {isGenerating === 'vacation_application' ? (
+                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        ) : (
+                            <div className="h-8 w-8 rounded-lg bg-purple-100 flex items-center justify-center">
+                                <svg className="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                        )}
+                        <span className="text-sm font-medium text-slate-900">Отпуск</span>
+                    </button>
+                </div>
+                <p className="text-xs text-slate-500 mt-3">
+                    💡 Документы формируются автоматически на основе данных сотрудника
+                </p>
             </div>
 
             {/* Modals */}
