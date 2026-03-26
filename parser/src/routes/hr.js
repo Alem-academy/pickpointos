@@ -244,6 +244,29 @@ router.get('/employees/:id', async (req, res) => {
     }
 });
 
+// GET /employees/:id/transfers - Get employee transfer history
+router.get('/employees/:id/transfers', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const result = await query(`
+            SELECT t.*, 
+                   fp.name as from_pvz_name, fp.address as from_pvz_address,
+                   tp.name as to_pvz_name, tp.address as to_pvz_address
+            FROM transfers t
+            LEFT JOIN pvz_points fp ON t.from_pvz_id = fp.id
+            LEFT JOIN pvz_points tp ON t.to_pvz_id = tp.id
+            WHERE t.employee_id = $1
+            ORDER BY t.start_date DESC
+        `, [id]);
+
+        res.json(result.rows);
+    } catch (err) {
+        Logger.error('Error fetching transfers:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // PATCH /employees/:id/status - Update employee status
 router.patch('/employees/:id/status', async (req, res) => {
     try {

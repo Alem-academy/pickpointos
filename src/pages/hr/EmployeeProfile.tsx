@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { TransferModal } from "@/components/hr/TransferModal";
 import { TerminationModal } from "@/components/hr/TerminationModal";
 import { DisciplineTab } from "@/components/hr/profile/DisciplineTab";
+import { HistoryTab } from "@/components/hr/profile/HistoryTab";
 
 function parseIIN(iin: string | undefined) {
     if (!iin || iin.length !== 12) return null;
@@ -223,7 +224,7 @@ export default function EmployeeProfile() {
                     </div>
                     <div className="p-6">
                         {activeTab === 'documents' && <DocumentsList employeeId={id!} employeeStatus={employee.status} onStatusChange={() => {}} />}
-                        {activeTab === 'history' && <div className="text-center py-8 text-slate-500">История переводов и изменений</div>}
+                        {activeTab === 'history' && <HistoryTab employeeId={id!} hiredAt={employee.hired_at || undefined} />}
                         {activeTab === 'discipline' && <DisciplineTab employeeId={id!} hiredAt={employee.hired_at || new Date().toISOString()} />}
                     </div>
                 </div>
