@@ -53,6 +53,33 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
 
     useEffect(() => { loadDocuments(); }, [loadDocuments]);
 
+    const handlePreview = async (doc: Document) => {
+        const docConfig = DOCUMENT_TYPES[doc.type] || { label: doc.type };
+        
+        // For generated documents, try to fetch content from backend
+        if (docConfig.category === 'generated') {
+            try {
+                const { content, scan_url } = await api.getDocumentContent(doc.id);
+                if (content) {
+                    setPreviewDoc({ content, type: doc.type, title: docConfig.label });
+                } else if (scan_url) {
+                    // Open in new window if content not available
+                    window.open(scan_url, '_blank');
+                } else {
+                    alert('Не удалось загрузить содержимое документа');
+                }
+            } catch (err) {
+                console.error('Preview error:', err);
+                alert('Ошибка при загрузке документа');
+            }
+        } else {
+            // For uploaded documents, open scan URL directly
+            if (doc.scan_url) {
+                window.open(doc.scan_url, '_blank');
+            }
+        }
+    };
+
     const handleGenerate = async (type: string, bypassModal = false) => {
         if (type === 'contract' && !bypassModal) { setIsIbanModalOpen(true); return; }
         setIsGenerating(type);
@@ -130,7 +157,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                     </div>
                                     <div className="flex items-center gap-2">
                                         {getStatusBadge(doc)}
-                                        <button onClick={() => setPreviewDoc({ content: '', type: doc.type, title: docConfig.label })} className="p-2 text-slate-400 hover:text-slate-600 transition-colors" title="Просмотр">
+                                        <button onClick={() => handlePreview(doc)} className="p-2 text-slate-400 hover:text-slate-600 transition-colors" title="Просмотр">
                                             <Eye className="h-4 w-4" />
                                         </button>
                                         <button onClick={() => handleDelete(doc.id, doc.type, doc.status)} className="p-2 text-slate-400 hover:text-red-600 transition-colors" title="Удалить" disabled={doc.status === 'signed'}>
