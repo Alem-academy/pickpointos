@@ -211,15 +211,29 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                     <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
                         <h3 className="text-lg font-bold text-slate-900 mb-4">Загрузка документа</h3>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Тип документа</label>
                         <select value={selectedDocType} onChange={e => setSelectedDocType(e.target.value)} className="w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 mb-4">
                             <option value="">Выберите тип...</option>
-                            <option value="id_main">Удостоверение (лиц.)</option>
-                            <option value="id_register">Удостоверение (обор.)</option>
-                            <option value="photo">Фото 3×4</option>
-                            <option value="cert_075">Медсправка 075/у</option>
-                            <option value="bank_details">Справка IBAN</option>
+                            <optgroup label="Удостоверение личности">
+                                <option value="id_main">Удостоверение (лицевая сторона)</option>
+                                <option value="id_register">Удостоверение (оборотная сторона)</option>
+                                <option value="id_scan">Скан удостоверения</option>
+                            </optgroup>
+                            <optgroup label="Медицинские справки">
+                                <option value="cert_075">Медсправка 075/у</option>
+                                <option value="cert_tb">Справка тубдиспансер</option>
+                            </optgroup>
+                            <optgroup label="Банковские реквизиты">
+                                <option value="bank_details">Справка IBAN</option>
+                            </optgroup>
+                            <optgroup label="Прочее">
+                                <option value="photo">Фотография 3×4</option>
+                                <option value="address_cert">Адресная справка</option>
+                                <option value="other">Другой документ</option>
+                            </optgroup>
                         </select>
-                        <input type="file" onChange={e => setPendingFile(e.target.files?.[0] || null)} className="w-full text-sm" />
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Файл</label>
+                        <input type="file" onChange={e => setPendingFile(e.target.files?.[0] || null)} className="w-full text-sm" accept=".pdf,.jpg,.jpeg,.png" />
                         <div className="flex gap-2 mt-4">
                             <button onClick={() => { setShowUploadModal(false); setPendingFile(null); setSelectedDocType(''); }} className="flex-1 px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900">Отмена</button>
                             <button onClick={handleUpload} disabled={isUploading || !selectedDocType || !pendingFile} className="flex-1 px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 disabled:opacity-50">{isUploading ? 'Загрузка...' : 'Загрузить'}</button>
