@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api, type Document } from '@/services/api';
-import { FileText, Loader2, Upload, Eye, Trash2, File, IdCard, Image, Award, Banknote, MapPin, Stethoscope, Plane, UserX } from 'lucide-react';
+import { FileText, Loader2, Upload, Eye, Trash2, File, IdCard, Image, Award, Banknote, MapPin, Stethoscope, Plane, UserX, CheckCircle, Share2 } from 'lucide-react';
 import { SigexSignModal } from '../SigexSignModal';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { cn } from '@/lib/utils';
@@ -135,16 +135,36 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
 
     const handleDelete = async (docId: string, docType: string, docStatus?: string) => {
         const docName = DOCUMENT_TYPES[docType]?.label || 'Документ';
-        
+
         // Check if document is fully signed (both parties)
         if (docStatus === 'signed') {
             alert('❌ Нельзя удалить подписанный документ!\n\nПодписанные документы хранятся в архиве.\nЕсли документ был подписан ошибочно, создайте новый с правильными данными.');
             return;
         }
-        
+
         if (!confirm(`Удалить "${docName}"?\n\n⚠️ Это действие необратимо.`)) return;
         try { await api.deleteDocument(docId); await loadDocuments(); if (onStatusChange) onStatusChange(); }
         catch (err) { console.error(err); alert('Ошибка удаления'); }
+    };
+
+    const handleGenerateSigningLink = async (docId: string) => {
+        try {
+            const response = await fetch(`/api/documents/${docId}/signing-link`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Copy to clipboard
+                await navigator.clipboard.writeText(data.signingUrl);
+                alert(`✅ Ссылка скопирована в буфер обмена!\n\n${data.signingUrl}\n\nСрок действия: ${new Date(data.expiresAt).toLocaleDateString('ru-RU')}`);
+            }
+        } catch (err) {
+            console.error('Failed to generate signing link:', err);
+            alert('Ошибка генерации ссылки');
+        }
     };
 
     const getStatusBadge = (doc: Document) => {
@@ -188,13 +208,22 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                             <Eye className="h-4 w-4" />
                                         </button>
                                         {doc.status === 'draft' && (
-                                            <button 
-                                                onClick={() => setSigningDocId(doc.id)} 
-                                                className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors" 
-                                                title="Подписать через eGov"
-                                            >
-                                                <CheckCircle className="h-4 w-4" />
-                                            </button>
+                                            <>
+                                                <button 
+                                                    onClick={() => setSigningDocId(doc.id)} 
+                                                    className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors" 
+                                                    title="Подписать через eGov"
+                                                >
+                                                    <CheckCircle className="h-4 w-4" />
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleGenerateSigningLink(doc.id)} 
+                                                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors" 
+                                                    title="Отправить ссылку на подписание"
+                                                >
+                                                    <Share2 className="h-4 w-4" />
+                                                </button>
+                                            </>
                                         )}
                                         <button onClick={() => handleDelete(doc.id, doc.type, doc.status)} className="p-2 text-slate-400 hover:text-red-600 transition-colors" title="Удалить" disabled={doc.status === 'signed'}>
                                             <Trash2 className={cn("h-4 w-4", doc.status === 'signed' ? 'opacity-30 cursor-not-allowed' : '')} />

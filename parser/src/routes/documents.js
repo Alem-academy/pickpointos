@@ -553,6 +553,128 @@ router.delete('/documents/:id', async (req, res) => {
     }
 });
 
+// POST /documents/:id/signing-link - Generate remote signing link
+router.post('/documents/:id/signing-link', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { expiresInDays = 7 } = req.body;
+        
+        // Check if document exists
+        const docResult = await query(`
+            SELECT d.*, e.iin as employee_iin, e.full_name as employee_name
+            FROM documents d
+            JOIN employees e ON d.employee_id = e.id
+            WHERE d.id = $1
+        `, [id]);
+        
+        if (docResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Document not found' });
+        }
+        
+        const doc = docResult.rows[0];
+        
+        // Generate unique token
+        const token = require('crypto').randomBytes(32).toString('hex');
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + expiresInDays);
+        
+        // Create or update signing link
+        const linkResult = await query(`
+            INSERT INTO document_signing_links 
+            (document_id, employee_id, token, expires_at, created_by_id)
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (document_id) 
+            DO UPDATE SET 
+                token = EXCLUDED.token,
+                expires_at = EXCLUDED.expires_at,
+                used_at = NULL,
+                is_active = TRUE,
+                created_at = NOW()
+            RETURNING *
+        `, [id, doc.employee_id, token, expiresAt, req.user?.id]);
+        
+        // Generate full URL
+        const baseUrl = process.env.FRONTEND_URL || 'https://pickpointos-production.up.railway.app';
+        const signingUrl = `${baseUrl}/sign/${token}`;
+        
+        Logger.info(`[Docs] Signing link generated for document ${id}: ${signingUrl}`);
+        
+        res.json({
+            success: true,
+            signingUrl,
+            token,
+            expiresAt: expiresAt.toISOString(),
+            document: {
+                id: doc.id,
+                type: doc.type,
+                employee_name: doc.employee_name,
+                employee_iin: doc.employee_iin
+            }
+        });
+        
+    } catch (err) {
+        Logger.error('[Docs] Generate signing link failed:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// GET /sign/:token - Get document signing info by token
+router.get('/sign/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+        
+        // Find signing link
+        const linkResult = await query(`
+            SELECT sl.*, d.type as document_type, d.status as document_status,
+                   e.full_name as employee_name, e.iin as employee_iin
+            FROM document_signing_links sl
+            JOIN documents d ON sl.document_id = d.id
+            JOIN employees e ON d.employee_id = e.id
+            WHERE sl.token = $1
+        `, [token]);
+        
+        if (linkResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Signing link not found' });
+        }
+        
+        const link = linkResult.rows[0];
+        
+        // Check if link is still valid
+        if (!link.is_active) {
+            return res.status(403).json({ error: 'Signing link is deactivated' });
+        }
+        
+        if (new Date() > new Date(link.expires_at)) {
+            return res.status(403).json({ error: 'Signing link has expired' });
+        }
+        
+        // Update access tracking
+        await query(`
+            UPDATE document_signing_links
+            SET last_accessed_at = NOW(), access_count = access_count + 1
+            WHERE id = $1
+        `, [link.id]);
+        
+        res.json({
+            success: true,
+            document: {
+                id: link.document_id,
+                type: link.document_type,
+                status: link.document_status
+            },
+            employee: {
+                name: link.employee_name,
+                iin: link.employee_iin
+            },
+            expiresAt: link.expires_at
+        });
+        
+    } catch (err) {
+        Logger.error('[Docs] Get signing link failed:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // --- Mappings ---
 
 router.post('/mappings', async (req, res) => {
