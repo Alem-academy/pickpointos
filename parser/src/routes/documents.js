@@ -15,7 +15,9 @@ import {
 import { storageService } from '../services/storage.service.js';
 import { Logger } from '../lib/logger.js';
 import { logDocumentGenerated } from '../lib/activityLogger.js';
-import { SigexService } from '../services/sigex.js';
+
+// Sigex integration is handled via frontend SigexService
+// Documents are pre-registered on generation and signed via eGov QR
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -372,37 +374,12 @@ router.post('/documents/generate', async (req, res) => {
             throw uploadErr;
         }
 
-        // Register document in Sigex for legal signing
-        let sigexDocumentId = null;
-        try {
-            Logger.info('[Docs] Registering document in Sigex...');
-            
-            // Register document metadata
-            const sigexDoc = await SigexService.registerDocument({
-                description: `${docConfig.label} для ${emp.full_name}`,
-                nameRu: `${docConfig.label}.pdf`,
-                nameKz: `${docConfig.label}.pdf`,
-                nameEn: `${docConfig.label}.pdf`
-            });
-            
-            sigexDocumentId = sigexDoc.documentId;
-            Logger.info('[Docs] Document registered in Sigex:', sigexDocumentId);
-            
-            // Upload HTML content to Sigex
-            await SigexService.addDocumentData(sigexDocumentId, htmlBuffer);
-            Logger.info('[Docs] Document content uploaded to Sigex');
-            
-        } catch (sigexErr) {
-            Logger.warn('[Docs] Sigex registration failed:', sigexErr.message);
-            // Continue without Sigex - document still valid in S3
-        }
-
-        // Save to database with Sigex tracking
+        // Save to database
         const docResult = await query(`
-            INSERT INTO documents (employee_id, type, status, scan_url, sigex_document_id, created_at)
-            VALUES ($1, $2, 'draft', $3, $4, NOW())
+            INSERT INTO documents (employee_id, type, status, scan_url, created_at)
+            VALUES ($1, $2, 'draft', $3, NOW())
             RETURNING *
-        `, [employeeId, type, htmlKey, sigexDocumentId]);
+        `, [employeeId, type, htmlKey]);
 
         // Log activity - document generated
         await logDocumentGenerated(employeeId, type, docResult.rows[0].id, req.user);
