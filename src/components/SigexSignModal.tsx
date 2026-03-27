@@ -130,10 +130,10 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
         try {
             // Send signature and Sigex info to backend
             await api.signDocument(documentId, {
-                signature: signature,
+                signature: signature || undefined,
                 signType: 'cms',
-                sigex_document_id: preRegisteredDocumentId,
-                sigex_operation_id: operationIdRef.current
+                sigex_document_id: preRegisteredDocumentId || undefined,
+                sigex_operation_id: operationIdRef.current || undefined
             });
             
             console.log('✅ Signed with signature:', signature?.substring(0, 30) + '...');
