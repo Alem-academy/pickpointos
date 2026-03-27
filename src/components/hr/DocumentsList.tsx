@@ -3,6 +3,7 @@ import { api, type Document } from '@/services/api';
 import { FileText, Loader2, Upload, Eye, Trash2, File, IdCard, Image, Award, Banknote, MapPin, Stethoscope, Plane, UserX, CheckCircle, Share2 } from 'lucide-react';
 import { SigexSignModal } from '../SigexSignModal';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
+import { DocumentParamsModal, type DocumentType } from './DocumentParamsModal';
 import { cn } from '@/lib/utils';
 
 interface DocumentsListProps {
@@ -37,6 +38,8 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     const [isUploading, setIsUploading] = useState(false);
     const [previewDoc, setPreviewDoc] = useState<{ content: string; type: string; title: string } | null>(null);
     const [signingDocId, setSigningDocId] = useState<string | null>(null);
+    const [paramsModalOpen, setParamsModalOpen] = useState(false);
+    const [pendingDocType, setPendingDocType] = useState<DocumentType | null>(null);
     const [isIbanModalOpen, setIsIbanModalOpen] = useState(false);
     const [ibanInput, setIbanInput] = useState('');
     const [showUploadModal, setShowUploadModal] = useState(false);
@@ -106,17 +109,45 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
         }
     };
 
-    const handleGenerate = async (type: string, bypassModal = false) => {
+    const handleGenerate = async (type: string, bypassModal = false, params?: any) => {
         if (type === 'contract' && !bypassModal) { setIsIbanModalOpen(true); return; }
+        
+        // Show params modal for documents that need additional data
+        if (!params) {
+            if (type === 'vacation_order' || type === 'vacation_application') {
+                setPendingDocType(type as DocumentType);
+                setParamsModalOpen(true);
+                return;
+            }
+            if (type === 'termination_order') {
+                setPendingDocType(type as DocumentType);
+                setParamsModalOpen(true);
+                return;
+            }
+            if (type === 'employment_certificate') {
+                setPendingDocType(type as DocumentType);
+                setParamsModalOpen(true);
+                return;
+            }
+        }
+        
         setIsGenerating(type);
         try {
-            const { content } = await api.generateDocument(employeeId, type, type === 'contract' ? ibanInput : undefined);
+            const { content } = await api.generateDocument(employeeId, type, type === 'contract' ? ibanInput : undefined, params);
             const docConfig = DOCUMENT_TYPES[type] || { label: 'Документ' };
             setPreviewDoc({ content, type, title: docConfig.label });
             await loadDocuments();
             if (isIbanModalOpen) { setIsIbanModalOpen(false); setIbanInput(''); }
         } catch (err) { console.error('Failed to generate:', err); alert('Ошибка генерации'); }
         finally { setIsGenerating(null); }
+    };
+
+    const handleParamsConfirm = async (params: any) => {
+        if (pendingDocType) {
+            await handleGenerate(pendingDocType, false, params);
+            setParamsModalOpen(false);
+            setPendingDocType(null);
+        }
     };
 
     const handleUpload = async () => {
@@ -518,6 +549,12 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                     })() || undefined}
                 />
             )}
+            <DocumentParamsModal
+                isOpen={paramsModalOpen}
+                documentType={pendingDocType}
+                onClose={() => { setParamsModalOpen(false); setPendingDocType(null); }}
+                onConfirm={handleParamsConfirm}
+            />
         </div>
     );
 }

@@ -49,8 +49,8 @@ export const hrApi = {
         return res.data;
     },
 
-    async generateDocument(employeeId: string, type: string, iban?: string): Promise<{ document: Document; content: string }> {
-        const res = await axiosInstance.post('/documents/generate', { employeeId, type, iban });
+    async generateDocument(employeeId: string, type: string, iban?: string, params?: any): Promise<{ document: Document; content: string }> {
+        const res = await axiosInstance.post('/documents/generate', { employeeId, type, iban, ...params });
         return res.data;
     },
 
