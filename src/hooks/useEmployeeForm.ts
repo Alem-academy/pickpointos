@@ -35,6 +35,10 @@ export interface EmployeeFormData {
     role: EmployeeRole;
     email: string;
     address: string;
+    // ID Card fields
+    idCardNumber?: string;
+    idCardIssueDate?: string;
+    idCardIssuedBy?: string;
 }
 
 export function useEmployeeForm() {
@@ -49,7 +53,10 @@ export function useEmployeeForm() {
         baseRate: '',
         role: 'employee' as EmployeeRole,
         email: '',
-        address: ''
+        address: '',
+        idCardNumber: '',
+        idCardIssueDate: '',
+        idCardIssuedBy: ''
     });
 
     const [files, setFiles] = useState<FileUploadState>({

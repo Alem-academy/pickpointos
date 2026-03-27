@@ -117,6 +117,43 @@ export function GeneralInfoStep({ formData, errors, handleChange, emergencyConta
                         <p className="text-xs text-red-500">{errors.address}</p>
                     )}
                 </div>
+                
+                {/* ID Card Section */}
+                <div className="md:col-span-2 mt-4 p-4 rounded-lg border bg-muted/30">
+                    <h4 className="text-sm font-semibold mb-3">📄 Удостоверение личности</h4>
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                            <label className="text-xs font-medium">Номер удостоверения</label>
+                            <input
+                                name="idCardNumber"
+                                value={formData.idCardNumber || ''}
+                                onChange={handleChange}
+                                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                placeholder="AB 1234567"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-medium">Дата выдачи</label>
+                            <input
+                                name="idCardIssueDate"
+                                type="date"
+                                value={formData.idCardIssueDate || ''}
+                                onChange={handleChange}
+                                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                            />
+                        </div>
+                        <div className="md:col-span-2 space-y-2">
+                            <label className="text-xs font-medium">Кем выдано</label>
+                            <input
+                                name="idCardIssuedBy"
+                                value={formData.idCardIssuedBy || ''}
+                                onChange={handleChange}
+                                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                placeholder="Министерство юстиции РК"
+                            />
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Emergency Contacts Section */}

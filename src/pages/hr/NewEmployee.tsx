@@ -80,7 +80,11 @@ export default function NewEmployeePage() {
                 status: 'new',
                 base_rate: 85000,
                 address: formData.address || undefined,
-                emergency_contacts: validContacts.length > 0 ? validContacts : undefined
+                emergency_contacts: validContacts.length > 0 ? validContacts : undefined,
+                // ID Card data
+                id_card_number: formData.idCardNumber || undefined,
+                id_card_issue_date: formData.idCardIssueDate || undefined,
+                id_card_issued_by: formData.idCardIssuedBy || undefined
             });
 
             // 2. Upload files
