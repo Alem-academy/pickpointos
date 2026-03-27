@@ -42,10 +42,15 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
             let qrRes;
 
             if (preRegisteredDocumentId) {
-                // If we already generated actual HTML/PDF document in SIGEX, use its ID directly
-                qrRes = await SigexService.registerQrSigningWithDocument(preRegisteredDocumentId, `Подписание: ${documentTitle}`);
+                // ✅ If document is already registered in Sigex, use it
+                console.log('📝 Using pre-registered Sigex document:', preRegisteredDocumentId);
+                qrRes = await SigexService.registerQrSigningWithDocument(
+                    preRegisteredDocumentId,
+                    `Подписание: ${documentTitle}`
+                );
             } else {
-                // Fallback for MVP: Raw string signing (Long-Polling sequential upload)
+                // ⚠️ Fallback: Raw string signing (NOT recommended)
+                console.warn('⚠️ No pre-registered document, using fallback');
                 qrRes = await SigexService.registerQrSigning(`Подписание документа: ${documentTitle}`);
             }
 
@@ -102,11 +107,9 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
                     }
 
                     // For 'new', 'meta', 'data', SIGEX is still waiting.
-                    // Usually this GET request hangs, but if it returns early, we loop again.
                     await new Promise(r => setTimeout(r, 2000));
                 } catch (err: any) {
                     console.warn(`Status check retry ${i + 1}:`, err);
-                    // Usually network dropout or 504 Gateway Timeout since SIGEX hangs for 60s
                     await new Promise(r => setTimeout(r, 1000));
                 }
             }
@@ -125,9 +128,18 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
 
     const finalizeSignature = async (signature?: string) => {
         try {
-            // 4. Send success to our backend
-            await api.signDocument(documentId); // We can pass the base64 signature here if needed
-            console.log('Signed with signature block:', signature?.substring(0, 30) + '...');
+            // Send signature and Sigex info to backend
+            await api.signDocument(documentId, {
+                signature: signature,
+                signType: 'cms',
+                sigex_document_id: preRegisteredDocumentId,
+                sigex_operation_id: operationIdRef.current
+            });
+            
+            console.log('✅ Signed with signature:', signature?.substring(0, 30) + '...');
+            console.log('📝 Sigex document ID:', preRegisteredDocumentId);
+            console.log('🔗 Operation ID:', operationIdRef.current);
+            
             setStep('success');
             setTimeout(() => {
                 onSuccess();

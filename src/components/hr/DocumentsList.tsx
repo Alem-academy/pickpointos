@@ -465,7 +465,15 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
             )}
 
             {previewDoc && <DocumentPreviewModal isOpen={!!previewDoc} onClose={() => setPreviewDoc(null)} title={previewDoc.title} content={previewDoc.content} />}
-            {signingDoc && <SigexSignModal documentId={signingDoc.id} documentTitle={DOCUMENT_TYPES[signingDoc.type]?.label || "Документ"} onClose={() => setSigningDoc(null)} onSuccess={() => { setSigningDoc(null); loadDocuments(); }} />}
+            {signingDoc && (
+                <SigexSignModal 
+                    documentId={signingDoc.id} 
+                    documentTitle={DOCUMENT_TYPES[signingDoc.type]?.label || "Документ"} 
+                    onClose={() => setSigningDoc(null)} 
+                    onSuccess={() => { setSigningDoc(null); loadDocuments(); }}
+                    preRegisteredDocumentId={signingDoc.sigex_document_id || undefined}
+                />
+            )}
         </div>
     );
 }

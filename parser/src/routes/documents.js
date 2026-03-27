@@ -15,6 +15,7 @@ import {
 import { storageService } from '../services/storage.service.js';
 import { Logger } from '../lib/logger.js';
 import { logDocumentGenerated } from '../lib/activityLogger.js';
+import { SigexService } from '../services/sigex.js';
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -359,10 +360,10 @@ router.post('/documents/generate', async (req, res) => {
             return res.status(400).json({ error: 'Unsupported document type' });
         }
 
-        // Save generated HTML directly to S3 (skip PDF generation for now)
+        // Save generated HTML to S3
         const htmlBuffer = Buffer.from(htmlContent, 'utf8');
         const htmlKey = `documents/${employeeId}/${type}_${Date.now()}.html`;
-        
+
         try {
             await storageService.uploadFile(htmlBuffer, 'text/html', htmlKey);
             Logger.info('[Docs] Document saved as HTML:', htmlKey);
@@ -371,13 +372,39 @@ router.post('/documents/generate', async (req, res) => {
             throw uploadErr;
         }
 
-        const docResult = await query(`
-            INSERT INTO documents (employee_id, type, status, scan_url, created_at)
-            VALUES ($1, $2, 'draft', $3, NOW())
-            RETURNING *
-        `, [employeeId, type, htmlKey]);
+        // Register document in Sigex for legal signing
+        let sigexDocumentId = null;
+        try {
+            Logger.info('[Docs] Registering document in Sigex...');
+            
+            // Register document metadata
+            const sigexDoc = await SigexService.registerDocument({
+                description: `${docConfig.label} для ${emp.full_name}`,
+                nameRu: `${docConfig.label}.pdf`,
+                nameKz: `${docConfig.label}.pdf`,
+                nameEn: `${docConfig.label}.pdf`
+            });
+            
+            sigexDocumentId = sigexDoc.documentId;
+            Logger.info('[Docs] Document registered in Sigex:', sigexDocumentId);
+            
+            // Upload HTML content to Sigex
+            await SigexService.addDocumentData(sigexDocumentId, htmlBuffer);
+            Logger.info('[Docs] Document content uploaded to Sigex');
+            
+        } catch (sigexErr) {
+            Logger.warn('[Docs] Sigex registration failed:', sigexErr.message);
+            // Continue without Sigex - document still valid in S3
+        }
 
-        // Log activity
+        // Save to database with Sigex tracking
+        const docResult = await query(`
+            INSERT INTO documents (employee_id, type, status, scan_url, sigex_document_id, created_at)
+            VALUES ($1, $2, 'draft', $3, $4, NOW())
+            RETURNING *
+        `, [employeeId, type, htmlKey, sigexDocumentId]);
+
+        // Log activity - document generated
         await logDocumentGenerated(employeeId, type, docResult.rows[0].id, req.user);
 
         res.status(201).json({
@@ -439,73 +466,68 @@ router.get('/documents/:id/content', async (req, res) => {
     }
 });
 
-// POST /documents/:id/sign - Sign a document (Mock eGov)
+// POST /documents/:id/sign - Sign a document (Sigex eGov QR)
 router.post('/documents/:id/sign', async (req, res) => {
     try {
         const { id } = req.params;
-        const { signature, signType } = req.body;
+        const { signature, signType, sigex_document_id, sigex_operation_id } = req.body;
 
+        // Get document info for activity logging
+        const docInfo = await query('SELECT employee_id, type FROM documents WHERE id = $1', [id]);
+        
         const result = await query(`
-            UPDATE documents 
-            SET status = 'signed', signed_at = NOW(), external_id = $1
-            WHERE id = $2
+            UPDATE documents
+            SET status = 'signed',
+                signed_at = NOW(),
+                signature_cms = $2,
+                sigex_document_id = COALESCE($3, sigex_document_id),
+                sigex_operation_id = COALESCE($4, sigex_operation_id),
+                external_id = $5
+            WHERE id = $6
             RETURNING *
-        `, [`SIGEX-${Date.now()}`, id]);
+        `, [
+            signature || null,
+            sigex_document_id || null,
+            sigex_operation_id || null,
+            `SIGEX-${Date.now()}`,
+            id
+        ]);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Document not found' });
         }
 
-        // Also update employee status to 'active' if it was 'signing'
+        // Update employee status to 'active' if signing contract or hiring order
         const docType = result.rows[0].type;
-        const doc = result.rows[0];
         if (['contract', 'order_hiring'].includes(docType)) {
             await query(`
-                UPDATE employees 
+                UPDATE employees
                 SET status = 'active', hired_at = COALESCE(hired_at, NOW())
-                WHERE id = (SELECT employee_id FROM documents WHERE id = $1) 
+                WHERE id = (SELECT employee_id FROM documents WHERE id = $1)
                 AND status = 'signing'
             `, [id]);
         }
 
-        // Generate Signature Sheet PDF
-        try {
-            const empQuery = await query('SELECT * FROM employees WHERE id = $1', [doc.employee_id]);
-            if (empQuery.rows.length > 0) {
-                const emp = empQuery.rows[0];
-                const qrUrl = 'https://pvz.alemlab.com/verify/' + doc.id; // Or sigex portal link
-                const qrCodeBase64 = await QRCode.toDataURL(qrUrl);
-                
-                const sigSheetHtml = fillTemplate(SIGNATURE_SHEET_TEMPLATE, {
-                    document_name: docType === 'contract' ? 'Трудовой договор' : (docType === 'order_hiring' ? 'Приказ о приеме на работу' : 'Заявление'),
-                    document_uuid: doc.external_id || doc.id,
-                    employer_name: 'Жасмин',
-                    employer_bin: '910 729 401 967',
-                    employer_sign_date: new Date().toLocaleDateString('ru-RU') + ' ' + new Date().toLocaleTimeString('ru-RU'),
-                    employer_cert_info: 'ТОО / ИП «Жасмин», сертификат GOST',
-                    employee_name: emp.full_name,
-                    employee_iin: emp.iin || '__________',
-                    employee_sign_date: new Date(doc.signed_at).toLocaleDateString('ru-RU') + ' ' + new Date(doc.signed_at).toLocaleTimeString('ru-RU'),
-                    employee_cert_info: `ИИН ${emp.iin || '__________'}, сертификат RSA (eGov QR)`,
-                    qr_code_base64: qrCodeBase64
-                });
-
-                const sheetBuffer = await pdfService.generatePdfFromHtml(sigSheetHtml);
-                const sheetKey = `documents/${doc.employee_id}/signature_sheet_${doc.id}_${Date.now()}.pdf`;
-                await storageService.uploadFile(sheetBuffer, 'application/pdf', sheetKey);
-                
-                await query(`
-                    INSERT INTO documents (employee_id, type, status, scan_url, created_at)
-                    VALUES ($1, 'signature_sheet', 'signed', $2, NOW())
-                `, [doc.employee_id, sheetKey]);
-            }
-        } catch (sheetErr) {
-            Logger.error('[Docs] Failed to generate signature sheet:', sheetErr);
+        // Log activity - document signed
+        if (docInfo.rows.length > 0) {
+            const { logActivity } = await import('../lib/activityLogger.js');
+            await logActivity({
+                employeeId: docInfo.rows[0].employee_id,
+                actionType: 'document_signed',
+                actionCategory: 'document',
+                title: `Документ подписан через Sigex`,
+                description: result.rows[0].type,
+                metadata: { 
+                    document_id: id,
+                    sigex_document_id,
+                    signType: signType || 'cms'
+                }
+            });
         }
 
-        res.json(doc);
+        res.json(result.rows[0]);
     } catch (err) {
-        console.error('Error signing document:', err);
+        Logger.error('Error signing document:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

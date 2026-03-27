@@ -102,8 +102,8 @@ export const hrApi = {
         return res.data;
     },
 
-    async signDocument(id: string): Promise<Document> {
-        const res = await axiosInstance.post(`/documents/${id}/sign`);
+    async signDocument(id: string, options?: { signature?: string; signType?: 'cms' | 'xml'; sigex_document_id?: string; sigex_operation_id?: string }): Promise<Document> {
+        const res = await axiosInstance.post(`/documents/${id}/sign`, options);
         return res.data;
     },
 
