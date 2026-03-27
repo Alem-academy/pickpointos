@@ -36,7 +36,6 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     const [isGenerating, setIsGenerating] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [previewDoc, setPreviewDoc] = useState<{ content: string; type: string; title: string } | null>(null);
-    const [signingDoc, setSigningDoc] = useState<Document | null>(null);
     const [signingDocId, setSigningDocId] = useState<string | null>(null);
     const [isIbanModalOpen, setIsIbanModalOpen] = useState(false);
     const [ibanInput, setIbanInput] = useState('');
@@ -507,10 +506,16 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
             {signingDocId && (
                 <SigexSignModal 
                     documentId={signingDocId} 
-                    documentTitle={DOCUMENT_TYPES[documents.find(d => d.id === signingDocId)?.type]?.label || "Документ"} 
+                    documentTitle={(() => {
+                        const doc = documents.find(d => d.id === signingDocId);
+                        return doc ? (DOCUMENT_TYPES[doc.type]?.label || "Документ") : "Документ";
+                    })()} 
                     onClose={() => setSigningDocId(null)} 
                     onSuccess={() => { setSigningDocId(null); loadDocuments(); }}
-                    preRegisteredDocumentId={documents.find(d => d.id === signingDocId)?.sigex_document_id || undefined}
+                    preRegisteredDocumentId={(() => {
+                        const doc = documents.find(d => d.id === signingDocId);
+                        return doc?.sigex_document_id;
+                    })() || undefined}
                 />
             )}
         </div>
