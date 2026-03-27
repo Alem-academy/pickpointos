@@ -37,6 +37,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     const [isUploading, setIsUploading] = useState(false);
     const [previewDoc, setPreviewDoc] = useState<{ content: string; type: string; title: string } | null>(null);
     const [signingDoc, setSigningDoc] = useState<Document | null>(null);
+    const [signingDocId, setSigningDocId] = useState<string | null>(null);
     const [isIbanModalOpen, setIsIbanModalOpen] = useState(false);
     const [ibanInput, setIbanInput] = useState('');
     const [showUploadModal, setShowUploadModal] = useState(false);
@@ -186,6 +187,15 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                         <button onClick={() => handlePreview(doc)} className="p-2 text-slate-400 hover:text-slate-600 transition-colors" title="Просмотр">
                                             <Eye className="h-4 w-4" />
                                         </button>
+                                        {doc.status === 'draft' && (
+                                            <button 
+                                                onClick={() => setSigningDocId(doc.id)} 
+                                                className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors" 
+                                                title="Подписать через eGov"
+                                            >
+                                                <CheckCircle className="h-4 w-4" />
+                                            </button>
+                                        )}
                                         <button onClick={() => handleDelete(doc.id, doc.type, doc.status)} className="p-2 text-slate-400 hover:text-red-600 transition-colors" title="Удалить" disabled={doc.status === 'signed'}>
                                             <Trash2 className={cn("h-4 w-4", doc.status === 'signed' ? 'opacity-30 cursor-not-allowed' : '')} />
                                         </button>
@@ -465,13 +475,13 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
             )}
 
             {previewDoc && <DocumentPreviewModal isOpen={!!previewDoc} onClose={() => setPreviewDoc(null)} title={previewDoc.title} content={previewDoc.content} />}
-            {signingDoc && (
+            {signingDocId && (
                 <SigexSignModal 
-                    documentId={signingDoc.id} 
-                    documentTitle={DOCUMENT_TYPES[signingDoc.type]?.label || "Документ"} 
-                    onClose={() => setSigningDoc(null)} 
-                    onSuccess={() => { setSigningDoc(null); loadDocuments(); }}
-                    preRegisteredDocumentId={signingDoc.sigex_document_id || undefined}
+                    documentId={signingDocId} 
+                    documentTitle={DOCUMENT_TYPES[documents.find(d => d.id === signingDocId)?.type]?.label || "Документ"} 
+                    onClose={() => setSigningDocId(null)} 
+                    onSuccess={() => { setSigningDocId(null); loadDocuments(); }}
+                    preRegisteredDocumentId={documents.find(d => d.id === signingDocId)?.sigex_document_id || undefined}
                 />
             )}
         </div>
