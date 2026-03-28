@@ -24,6 +24,7 @@ import Discipline from "@/pages/hr/Discipline";
 import Employees from "@/pages/hr/Employees";
 import RentPage from "@/pages/finance/Rent";
 import CourierDashboard from "@/pages/courier/Dashboard";
+import { SignDocument } from "@/pages/SignDocument";
 import { useAuth } from "@/components/layout/AuthContext";
 
 function IndexRedirect() {
@@ -49,6 +50,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/invite/:token" element={<InvitePage />} />
+          <Route path="/sign/:token" element={<SignDocument />} />
           <Route path="/my-profile" element={<MyProfile />} />
 
           <Route element={<Layout />}>
