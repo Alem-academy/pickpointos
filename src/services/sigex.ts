@@ -227,7 +227,7 @@ export class SigexService {
                 .filter(Boolean);
 
             if (cmsSignatures.length > 0) {
-                res.status = res.status || 'done';
+                res.status = 'done';
                 res.signatures = cmsSignatures;
                 return res;
             }
