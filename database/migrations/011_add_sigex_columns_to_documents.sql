@@ -13,7 +13,7 @@ ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP WITH TIME ZONE;
 -- Add indexes for fast lookups
 CREATE INDEX IF NOT EXISTS idx_documents_sigex_document_id ON documents(sigex_document_id);
 CREATE INDEX IF NOT EXISTS idx_documents_sigex_operation_id ON documents(sigex_operation_id);
-CREATE INDEX IF NOT EXISTS idx_documents_signature_cms ON documents(signature_cms) WHERE signature_cms IS NOT NULL;
+-- Не индексировать signature_cms: base64 CMS часто > 2.7 KB → ошибка btree при UPDATE
 
 -- Add comments
 COMMENT ON COLUMN documents.sigex_document_id IS 'Document ID in Sigex system';

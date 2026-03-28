@@ -9,19 +9,21 @@ export const pdfService = {
      * @returns {Promise<Buffer>}
      */
     async generatePdfFromHtml(htmlContent, options = {}) {
+        const lite = options.lite === true;
+        const { lite: _l, ...pdfOverrides } = options;
         let browser;
         try {
-            Logger.info('[PDF Service] Launching browser...');
-            
+            Logger.info('[PDF Service] Launching browser... (lite=%s)', lite);
+
             // Use executable path from env if available (for Railway/Nix)
             const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
             if (executablePath) {
                 Logger.info('[PDF Service] Using Chromium from: ' + executablePath);
             }
-            
+
             browser = await puppeteer.launch({
                 executablePath: executablePath,
-                headless: "new",
+                headless: 'new',
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
@@ -37,24 +39,25 @@ export const pdfService = {
             Logger.info('[PDF Service] Browser launched successfully');
 
             const page = await browser.newPage();
-            
+            if (lite) {
+                await page.setViewport({ width: 1200, height: 1600, deviceScaleFactor: 1 });
+            }
+
             Logger.info('[PDF Service] Setting HTML content...');
             await page.setContent(htmlContent, {
-                waitUntil: ['domcontentloaded', 'networkidle0'],
-                timeout: 30000
+                waitUntil: lite ? 'domcontentloaded' : ['domcontentloaded', 'networkidle0'],
+                timeout: lite ? 25000 : 30000
             });
 
-            // Default PDF format is A4 with standard margins
             const defaultOptions = {
                 format: 'A4',
-                printBackground: true,
-                margin: {
-                    top: '20px',
-                    right: '20px',
-                    bottom: '20px',
-                    left: '20px'
-                },
-                ...options
+                printBackground: !lite,
+                preferCSSPageSize: false,
+                scale: lite ? 0.92 : 1,
+                margin: lite
+                    ? { top: '12mm', right: '10mm', bottom: '12mm', left: '10mm' }
+                    : { top: '20px', right: '20px', bottom: '20px', left: '20px' },
+                ...pdfOverrides
             };
 
             Logger.info('[PDF Service] Generating PDF buffer...');

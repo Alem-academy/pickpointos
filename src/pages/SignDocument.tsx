@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, XCircle, Loader2, FileText, Calendar, User } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, FileText, Calendar, User, RefreshCw } from 'lucide-react';
 import { SigexSignModal } from '@/components/SigexSignModal';
+import { SigexService } from '@/services/sigex';
 
 interface SigningInfo {
     success: boolean;
@@ -9,6 +10,7 @@ interface SigningInfo {
         id: string;
         type: string;
         status: string;
+        sigex_document_id?: string | null;
     };
     employee: {
         name: string;
@@ -24,6 +26,7 @@ export function SignDocument() {
     const [signingInfo, setSigningInfo] = useState<SigningInfo | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [showSignModal, setShowSignModal] = useState(false);
+    const [recovering, setRecovering] = useState(false);
 
     useEffect(() => {
         if (!token) {
@@ -59,10 +62,75 @@ export function SignDocument() {
 
     const handleSignSuccess = () => {
         setShowSignModal(false);
+        if (token) {
+            try {
+                sessionStorage.removeItem(`sigex-sign-op:${token}`);
+            } catch {
+                /* ignore */
+            }
+        }
         // Refresh info after signing
         setTimeout(() => {
             loadSigningInfo();
         }, 2000);
+    };
+
+    /** Если подпись в eGov прошла, а вкладка не дождалась опроса — подтянуть CMS и сохранить по токену ссылки */
+    const tryRecoverFromSigex = async () => {
+        if (!token) return;
+        const operationId = (() => {
+            try {
+                return sessionStorage.getItem(`sigex-sign-op:${token}`);
+            } catch {
+                return null;
+            }
+        })();
+        if (!operationId) {
+            alert(
+                'Сначала нажмите «Подписать через eGov» на этой странице, отсканируйте QR и подпишите в приложении. ' +
+                    'Если вы уже закрыли окно с QR — откройте подписание снова.'
+            );
+            return;
+        }
+        setRecovering(true);
+        try {
+            const statusRes = await SigexService.checkQrStatus(operationId);
+            const sig =
+                statusRes.signatures?.[0] ||
+                statusRes.documentsToSign
+                    ?.map((d: { signature?: string; document?: { file?: { data?: string } } }) => d.signature || d.document?.file?.data)
+                    .filter(Boolean)[0];
+            if (!sig) {
+                alert(
+                    'Подпись ещё не видна в Sigex. Подождите 30–60 секунд после подписания в eGov и нажмите снова.'
+                );
+                return;
+            }
+            const res = await fetch(`/api/sign/${token}/submit-signature`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    signature: sig,
+                    sigex_operation_id: operationId,
+                    sigex_document_id: signingInfo?.document.sigex_document_id || undefined
+                })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error((data as { error?: string }).error || `Ошибка ${res.status}`);
+            }
+            try {
+                sessionStorage.removeItem(`sigex-sign-op:${token}`);
+            } catch {
+                /* ignore */
+            }
+            await loadSigningInfo();
+        } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : 'Не удалось завершить подписание';
+            alert(msg);
+        } finally {
+            setRecovering(false);
+        }
     };
 
     if (loading) {
@@ -182,6 +250,22 @@ export function SignDocument() {
                         <p className="text-sm text-slate-500 mt-4">
                             После нажатия кнопки откроется QR-код для сканирования
                         </p>
+                        <button
+                            type="button"
+                            disabled={recovering}
+                            onClick={tryRecoverFromSigex}
+                            className="mt-6 flex w-full max-w-md mx-auto items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                        >
+                            {recovering ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <RefreshCw className="h-4 w-4" />
+                            )}
+                            Уже подписал в eGov — проверить и сохранить
+                        </button>
+                        <p className="text-xs text-slate-400 mt-2 max-w-md mx-auto">
+                            Если в приложении подпись прошла успешно, а страница не обновилась, нажмите сюда (нужен тот же браузер, где открывали QR).
+                        </p>
                     </div>
                 )}
 
@@ -225,12 +309,14 @@ export function SignDocument() {
             </div>
 
             {/* Sign Modal */}
-            {showSignModal && (
+            {showSignModal && token && (
                 <SigexSignModal
                     documentId={signingInfo.document.id}
                     documentTitle="Документ на подпись"
                     onClose={() => setShowSignModal(false)}
                     onSuccess={handleSignSuccess}
+                    preRegisteredDocumentId={signingInfo.document.sigex_document_id || undefined}
+                    publicSigningToken={token}
                 />
             )}
         </div>

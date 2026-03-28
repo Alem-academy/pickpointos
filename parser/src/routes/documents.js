@@ -1,5 +1,6 @@
 import express from 'express';
 import multer from 'multer';
+import axios from 'axios';
 import { query } from '../lib/db.js';
 import QRCode from 'qrcode';
 import crypto from 'crypto';
@@ -14,11 +15,55 @@ import {
     fillTemplate
 } from '../services/templates.js';
 import { storageService } from '../services/storage.service.js';
+import { htmlToPdfBuffer } from '../services/pdfRender.service.js';
 import { Logger } from '../lib/logger.js';
 import { logDocumentGenerated } from '../lib/activityLogger.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 // Sigex integration is handled via frontend SigexService
 // Documents are pre-registered on generation and signed via eGov QR
+
+/**
+ * Имя файла для Sigex/eGov Mobile: только ASCII (латиница, цифры, точка).
+ * Кириллица в имени на части Android/Google viewer даёт плейсхолдер из подчёркиваний и ошибку «недопустимый PDF».
+ */
+const DOC_SIGN_FILE_NAME_ASCII = {
+    contract: 'employment_contract.pdf',
+    order_hiring: 'hiring_order.pdf',
+    application: 'job_application.pdf',
+    vacation_application: 'vacation_request.pdf',
+    vacation_order: 'vacation_order.pdf',
+    termination_order: 'termination_order.pdf',
+    employment_certificate: 'employment_certificate.pdf'
+};
+
+/**
+ * PDF (base64) for eGov Mobile: HTML шаблоны рендерим через Puppeteer; готовый PDF из S3 отдаём как есть.
+ */
+async function getPdfBase64ForSigningDoc(doc) {
+    if (!doc.scan_url) {
+        throw new Error('No file for this document');
+    }
+    const key = doc.scan_url;
+    const signedUrl = key.startsWith('http') ? key : await storageService.getFileUrl(key);
+
+    if (key.endsWith('.html')) {
+        const response = await axios.get(signedUrl, { responseType: 'text', timeout: 30000 });
+        const html = response.data;
+        if (!html || typeof html !== 'string') {
+            throw new Error('Empty HTML content');
+        }
+        const pdfBuf = await htmlToPdfBuffer(html, { lite: true });
+        return pdfBuf.toString('base64');
+    }
+
+    if (key.endsWith('.pdf')) {
+        const response = await axios.get(signedUrl, { responseType: 'arraybuffer', timeout: 30000 });
+        return Buffer.from(response.data).toString('base64');
+    }
+
+    throw new Error('Для подписи в eGov нужен документ в формате HTML или PDF');
+}
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -417,7 +462,6 @@ router.get('/documents/:id/content', async (req, res) => {
         // For HTML files, fetch content and return it
         if (doc.scan_url.endsWith('.html')) {
             try {
-                const axios = require('axios');
                 const response = await axios.get(signedUrl, { responseType: 'text', timeout: 5000 });
                 
                 res.json({
@@ -441,6 +485,29 @@ router.get('/documents/:id/content', async (req, res) => {
     } catch (err) {
         Logger.error('Error fetching document content:', err);
         res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// GET /documents/:id/pdf-base64 — PDF для QR Sigex (только с JWT HR)
+router.get('/documents/:id/pdf-base64', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await query('SELECT * FROM documents WHERE id = $1', [id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Document not found' });
+        }
+        const doc = result.rows[0];
+        const fileName = DOC_SIGN_FILE_NAME_ASCII[doc.type] || 'document.pdf';
+        const pdfBase64 = await getPdfBase64ForSigningDoc(doc);
+        res.json({
+            pdfBase64,
+            fileName
+        });
+    } catch (err) {
+        Logger.error('[Docs] pdf-base64 (auth) failed:', err.message);
+        const msg = err.message || 'PDF generation failed';
+        const code = msg.includes('Для подписи') || msg.includes('No file') ? 400 : 503;
+        res.status(code).json({ error: msg });
     }
 });
 
@@ -503,9 +570,126 @@ router.post('/documents/:id/sign', async (req, res) => {
             });
         }
 
+        try {
+            await query(`
+                UPDATE document_signing_links
+                SET is_active = false, used_at = NOW()
+                WHERE document_id = $1 AND is_active = true
+            `, [id]);
+        } catch (linkErr) {
+            Logger.warn('[Docs] deactivate signing link skipped:', linkErr.message);
+        }
+
         res.json(result.rows[0]);
     } catch (err) {
-        Logger.error('Error signing document:', err);
+        Logger.error('Error signing document:', err.message, err.code || '', err.detail || '');
+        const msg = err.message || '';
+        const isBtree =
+            msg.includes('btree') ||
+            msg.includes('index row size') ||
+            err.code === '54000';
+        res.status(500).json({
+            error: 'Internal server error',
+            ...(isBtree
+                ? {
+                      hint: 'Удалите индекс idx_documents_signature_cms (миграция parser/src/migrations/009_drop_signature_cms_index.sql).'
+                  }
+                : {})
+        });
+    }
+});
+
+// POST /sign/:token/submit-signature — public completion using signing link (no HR JWT)
+router.post('/sign/:token/submit-signature', async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { signature, sigex_operation_id, sigex_document_id } = req.body || {};
+
+        if (!signature || typeof signature !== 'string') {
+            return res.status(400).json({ error: 'signature is required' });
+        }
+
+        const linkResult = await query(`
+            SELECT sl.id as link_id, sl.document_id, sl.is_active, sl.expires_at,
+                   d.status as document_status, d.employee_id, d.type as document_type
+            FROM document_signing_links sl
+            JOIN documents d ON sl.document_id = d.id
+            WHERE sl.token = $1
+        `, [token]);
+
+        if (linkResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Signing link not found' });
+        }
+
+        const row = linkResult.rows[0];
+
+        if (!row.is_active) {
+            return res.status(403).json({ error: 'Signing link is deactivated' });
+        }
+        if (new Date() > new Date(row.expires_at)) {
+            return res.status(403).json({ error: 'Signing link has expired' });
+        }
+        if (row.document_status === 'signed') {
+            return res.json({ success: true, document: { id: row.document_id, status: 'signed' }, alreadySigned: true });
+        }
+
+        const docId = row.document_id;
+
+        const result = await query(`
+            UPDATE documents
+            SET status = 'signed',
+                signed_at = NOW(),
+                signature_cms = $1,
+                sigex_document_id = COALESCE($2, sigex_document_id),
+                sigex_operation_id = COALESCE($3, sigex_operation_id),
+                external_id = $4
+            WHERE id = $5
+            RETURNING *
+        `, [
+            signature,
+            sigex_document_id || null,
+            sigex_operation_id || null,
+            `SIGEX-${Date.now()}`,
+            docId
+        ]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Document not found' });
+        }
+
+        const docType = result.rows[0].type;
+        if (['contract', 'order_hiring'].includes(docType)) {
+            await query(`
+                UPDATE employees
+                SET status = 'active', hired_at = COALESCE(hired_at, NOW())
+                WHERE id = (SELECT employee_id FROM documents WHERE id = $1)
+                AND status = 'signing'
+            `, [docId]);
+        }
+
+        const { logActivity } = await import('../lib/activityLogger.js');
+        await logActivity({
+            employeeId: row.employee_id,
+            actionType: 'document_signed',
+            actionCategory: 'document',
+            title: `Документ подписан через Sigex (публичная ссылка)`,
+            description: docType,
+            metadata: {
+                document_id: docId,
+                sigex_document_id,
+                signType: 'cms'
+            }
+        });
+
+        await query(`
+            UPDATE document_signing_links
+            SET is_active = false, used_at = NOW()
+            WHERE id = $1
+        `, [row.link_id]);
+
+        res.json({ success: true, document: result.rows[0] });
+    } catch (err) {
+        Logger.error('[Docs] Public submit-signature failed:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -634,6 +818,53 @@ router.post('/documents/:id/signing-link', async (req, res) => {
     }
 });
 
+// GET /sign/:token/pdf-base64 — PDF для eGov по публичной ссылке (без JWT)
+router.get('/sign/:token/pdf-base64', async (req, res) => {
+    try {
+        const { token } = req.params;
+
+        const linkResult = await query(`
+            SELECT sl.*, d.type as document_type, d.status as document_status
+            FROM document_signing_links sl
+            JOIN documents d ON sl.document_id = d.id
+            WHERE sl.token = $1
+        `, [token]);
+
+        if (linkResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Signing link not found' });
+        }
+
+        const link = linkResult.rows[0];
+        if (!link.is_active) {
+            return res.status(403).json({ error: 'Signing link is deactivated' });
+        }
+        if (new Date() > new Date(link.expires_at)) {
+            return res.status(403).json({ error: 'Signing link has expired' });
+        }
+        if (link.document_status === 'signed') {
+            return res.status(400).json({ error: 'Document already signed' });
+        }
+
+        const docResult = await query('SELECT * FROM documents WHERE id = $1', [link.document_id]);
+        if (docResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Document not found' });
+        }
+        const doc = docResult.rows[0];
+        const fileName = DOC_SIGN_FILE_NAME_ASCII[doc.type] || 'document.pdf';
+        const pdfBase64 = await getPdfBase64ForSigningDoc(doc);
+
+        res.json({
+            pdfBase64,
+            fileName
+        });
+    } catch (err) {
+        Logger.error('[Docs] pdf-base64 (public link) failed:', err.message);
+        const msg = err.message || 'PDF generation failed';
+        const code = msg.includes('Для подписи') || msg.includes('No file') ? 400 : 503;
+        res.status(code).json({ error: msg });
+    }
+});
+
 // GET /sign/:token - Get document signing info by token
 router.get('/sign/:token', async (req, res) => {
     try {
@@ -642,6 +873,7 @@ router.get('/sign/:token', async (req, res) => {
         // Find signing link
         const linkResult = await query(`
             SELECT sl.*, d.type as document_type, d.status as document_status,
+                   d.sigex_document_id as document_sigex_id,
                    e.full_name as employee_name, e.iin as employee_iin
             FROM document_signing_links sl
             JOIN documents d ON sl.document_id = d.id
@@ -676,7 +908,8 @@ router.get('/sign/:token', async (req, res) => {
             document: {
                 id: link.document_id,
                 type: link.document_type,
-                status: link.document_status
+                status: link.document_status,
+                sigex_document_id: link.document_sigex_id || null
             },
             employee: {
                 name: link.employee_name,

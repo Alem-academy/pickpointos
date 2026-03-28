@@ -9,9 +9,11 @@ interface SigexSignModalProps {
     onClose: () => void;
     onSuccess: () => void;
     preRegisteredDocumentId?: string; // If provided, uses this exact SIGEX document
+    /** Публичная ссылка /sign/:token — сохраняем operationId и шлём подпись на /api/sign/.../submit-signature (без JWT) */
+    publicSigningToken?: string;
 }
 
-export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, preRegisteredDocumentId }: SigexSignModalProps) {
+export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, preRegisteredDocumentId, publicSigningToken }: SigexSignModalProps) {
     const [step, setStep] = useState<'init' | 'qr' | 'signing' | 'success' | 'error'>('init');
     const [qrCode, setQrCode] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -38,20 +40,64 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
             setStep('init');
             setError(null);
 
-            // 1. Register QR Signing
-            let qrRes;
+            // 1. Регистрация QR + (если нет Sigex doc id) отправка реального PDF — иначе eGov Mobile не показывает предпросмотр
+            let qrRes: Awaited<ReturnType<typeof SigexService.registerQrSigning>>;
+            let dataPromise: Promise<any> | null = null;
 
             if (preRegisteredDocumentId) {
-                // ✅ If document is already registered in Sigex, use it
-                console.log('📝 Using pre-registered Sigex document:', preRegisteredDocumentId);
+                console.log('[Sigex] pre-registered document:', preRegisteredDocumentId);
                 qrRes = await SigexService.registerQrSigningWithDocument(
                     preRegisteredDocumentId,
                     `Подписание: ${documentTitle}`
                 );
             } else {
-                // ⚠️ Fallback: Raw string signing (NOT recommended)
-                console.warn('⚠️ No pre-registered document, using fallback');
-                qrRes = await SigexService.registerQrSigning(`Подписание документа: ${documentTitle}`);
+                let pdfBase64: string;
+                // До ответа API не подставляем кириллицу в имя — иначе eGov/Android могут показать «____________.pdf»
+                let pdfFileName = 'document.pdf';
+                try {
+                    if (publicSigningToken) {
+                        const r = await fetch(`/api/sign/${publicSigningToken}/pdf-base64`);
+                        const j = (await r.json()) as { pdfBase64?: string; fileName?: string; error?: string };
+                        if (!r.ok) {
+                            throw new Error(j.error || `Ошибка подготовки PDF (${r.status})`);
+                        }
+                        if (!j.pdfBase64) {
+                            throw new Error(j.error || 'Пустой PDF');
+                        }
+                        pdfBase64 = j.pdfBase64;
+                        if (j.fileName) {
+                            pdfFileName = j.fileName;
+                        }
+                    } else {
+                        const j = await api.getDocumentPdfBase64(documentId);
+                        pdfBase64 = j.pdfBase64;
+                        if (j.fileName) {
+                            pdfFileName = j.fileName;
+                        }
+                    }
+                } catch (pdfErr: unknown) {
+                    const ax = pdfErr as { response?: { status?: number; data?: { error?: string } }; message?: string };
+                    const st = ax.response?.status;
+                    const apiErr = ax.response?.data?.error;
+                    throw new Error(
+                        st === 503 || apiErr?.includes('Puppeteer') || apiErr?.includes('browser')
+                            ? 'Сервер не смог сформировать PDF (нужен Chromium на хосте). Обратитесь к администратору.'
+                            : apiErr || ax.message || 'Не удалось подготовить PDF для подписи в eGov'
+                    );
+                }
+
+                console.log('[Sigex] PDF for eGov:', pdfFileName, `~${Math.round(pdfBase64.length / 1024)} KB base64`);
+                qrRes = await SigexService.registerQrSigning(`Подписание: ${documentTitle}`);
+
+                dataPromise = SigexService.sendQrData(
+                    qrRes.operationId,
+                    pdfBase64,
+                    pdfFileName,
+                    'application/pdf'
+                ).catch((err: Error) => {
+                    console.warn('Data POST (PDF) failed (or aborted):', err.message);
+                    return null;
+                });
             }
 
             setQrCode(qrRes.qrCode);
@@ -60,24 +106,19 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
                 business: qrRes.eGovBusinessLaunchLink
             });
             operationIdRef.current = qrRes.operationId;
+            if (publicSigningToken) {
+                try {
+                    sessionStorage.setItem(`sigex-sign-op:${publicSigningToken}`, qrRes.operationId);
+                } catch {
+                    /* private mode */
+                }
+            }
 
             setStep('qr');
 
-            // 3. Send Payload
-            let dataPromise: Promise<any> | null = null;
-            if (!preRegisteredDocumentId) {
-                // We MUST not await this here, because it hangs! 
-                // But we WILL save the promise so we can check it.
-                dataPromise = SigexService.sendQrData(qrRes.operationId, qrRes.operationId, 'Подписание документа')
-                    .catch(err => {
-                        console.warn('Data POST fallback failed (or aborted):', err.message);
-                        return null;
-                    });
-            }
-
-            // 4. Verification & Status Check (THIS HANGS / POLLS UP TO 60 TIMES -> 120 sec)
+            // 4. Verification & Status Check (long-poll GET может держаться до ~110s на стороне gateway)
             let isDone = false;
-            for (let i = 0; i < 60; i++) {
+            for (let i = 0; i < 80; i++) {
                 try {
                     const statusRes = await SigexService.checkQrStatus(qrRes.operationId);
 
@@ -138,14 +179,31 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
 
     const finalizeSignature = async (signature?: string) => {
         try {
-            // Send signature and Sigex info to backend
-            await api.signDocument(documentId, {
+            const payload = {
                 signature: signature || undefined,
-                signType: 'cms',
+                signType: 'cms' as const,
                 sigex_document_id: preRegisteredDocumentId || undefined,
                 sigex_operation_id: operationIdRef.current || undefined
-            });
-            
+            };
+
+            if (publicSigningToken) {
+                const res = await fetch(`/api/sign/${publicSigningToken}/submit-signature`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        signature: payload.signature,
+                        sigex_document_id: payload.sigex_document_id,
+                        sigex_operation_id: payload.sigex_operation_id
+                    })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    throw new Error((data as { error?: string }).error || `Ошибка сервера: ${res.status}`);
+                }
+            } else {
+                await api.signDocument(documentId, payload);
+            }
+
             console.log('✅ Signed with signature:', signature?.substring(0, 30) + '...');
             console.log('📝 Sigex document ID:', preRegisteredDocumentId);
             console.log('🔗 Operation ID:', operationIdRef.current);

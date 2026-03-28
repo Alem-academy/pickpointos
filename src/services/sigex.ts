@@ -159,9 +159,10 @@ export class SigexService {
                 signMethod: 'CMS_WITH_DATA',
                 documentsToSign: [{
                     id: documentId,
-                    nameRu: `${description}.pdf`,
-                    nameKz: `${description}.pdf`,
-                    nameEn: `${description}.pdf`
+                    // Только ASCII: кириллица в имени файла ломает предпросмотр в eGov Mobile (подчёркивания вместо имени)
+                    nameRu: 'document.pdf',
+                    nameKz: 'document.pdf',
+                    nameEn: 'document.pdf'
                 }]
             })
         });
@@ -180,21 +181,36 @@ export class SigexService {
     /**
      * Send data to eGov QR signing operation
      */
-    static async sendQrData(operationId: string, data: string, documentName: string = 'Документ'): Promise<any> {
+    /**
+     * @param data — base64 содержимого файла (для PDF обязательно корректный MIME, иначе eGov Mobile не откроет предпросмотр)
+     * @param mime — например application/pdf
+     */
+    static async sendQrData(
+        operationId: string,
+        data: string,
+        documentName: string = 'Документ',
+        mime: string = ''
+    ): Promise<any> {
         // This request will HANG (Long-Polling) until the user scans the QR code in eGov Mobile.
         // It must NOT be awaited in the UI thread before showing the QR code!
+        const name =
+            documentName.endsWith('.pdf') || documentName.endsWith('.PDF')
+                ? documentName
+                : mime === 'application/pdf'
+                  ? `${documentName}.pdf`
+                  : documentName;
         const body = {
             signMethod: 'CMS_SIGN_ONLY',
             documentsToSign: [
                 {
                     id: 1,
-                    nameRu: documentName,
-                    nameKz: documentName,
-                    nameEn: documentName,
+                    nameRu: name,
+                    nameKz: name,
+                    nameEn: name,
                     meta: [],
                     document: {
                         file: {
-                            mime: "",
+                            mime: mime || '',
                             data: data
                         }
                     }

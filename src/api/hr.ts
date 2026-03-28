@@ -107,6 +107,11 @@ export const hrApi = {
         return res.data;
     },
 
+    async getDocumentPdfBase64(id: string): Promise<{ pdfBase64: string; fileName: string }> {
+        const res = await axiosInstance.get(`/documents/${id}/pdf-base64`);
+        return res.data;
+    },
+
     async deleteDocument(id: string): Promise<void> {
         await axiosInstance.delete(`/documents/${id}`);
     },

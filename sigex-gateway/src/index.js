@@ -19,6 +19,7 @@ app.use(morgan('dev'));
 
 import authRoutes from './routes/auth.js';
 import signRoutes from './routes/sign.js';
+import renderRoutes from './routes/render.js';
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -28,6 +29,7 @@ app.get('/health', (req, res) => {
 // Use routers
 app.use('/api/auth', authRoutes);
 app.use('/api/sign', signRoutes);
+app.use('/api/render', renderRoutes);
 
 app.listen(PORT, () => {
 
