@@ -560,6 +560,8 @@ router.post('/documents/:id/signing-link', async (req, res) => {
         const { id } = req.params;
         const { expiresInDays = 7 } = req.body;
         
+        Logger.info(`[Docs] Generating signing link for document ${id}`);
+        
         // Check if document exists
         const docResult = await query(`
             SELECT d.*, e.iin as employee_iin, e.full_name as employee_name
@@ -569,6 +571,7 @@ router.post('/documents/:id/signing-link', async (req, res) => {
         `, [id]);
         
         if (docResult.rows.length === 0) {
+            Logger.warn(`[Docs] Document not found: ${id}`);
             return res.status(404).json({ error: 'Document not found' });
         }
         
@@ -578,6 +581,8 @@ router.post('/documents/:id/signing-link', async (req, res) => {
         const token = crypto.randomBytes(32).toString('hex');
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + expiresInDays);
+        
+        Logger.info(`[Docs] Generated token: ${token.substring(0, 8)}...`);
         
         // Create or update signing link
         const linkResult = await query(`
@@ -593,6 +598,8 @@ router.post('/documents/:id/signing-link', async (req, res) => {
                 created_at = NOW()
             RETURNING *
         `, [id, doc.employee_id, token, expiresAt, req.user?.id]);
+        
+        Logger.info(`[Docs] Signing link saved to database`);
         
         // Generate full URL
         const baseUrl = process.env.FRONTEND_URL || 'https://pickpointos-production.up.railway.app';
@@ -615,7 +622,15 @@ router.post('/documents/:id/signing-link', async (req, res) => {
         
     } catch (err) {
         Logger.error('[Docs] Generate signing link failed:', err);
-        res.status(500).json({ error: 'Internal server error' });
+        Logger.error('[Docs] Error details:', JSON.stringify({
+            message: err.message,
+            stack: err.stack,
+            code: err.code
+        }));
+        res.status(500).json({ 
+            error: 'Internal server error',
+            message: err.message 
+        });
     }
 });
 
