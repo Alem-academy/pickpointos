@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { X, Calendar, Banknote, FileText } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 export type DocumentType = 'vacation_order' | 'vacation_application' | 'termination_order' | 'employment_certificate';
 
