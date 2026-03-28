@@ -64,16 +64,20 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
             setStep('qr');
 
             // 3. Send Payload
-            // IF we don't have a pre-registered document, we MUST send data.
-            // But we MUST NOT await it, because SIGEX hangs holding the connection open!
+            let dataPromise: Promise<any> | null = null;
             if (!preRegisteredDocumentId) {
-                SigexService.sendQrData(qrRes.operationId, qrRes.operationId, 'Подписание документа')
-                    .catch(err => console.warn('Data POST fallback failed (or aborted):', err.message));
+                // We MUST not await this here, because it hangs! 
+                // But we WILL save the promise so we can check it.
+                dataPromise = SigexService.sendQrData(qrRes.operationId, qrRes.operationId, 'Подписание документа')
+                    .catch(err => {
+                        console.warn('Data POST fallback failed (or aborted):', err.message);
+                        return null;
+                    });
             }
 
-            // 4. Verification & Status Check (THIS HANGS / POLLS UP TO 25 TIMES)
+            // 4. Verification & Status Check (THIS HANGS / POLLS UP TO 60 TIMES -> 120 sec)
             let isDone = false;
-            for (let i = 0; i < 25; i++) {
+            for (let i = 0; i < 60; i++) {
                 try {
                     const statusRes = await SigexService.checkQrStatus(qrRes.operationId);
 
@@ -104,6 +108,23 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
             }
 
             if (!isDone) {
+                // If the dataPromise finished while we were polling but loop timed out, check it!
+                if (dataPromise) {
+                    try {
+                        const finalPostRes = await dataPromise;
+                        if (finalPostRes && finalPostRes.status === 'done' && finalPostRes.documentsToSign?.length) {
+                             const cmsSigs = finalPostRes.documentsToSign
+                                .map((d: any) => d.signature || d.document?.file?.data)
+                                .filter(Boolean);
+                             if (cmsSigs.length > 0) {
+                                 setStep('signing');
+                                 await finalizeSignature(cmsSigs[0]);
+                                 return;
+                             }
+                        }
+                    } catch (e) {}
+                }
+                
                 setError('Время ожидания подписания истекло');
                 setStep('error');
             }
