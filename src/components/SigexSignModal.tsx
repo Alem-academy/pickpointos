@@ -63,23 +63,12 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
 
             setStep('qr');
 
-            // 3. Send Payload (This returns quickly)
-            let postSuccess = false;
-            for (let i = 0; i < 3; i++) {
-                try {
-                    await SigexService.sendQrData(qrRes.operationId, qrRes.operationId, 'Подписание документа');
-                    postSuccess = true;
-                    break;
-                } catch (err: any) {
-                    console.warn(`Data POST retry ${i + 1}:`, err);
-                    await new Promise(r => setTimeout(r, 1000));
-                }
-            }
-
-            if (!postSuccess) {
-                setError('Ошибка инициализации данных.');
-                setStep('error');
-                return;
+            // 3. Send Payload
+            // IF we don't have a pre-registered document, we MUST send data.
+            // But we MUST NOT await it, because SIGEX hangs holding the connection open!
+            if (!preRegisteredDocumentId) {
+                SigexService.sendQrData(qrRes.operationId, qrRes.operationId, 'Подписание документа')
+                    .catch(err => console.warn('Data POST fallback failed (or aborted):', err.message));
             }
 
             // 4. Verification & Status Check (THIS HANGS / POLLS UP TO 25 TIMES)
