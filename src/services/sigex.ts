@@ -223,11 +223,11 @@ export class SigexService {
         // without setting status='done'. Detect this case and synthesize 'done'.
         if (res.documentsToSign?.length) {
             const cmsSignatures = res.documentsToSign
-                .filter((d: any) => d.document?.file?.data)
-                .map((d: any) => d.document.file.data);
+                .map((d: any) => d.signature || d.document?.file?.data)
+                .filter(Boolean);
 
             if (cmsSignatures.length > 0) {
-                res.status = 'done';
+                res.status = res.status || 'done';
                 res.signatures = cmsSignatures;
                 return res;
             }
