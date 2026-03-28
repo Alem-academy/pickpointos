@@ -149,7 +149,15 @@ VITE_SIGEX_GATEWAY_URL=https://gateway.pvz.kz
 
 ### Sigex Gateway (VPS)
 
-**Manual Deployment:**
+**Status:** ✅ **MIGRATED TO SYSTEMD** (2026-03-28)
+
+**Configuration:**
+- 4 CPU / 4 GB RAM / 80 GB Disk
+- Swap: 2 GB
+- Node.js Memory: 2048 MB
+- Service: sigex-gateway.service (systemd)
+
+**Deployment:**
 ```bash
 # 1. SSH to server
 ssh centos@195.49.215.116
@@ -163,13 +171,10 @@ git pull origin main
 # 4. Install dependencies
 npm install
 
-# 5. Build (if needed)
-npm run build
-
-# 6. Restart service
+# 5. Restart service
 sudo systemctl restart sigex-gateway
 
-# 7. Check status
+# 6. Check status
 sudo systemctl status sigex-gateway
 ```
 
