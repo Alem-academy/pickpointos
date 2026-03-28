@@ -457,11 +457,11 @@ router.post('/documents/:id/sign', async (req, res) => {
             UPDATE documents
             SET status = 'signed',
                 signed_at = NOW(),
-                signature_cms = $2,
-                sigex_document_id = COALESCE($3, sigex_document_id),
-                sigex_operation_id = COALESCE($4, sigex_operation_id),
-                external_id = $5
-            WHERE id = $6
+                signature_cms = $1,
+                sigex_document_id = COALESCE($2, sigex_document_id),
+                sigex_operation_id = COALESCE($3, sigex_operation_id),
+                external_id = $4
+            WHERE id = $5
             RETURNING *
         `, [
             signature || null,
