@@ -29,6 +29,9 @@ CREATE INDEX IF NOT EXISTS idx_signing_links_document ON document_signing_links(
 CREATE INDEX IF NOT EXISTS idx_signing_links_employee ON document_signing_links(employee_id);
 CREATE INDEX IF NOT EXISTS idx_signing_links_active ON document_signing_links(is_active, expires_at) WHERE is_active = TRUE;
 
+-- UNIQUE constraint on document_id for ON CONFLICT to work
+CREATE UNIQUE INDEX IF NOT EXISTS idx_signing_links_document_unique ON document_signing_links(document_id);
+
 -- Comments
 COMMENT ON TABLE document_signing_links IS 'Unique links for remote document signing via eGov QR';
 COMMENT ON COLUMN document_signing_links.token IS 'Public token for signing link (e.g., /sign/abc123)';
