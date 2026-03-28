@@ -3,7 +3,7 @@
 **Server:** gateway.pvz.kz  
 **IP:** 195.49.215.116  
 **OS:** CentOS 9-stream  
-**Configuration:** 1 CPU / 1 GB RAM / 20 GB Disk  
+**Configuration:** 4 CPU / 4 GB RAM / 80 GB Disk ✅ **UPGRADED**  
 **Date:** 2026-03-27
 
 ---
