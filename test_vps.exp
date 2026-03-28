@@ -1,0 +1,10 @@
+#!/usr/bin/expect -f
+set password [lindex $argv 0]
+spawn ssh -o StrictHostKeyChecking=no centos@195.49.215.116 "free -h && sudo systemctl status sigex-gateway"
+expect {
+    "*assword:*" {
+        send "$password\r"
+        exp_continue
+    }
+    eof
+}

@@ -2,6 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import { query } from '../lib/db.js';
 import QRCode from 'qrcode';
+import crypto from 'crypto';
 import {
     CONTRACT_TEMPLATE,
     HIRING_ORDER_TEMPLATE,
@@ -574,7 +575,7 @@ router.post('/documents/:id/signing-link', async (req, res) => {
         const doc = docResult.rows[0];
         
         // Generate unique token
-        const token = require('crypto').randomBytes(32).toString('hex');
+        const token = crypto.randomBytes(32).toString('hex');
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + expiresInDays);
         

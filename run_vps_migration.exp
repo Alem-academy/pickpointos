@@ -1,0 +1,23 @@
+#!/usr/bin/expect -f
+set timeout -1
+set password [lindex $argv 0]
+
+# First, transfer the script
+spawn scp -o StrictHostKeyChecking=no vps_migration.sh centos@195.49.215.116:/home/centos/
+expect {
+    "*assword:*" {
+        send "$password\r"
+        exp_continue
+    }
+    eof
+}
+
+# Second, execute the script
+spawn ssh -o StrictHostKeyChecking=no centos@195.49.215.116 "sudo bash /home/centos/vps_migration.sh"
+expect {
+    "*assword:*" {
+        send "$password\r"
+        exp_continue
+    }
+    eof
+}

@@ -1,0 +1,10 @@
+#!/usr/bin/expect -f
+set password [lindex $argv 0]
+spawn ssh -o StrictHostKeyChecking=no centos@195.49.215.116 "systemctl status sigex-gateway --no-pager && free -h && curl -s http://localhost:8080/health && echo '' && sudo journalctl -u sigex-gateway -n 20 --no-pager"
+expect {
+    "*assword:*" {
+        send "$password\r"
+        exp_continue
+    }
+    eof
+}
