@@ -1,31 +1,33 @@
-FROM node:20-alpine
+# Debian + системный Chromium: Puppeteer в Alpine/Railway без скачанного Chrome даёт ENOENT
+FROM node:20-bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    chromium \
+    fonts-liberation \
+    fonts-noto-cyrillic \
+    fontconfig \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 WORKDIR /app
 
-# 1. Copy package.json and install dependencies
 COPY package*.json ./
 RUN npm install
 
-# 2. Copy source code
 COPY . .
 
-# 3. Build Frontend
-# Pass VITE variables as build arguments so Vite can bake them into the JS bundle
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 
 ARG VITE_SIGEX_GATEWAY_URL
 ENV VITE_SIGEX_GATEWAY_URL=$VITE_SIGEX_GATEWAY_URL
 
-# This creates /app/dist
 RUN npm run build
 
-# 4. Cleanup (optional, reduces size)
-# RUN npm prune --production
-
-# 5. Expose Backend Port (Railway listens on PORT env var, mostly 8080 or random)
 ENV PORT=8080
 EXPOSE 8080
 
-# 6. Start the Backend Server (which serves the frontend from /dist)
 CMD ["node", "parser/src/index.js"]

@@ -1,8 +1,12 @@
-# Force Railway to use Node.js provider
+# Резерв, если сборка без Dockerfile: Chromium в PATH + не качаем Chrome в node_modules
 providers = ["node"]
 
+[variables]
+PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
+PUPPETEER_EXECUTABLE_PATH = "chromium"
+
 [phases.setup]
-nixPkgs = ["nodejs", "npm", "python3"]
+nixPkgs = ["nodejs", "npm", "python3", "chromium"]
 
 [phases.install]
 cmds = ["npm install --force"]

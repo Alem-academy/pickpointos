@@ -1,5 +1,29 @@
+import { execSync } from 'node:child_process';
 import puppeteer from 'puppeteer';
 import { Logger } from '../lib/logger.js';
+
+function resolveChromiumPath() {
+    const fromEnv = process.env.PUPPETEER_EXECUTABLE_PATH?.trim();
+    if (fromEnv) {
+        return fromEnv;
+    }
+    const names = ['chromium', 'chromium-browser', 'google-chrome-stable', 'google-chrome'];
+    for (const name of names) {
+        try {
+            const out = execSync(`command -v ${name} 2>/dev/null || true`, {
+                encoding: 'utf8',
+                shell: '/bin/sh'
+            }).trim();
+            if (out) {
+                Logger.info('[PDF Service] Chromium from PATH: ' + out);
+                return out;
+            }
+        } catch {
+            /* ignore */
+        }
+    }
+    return undefined;
+}
 
 export const pdfService = {
     /**
@@ -15,14 +39,15 @@ export const pdfService = {
         try {
             Logger.info('[PDF Service] Launching browser... (lite=%s)', lite);
 
-            // Use executable path from env if available (for Railway/Nix)
-            const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+            const executablePath = resolveChromiumPath();
             if (executablePath) {
-                Logger.info('[PDF Service] Using Chromium from: ' + executablePath);
+                Logger.info('[PDF Service] Using Chromium: ' + executablePath);
+            } else {
+                Logger.info('[PDF Service] Using Puppeteer bundled Chrome (dev / скачанный cache)');
             }
 
             browser = await puppeteer.launch({
-                executablePath: executablePath,
+                executablePath: executablePath || undefined,
                 headless: 'new',
                 args: [
                     '--no-sandbox',

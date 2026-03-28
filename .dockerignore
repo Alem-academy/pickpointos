@@ -16,7 +16,6 @@ dist-ssr
 .gitignore
 
 # Docker
-Dockerfile
 .dockerignore
 docker-compose.yml
 
