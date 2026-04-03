@@ -242,7 +242,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                                 <button 
                                                     onClick={() => setSigningDocId(doc.id)} 
                                                     className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors" 
-                                                    title="Подписать через eGov"
+                                                    title="Подписать (eGov или NCALayer)"
                                                 >
                                                     <CheckCircle className="h-4 w-4" />
                                                 </button>

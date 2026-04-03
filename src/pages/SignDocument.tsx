@@ -239,16 +239,17 @@ export function SignDocument() {
                 {!isSigned && !isExpired && (
                     <div className="bg-white rounded-xl shadow-lg p-8 text-center">
                         <p className="text-slate-600 mb-6">
-                            Для подписания документа используйте приложение <strong>eGov Mobile</strong>
+                            Выберите способ: <strong>eGov Mobile</strong> (QR-код) или <strong>NCALayer</strong> на компьютере
+                            (файловый ключ ЭЦП RSA/GOST).
                         </p>
                         <button
                             onClick={handleSign}
                             className="w-full max-w-md mx-auto bg-primary text-white py-4 rounded-lg font-semibold text-lg hover:bg-primary/90 transition-colors shadow-lg"
                         >
-                            📱 Подписать через eGov
+                            Подписать документ
                         </button>
                         <p className="text-sm text-slate-500 mt-4">
-                            После нажатия кнопки откроется QR-код для сканирования
+                            В окне можно выбрать QR для телефона или подпись через NCALayer на ПК
                         </p>
                         <button
                             type="button"

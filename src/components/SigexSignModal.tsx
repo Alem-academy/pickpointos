@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Loader2, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
+import { X, Loader2, CheckCircle, AlertTriangle, RefreshCw, Smartphone, Monitor } from 'lucide-react';
 import { SigexService } from '@/services/sigex';
 import { api } from '@/services/api';
+// @ts-ignore
+import { NCALayerClient } from 'ncalayer-js-client';
 
 interface SigexSignModalProps {
     documentId: string; // Internal DB ID
@@ -14,17 +16,20 @@ interface SigexSignModalProps {
 }
 
 export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, preRegisteredDocumentId, publicSigningToken }: SigexSignModalProps) {
-    const [step, setStep] = useState<'init' | 'qr' | 'signing' | 'success' | 'error'>('init');
+    const [step, setStep] = useState<'method-selection' | 'init' | 'qr' | 'ncalayer_init' | 'signing' | 'success' | 'error'>('method-selection');
     const [qrCode, setQrCode] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [eGovLinks, setEGovLinks] = useState<{ mobile: string; business: string } | null>(null);
+    const [fetchedPdfBase64, setFetchedPdfBase64] = useState<string | null>(null);
+    const [fetchedPdfName, setFetchedPdfName] = useState<string>('document.pdf');
 
     // Refs for polling
     const pollInterval = useRef<any>(null);
     const operationIdRef = useRef<string | null>(null);
 
     useEffect(() => {
-        startSigningProcess();
+        // Pre-fetch PDF in background if possible to speed up NCALayer/eGov later
+        loadPdfBackground();
         return () => stopPolling();
     }, []);
 
@@ -35,7 +40,30 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
         }
     };
 
-    const startSigningProcess = async () => {
+    const loadPdfBackground = async () => {
+        // PDF нужен для NCALayer и ускоряет eGov; наличие sigex_document_id не отменяет локальную генерацию PDF
+        try {
+            if (publicSigningToken) {
+                const r = await fetch(`/api/sign/${publicSigningToken}/pdf-base64`);
+                const j = await r.json();
+                if (r.ok && j.pdfBase64) {
+                    setFetchedPdfBase64(j.pdfBase64);
+                    if (j.fileName) setFetchedPdfName(j.fileName);
+                }
+            } else {
+                const j = await api.getDocumentPdfBase64(documentId);
+                if (j.pdfBase64) {
+                    setFetchedPdfBase64(j.pdfBase64);
+                    if (j.fileName) setFetchedPdfName(j.fileName);
+                }
+            }
+        } catch (e) {
+            console.warn('Background PDF fetch failed:', e);
+        }
+    };
+
+
+    const startEgovSigningProcess = async () => {
         try {
             setStep('init');
             setError(null);
@@ -51,47 +79,41 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
                     `Подписание: ${documentTitle}`
                 );
             } else {
-                let pdfBase64: string;
-                // До ответа API не подставляем кириллицу в имя — иначе eGov/Android могут показать «____________.pdf»
-                let pdfFileName = 'document.pdf';
-                try {
-                    if (publicSigningToken) {
-                        const r = await fetch(`/api/sign/${publicSigningToken}/pdf-base64`);
-                        const j = (await r.json()) as { pdfBase64?: string; fileName?: string; error?: string };
-                        if (!r.ok) {
-                            throw new Error(j.error || `Ошибка подготовки PDF (${r.status})`);
+                let pdfBase64 = fetchedPdfBase64;
+                let pdfFileName = fetchedPdfName;
+
+                if (!pdfBase64) {
+                    try {
+                        if (publicSigningToken) {
+                            const r = await fetch(`/api/sign/${publicSigningToken}/pdf-base64`);
+                            const j = (await r.json()) as { pdfBase64?: string; fileName?: string; error?: string };
+                            if (!r.ok) throw new Error(j.error || `Ошибка подготовки PDF (${r.status})`);
+                            if (!j.pdfBase64) throw new Error(j.error || 'Пустой PDF');
+                            pdfBase64 = j.pdfBase64;
+                            if (j.fileName) pdfFileName = j.fileName;
+                        } else {
+                            const j = await api.getDocumentPdfBase64(documentId);
+                            pdfBase64 = j.pdfBase64;
+                            if (j.fileName) pdfFileName = j.fileName;
                         }
-                        if (!j.pdfBase64) {
-                            throw new Error(j.error || 'Пустой PDF');
-                        }
-                        pdfBase64 = j.pdfBase64;
-                        if (j.fileName) {
-                            pdfFileName = j.fileName;
-                        }
-                    } else {
-                        const j = await api.getDocumentPdfBase64(documentId);
-                        pdfBase64 = j.pdfBase64;
-                        if (j.fileName) {
-                            pdfFileName = j.fileName;
-                        }
+                    } catch (pdfErr: unknown) {
+                        const ax = pdfErr as { response?: { status?: number; data?: { error?: string } }; message?: string };
+                        const st = ax.response?.status;
+                        const apiErr = ax.response?.data?.error;
+                        throw new Error(
+                            st === 503 || apiErr?.includes('Puppeteer') || apiErr?.includes('browser')
+                                ? 'Сервер не смог сформировать PDF (нужен Chromium на хосте). Обратитесь к администратору.'
+                                : apiErr || ax.message || 'Не удалось подготовить PDF для подписи в eGov'
+                        );
                     }
-                } catch (pdfErr: unknown) {
-                    const ax = pdfErr as { response?: { status?: number; data?: { error?: string } }; message?: string };
-                    const st = ax.response?.status;
-                    const apiErr = ax.response?.data?.error;
-                    throw new Error(
-                        st === 503 || apiErr?.includes('Puppeteer') || apiErr?.includes('browser')
-                            ? 'Сервер не смог сформировать PDF (нужен Chromium на хосте). Обратитесь к администратору.'
-                            : apiErr || ax.message || 'Не удалось подготовить PDF для подписи в eGov'
-                    );
                 }
 
-                console.log('[Sigex] PDF for eGov:', pdfFileName, `~${Math.round(pdfBase64.length / 1024)} KB base64`);
+                console.log('[Sigex] PDF for eGov:', pdfFileName, `~${Math.round((pdfBase64?.length || 0) / 1024)} KB`);
                 qrRes = await SigexService.registerQrSigning(`Подписание: ${documentTitle}`);
 
                 dataPromise = SigexService.sendQrData(
                     qrRes.operationId,
-                    pdfBase64,
+                    pdfBase64 as string,
                     pdfFileName,
                     'application/pdf'
                 ).catch((err: Error) => {
@@ -177,6 +199,63 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
         }
     };
 
+    const startNcaLayerSigning = async () => {
+        try {
+            setStep('ncalayer_init');
+            setError(null);
+
+            let pdfBase64 = fetchedPdfBase64;
+            if (!pdfBase64) {
+                try {
+                    if (publicSigningToken) {
+                        const r = await fetch(`/api/sign/${publicSigningToken}/pdf-base64`);
+                        const j = (await r.json()) as { pdfBase64?: string; error?: string };
+                        if (!r.ok || !j.pdfBase64) throw new Error(j.error || 'Ошибка скачивания файла');
+                        pdfBase64 = j.pdfBase64;
+                    } else {
+                        const j = await api.getDocumentPdfBase64(documentId);
+                        if (!j.pdfBase64) throw new Error(j.error || 'Пустой PDF');
+                        pdfBase64 = j.pdfBase64;
+                    }
+                    setFetchedPdfBase64(pdfBase64);
+                } catch (err: any) {
+                    throw new Error('Не удалось подготовить документ для подписи. ' + (err.message || ''));
+                }
+            }
+
+            if (!pdfBase64) {
+                throw new Error('Не удалось получить PDF для подписи через NCALayer.');
+            }
+
+            const ncalayer = new NCALayerClient();
+            try {
+                await ncalayer.connect();
+            } catch (error) {
+                throw new Error('Не удалось подключиться к программе NCALayer. Убедитесь, что она запущена на вашем компьютере.');
+            }
+
+            setStep('signing');
+            // Sign the Base64 PDF data directly creating a CMS
+            const signature = await ncalayer.basicsSignCMS(
+                NCALayerClient.basicsStorageAll,
+                pdfBase64 as string,
+                NCALayerClient.basicsCMSParamsWithData, // Must match "signMethod: CMS_WITH_DATA" logic
+                NCALayerClient.basicsSignerSign // For documents it's usually Sign
+            );
+
+            await finalizeSignature(signature);
+
+        } catch (err: any) {
+            console.error('NCALayer error:', err);
+            if (err.message?.includes('отменен') || err.message?.includes('canceled') || err.toString().includes('Canceled')) {
+                setError('Процесс подписания был отменен пользователем.');
+            } else {
+                setError(err.message || 'Неизвестная ошибка при подписании через NCALayer.');
+            }
+            setStep('error');
+        }
+    };
+
     const finalizeSignature = async (signature?: string) => {
         try {
             const payload = {
@@ -225,7 +304,7 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
             <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
                 {/* Header */}
                 <div className="mb-6 flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Подписание через eGov</h3>
+                    <h3 className="text-lg font-semibold">Электронная подпись</h3>
                     <button onClick={onClose} className="rounded-full p-1 hover:bg-slate-100">
                         <X className="h-5 w-5 text-slate-500" />
                     </button>
@@ -234,10 +313,44 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
                 {/* Content */}
                 <div className="min-h-[300px] flex flex-col items-center justify-center text-center">
 
-                    {step === 'init' && (
+                    {step === 'method-selection' && (
+                        <div className="space-y-4 w-full animate-in fade-in duration-300">
+                            <p className="text-muted-foreground mb-6">Выберите удобный для вас способ подписания документа:</p>
+                            
+                            <button
+                                onClick={startEgovSigningProcess}
+                                className="w-full flex items-center p-4 border-2 border-primary/20 rounded-xl hover:border-primary hover:bg-primary/5 transition-colors text-left group"
+                            >
+                                <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
+                                    <Smartphone className="h-6 w-6 text-primary" />
+                                </div>
+                                <div className="ml-4 truncate">
+                                    <h4 className="font-semibold text-lg text-slate-900">QR-код eGov Mobile</h4>
+                                    <p className="text-sm text-slate-500 whitespace-normal">Удобно, если на телефоне установлено приложение eGov</p>
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={startNcaLayerSigning}
+                                className="w-full flex items-center p-4 border-2 border-slate-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-colors text-left group"
+                            >
+                                <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
+                                    <Monitor className="h-6 w-6 text-blue-600" />
+                                </div>
+                                <div className="ml-4 truncate">
+                                    <h4 className="font-semibold text-lg text-slate-900">Ключи ЭЦП на ПК</h4>
+                                    <p className="text-sm text-slate-500 whitespace-normal">Через программу NCALayer (файлы RSA / GOST)</p>
+                                </div>
+                            </button>
+                        </div>
+                    )}
+
+                    {(step === 'init' || step === 'ncalayer_init') && (
                         <div className="space-y-4">
                             <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                            <p className="text-muted-foreground">Подготовка документа...</p>
+                            <p className="text-muted-foreground">
+                                {step === 'init' ? 'Подготовка документа и генерация QR...' : 'Подключение к NCALayer...'}
+                            </p>
                         </div>
                     )}
 
@@ -285,18 +398,28 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
                     )}
 
                     {step === 'error' && (
-                        <div className="space-y-4">
+                        <div className="space-y-4 animate-in zoom-in duration-300 w-full">
                             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-600">
-                                <AlertTriangle className="h-8 w-8" />
+                                <AlertTriangle className="h-10 w-10" />
                             </div>
-                            <p className="font-medium text-red-600">{error}</p>
-                            <button
-                                onClick={startSigningProcess}
-                                className="flex items-center gap-2 mx-auto rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
-                            >
-                                <RefreshCw className="h-4 w-4" />
-                                Повторить
-                            </button>
+                            <h4 className="text-xl font-bold text-slate-900">Ошибка подписания</h4>
+                            <p className="text-red-600/90 whitespace-pre-wrap">{error}</p>
+                            
+                            <div className="pt-4 flex gap-3 flex-col sm:flex-row w-full justify-center">
+                                <button
+                                    onClick={() => setStep('method-selection')}
+                                    className="flex items-center justify-center gap-2 rounded-lg bg-slate-100 px-6 py-2.5 font-medium text-slate-700 hover:bg-slate-200 transition-colors w-full"
+                                >
+                                    Выбрать способ
+                                </button>
+                                <button
+                                    onClick={() => error?.includes('NCALayer') ? startNcaLayerSigning() : startEgovSigningProcess()}
+                                    className="flex items-center justify-center gap-2 rounded-lg bg-red-50 px-6 py-2.5 font-medium text-red-600 hover:bg-red-100 transition-colors w-full"
+                                >
+                                    <RefreshCw className="h-4 w-4" />
+                                    Повторить
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
