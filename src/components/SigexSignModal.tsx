@@ -214,7 +214,7 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
                         pdfBase64 = j.pdfBase64;
                     } else {
                         const j = await api.getDocumentPdfBase64(documentId);
-                        if (!j.pdfBase64) throw new Error(j.error || 'Пустой PDF');
+                        if (!j.pdfBase64) throw new Error('Пустой PDF');
                         pdfBase64 = j.pdfBase64;
                     }
                     setFetchedPdfBase64(pdfBase64);
