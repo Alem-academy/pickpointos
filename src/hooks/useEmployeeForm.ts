@@ -28,6 +28,7 @@ export interface FormErrors {
 export interface EmployeeFormData {
     firstName: string;
     lastName: string;
+    patronymic: string;
     phone: string;
     iin: string;
     pvzId: string;
@@ -35,6 +36,8 @@ export interface EmployeeFormData {
     role: EmployeeRole;
     email: string;
     address: string;
+    registeredAddress: string;
+    iban: string;
     // ID Card fields
     idCardNumber?: string;
     idCardIssueDate?: string;
@@ -47,6 +50,7 @@ export function useEmployeeForm() {
     const [formData, setFormData] = useState<EmployeeFormData>({
         firstName: '',
         lastName: '',
+        patronymic: '',
         phone: '',
         iin: '',
         pvzId: '',
@@ -54,6 +58,8 @@ export function useEmployeeForm() {
         role: 'employee' as EmployeeRole,
         email: '',
         address: '',
+        registeredAddress: '',
+        iban: '',
         idCardNumber: '',
         idCardIssueDate: '',
         idCardIssuedBy: ''

@@ -1,4 +1,5 @@
 export { CONTRACT_TEMPLATE } from './contract_template.js';
+export { ADDENDUM_TEMPLATE } from './addendum_template.js';
 
 // ============================================
 // ПРИКАЗЫ И ЗАЯВЛЕНИЯ (Март 2024 - Актуальные шаблоны)
@@ -293,6 +294,106 @@ export const EMPLOYMENT_CERTIFICATE_TEMPLATE = `
 </body>
 </html>
 `;
+
+// ============================================
+// ЧИСЛО ПРОПИСЬЮ
+// ============================================
+
+export function numberToWordsRu(num) {
+    if (num === 0) return 'ноль';
+    if (num < 0) return 'минус ' + numberToWordsRu(-num);
+
+    const ones = ['', 'один', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'];
+    const teens = ['десять', 'одиннадцать', 'двенадцать', 'тринадцать', 'четырнадцать', 'пятнадцать', 'шестнадцать', 'семнадцать', 'восемнадцать', 'девятнадцать'];
+    const tens = ['', '', 'двадцать', 'тридцать', 'сорок', 'пятьдесят', 'шестьдесят', 'семьдесят', 'восемьдесят', 'девяносто'];
+    const hundreds = ['', 'сто', 'двести', 'триста', 'четыреста', 'пятьсот', 'шестьсот', 'семьсот', 'восемьсот', 'девятьсот'];
+    const onesF = ['', 'одна', 'две', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'];
+
+    function pluralize(n, one, two, five) {
+        n = Math.abs(n) % 100;
+        const n1 = n % 10;
+        if (n > 10 && n < 20) return five;
+        if (n1 > 1 && n1 < 5) return two;
+        if (n1 === 1) return one;
+        return five;
+    }
+
+    function convertLessThanThousand(n, feminine = false) {
+        let result = '';
+        const h = Math.floor(n / 100);
+        const rest = n % 100;
+        if (h > 0) result += hundreds[h] + ' ';
+        if (rest >= 10 && rest < 20) {
+            result += teens[rest - 10];
+        } else {
+            const t = Math.floor(rest / 10);
+            const o = rest % 10;
+            if (t > 0) result += tens[t] + ' ';
+            if (o > 0) result += (feminine ? onesF[o] : ones[o]);
+        }
+        return result.trim();
+    }
+
+    const parts = [];
+    const billions = Math.floor(num / 1000000000);
+    const millions = Math.floor((num % 1000000000) / 1000000);
+    const thousands = Math.floor((num % 1000000) / 1000);
+    const remainder = num % 1000;
+
+    if (billions > 0) {
+        parts.push(convertLessThanThousand(billions) + ' ' + pluralize(billions, 'миллиард', 'миллиарда', 'миллиардов'));
+    }
+    if (millions > 0) {
+        parts.push(convertLessThanThousand(millions) + ' ' + pluralize(millions, 'миллион', 'миллиона', 'миллионов'));
+    }
+    if (thousands > 0) {
+        parts.push(convertLessThanThousand(thousands, true) + ' ' + pluralize(thousands, 'тысяча', 'тысячи', 'тысяч'));
+    }
+    if (remainder > 0 || num === 0) {
+        parts.push(convertLessThanThousand(remainder));
+    }
+
+    return parts.join(' ');
+}
+
+export function numberToWordsKz(num) {
+    if (num === 0) return 'нөл';
+    if (num < 0) return 'минус ' + numberToWordsKz(-num);
+
+    const ones = ['', 'бір', 'екі', 'үш', 'төрт', 'бес', 'алты', 'жеті', 'сегіз', 'тоғыз'];
+    const tens = ['', 'он', 'жиырма', 'отыз', 'қырық', 'елу', 'алпыс', 'жетпіс', 'сексен', 'тоқсан'];
+    const hundreds = ['', 'жүз', 'екі жүз', 'үш жүз', 'төрт жүз', 'бес жүз', 'алты жүз', 'жеті жүз', 'сегіз жүз', 'тоғыз жүз'];
+
+    function convertLessThanThousand(n) {
+        let result = '';
+        const h = Math.floor(n / 100);
+        const rest = n % 100;
+        if (h > 0) result += hundreds[h] + ' ';
+        if (rest >= 10) {
+            result += tens[Math.floor(rest / 10)] + ' ';
+        }
+        const o = rest % 10;
+        if (o > 0) result += ones[o];
+        return result.trim();
+    }
+
+    const parts = [];
+    const millions = Math.floor(num / 1000000);
+    const thousands = Math.floor((num % 1000000) / 1000);
+    const remainder = num % 1000;
+
+    if (millions > 0) {
+        parts.push(convertLessThanThousand(millions) + ' миллион');
+    }
+    if (thousands > 0) {
+        parts.push(convertLessThanThousand(thousands) + ' мың');
+    }
+    if (remainder > 0 || num === 0) {
+        parts.push(convertLessThanThousand(remainder));
+    }
+
+    return parts.join(' ');
+}
 
 export function fillTemplate(template, data) {
     let content = template;

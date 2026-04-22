@@ -167,7 +167,7 @@ router.get('/employees', authenticateToken, async (req, res) => {
 // POST /employees - Create new employee
 router.post('/employees', async (req, res) => {
     try {
-        const { iin, full_name, phone, email, role, main_pvz_id, status, address, base_rate, probation_until, hired_at, iban, emergency_contacts, id_card_number, id_card_issued_by, id_card_issue_date, registered_address, employer_id } = req.body;
+        const { iin, full_name, phone, email, role, main_pvz_id, status, address, base_rate, probation_until, hired_at, iban, emergency_contacts, id_card_number, id_card_issued_by, id_card_issue_date, registered_address, employer_id, patronymic, contract_end_date, probation_months } = req.body;
 
         // Basic validation
         if (!iin || !full_name || !role) {
@@ -178,9 +178,10 @@ router.post('/employees', async (req, res) => {
             INSERT INTO employees (
                 iin, full_name, phone, email, role, main_pvz_id, status,
                 address, base_rate, probation_until, hired_at, iban, emergency_contacts,
-                id_card_number, id_card_issued_by, id_card_issue_date, registered_address, employer_id
+                id_card_number, id_card_issued_by, id_card_issue_date, registered_address, employer_id, patronymic,
+                contract_end_date, probation_months
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
             RETURNING *
         `, [
             iin,
@@ -200,7 +201,10 @@ router.post('/employees', async (req, res) => {
             id_card_issued_by || null,
             id_card_issue_date || null,
             registered_address || null,
-            employer_id || null
+            employer_id || null,
+            patronymic || null,
+            contract_end_date || null,
+            probation_months || null
         ]);
 
         res.status(201).json(result.rows[0]);
@@ -357,9 +361,21 @@ router.patch('/employees/:id/status', async (req, res) => {
             sql += `, registered_address = $${paramIdx++}`;
             params.push(req.body.registered_address);
         }
+        if (req.body.patronymic !== undefined) {
+            sql += `, patronymic = $${paramIdx++}`;
+            params.push(req.body.patronymic);
+        }
         if (req.body.iban !== undefined) {
             sql += `, iban = $${paramIdx++}`;
             params.push(req.body.iban);
+        }
+        if (req.body.contract_end_date !== undefined) {
+            sql += `, contract_end_date = $${paramIdx++}`;
+            params.push(req.body.contract_end_date);
+        }
+        if (req.body.probation_months !== undefined) {
+            sql += `, probation_months = $${paramIdx++}`;
+            params.push(req.body.probation_months);
         }
         if (req.body.address !== undefined) {
             sql += `, address = $${paramIdx++}`;

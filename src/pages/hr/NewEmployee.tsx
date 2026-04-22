@@ -70,16 +70,20 @@ export default function NewEmployeePage() {
             const validContacts = emergencyContacts.filter(c => c.name && c.phone && c.relationship);
 
             // 1. Create employee
+            const fullName = `${formData.lastName} ${formData.firstName}${formData.patronymic ? ' ' + formData.patronymic : ''}`.trim();
             const newEmployee = await api.createEmployee({
-                full_name: `${formData.lastName} ${formData.firstName}`,
+                full_name: fullName,
                 iin: formData.iin,
                 phone: formData.phone,
                 email: formData.email,
                 role: formData.role,
                 main_pvz_id: formData.pvzId || undefined,
                 status: 'new',
-                base_rate: 85000,
+                base_rate: formData.baseRate ? Number(formData.baseRate) : 85000,
                 address: formData.address || undefined,
+                registered_address: formData.registeredAddress || undefined,
+                iban: formData.iban || undefined,
+                patronymic: formData.patronymic || undefined,
                 emergency_contacts: validContacts.length > 0 ? validContacts : undefined,
                 // ID Card data
                 id_card_number: formData.idCardNumber || undefined,

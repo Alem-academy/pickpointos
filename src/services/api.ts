@@ -89,6 +89,7 @@ export interface Employee {
     hired_at: string | null;
     created_at: string;
     iban?: string; // KZ IBAN
+    patronymic?: string;
     id_card_number?: string;
     id_card_issued_by?: string;
     id_card_issue_date?: string;

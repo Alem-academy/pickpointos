@@ -8,6 +8,7 @@ import RFDashboard from '@/pages/rf/Dashboard';
 import NewHire from '@/pages/rf/NewHire';
 import Applications from '@/pages/hr/Applications';
 import Templates from '@/pages/hr/Templates';
+import VerifyDocument from '@/pages/VerifyDocument';
 
 const router = createBrowserRouter([
     {
@@ -33,6 +34,10 @@ const router = createBrowserRouter([
                 ],
             },
         ],
+    },
+    {
+        path: '/verify/:documentId',
+        element: <VerifyDocument />,
     },
     {
         path: '/',

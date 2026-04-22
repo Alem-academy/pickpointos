@@ -6,19 +6,23 @@ import QRCode from 'qrcode';
 import crypto from 'crypto';
 import {
     CONTRACT_TEMPLATE,
+    ADDENDUM_TEMPLATE,
     HIRING_ORDER_TEMPLATE,
     EMPLOYMENT_APPLICATION_TEMPLATE,
     VACATION_APPLICATION_TEMPLATE,
     VACATION_ORDER_TEMPLATE,
     TERMINATION_ORDER_TEMPLATE,
     EMPLOYMENT_CERTIFICATE_TEMPLATE,
-    fillTemplate
+    fillTemplate,
+    numberToWordsRu,
+    numberToWordsKz
 } from '../services/templates.js';
 import { storageService } from '../services/storage.service.js';
 import { htmlToPdfBuffer } from '../services/pdfRender.service.js';
 import { Logger } from '../lib/logger.js';
 import { logDocumentGenerated } from '../lib/activityLogger.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { generateSignatureSheet, getDocumentVerificationData } from '../services/signatureSheet.service.js';
 
 // Sigex integration is handled via frontend SigexService
 // Documents are pre-registered on generation and signed via eGov QR
@@ -34,7 +38,8 @@ const DOC_SIGN_FILE_NAME_ASCII = {
     vacation_application: 'vacation_request.pdf',
     vacation_order: 'vacation_order.pdf',
     termination_order: 'termination_order.pdf',
-    employment_certificate: 'employment_certificate.pdf'
+    employment_certificate: 'employment_certificate.pdf',
+    addendum: 'addendum.pdf'
 };
 
 /**
@@ -247,43 +252,57 @@ router.post('/documents/generate', async (req, res) => {
         const contractNum = `ТД-${String(seq).padStart(3, '0')}/${yearShort}`;
 
         if (type === 'contract') {
+            // Compute contract end date
+            let endDateStr;
+            if (emp.contract_end_date) {
+                endDateStr = new Date(emp.contract_end_date).toLocaleDateString('ru-RU');
+            } else if (emp.hired_at) {
+                const d = new Date(emp.hired_at);
+                d.setFullYear(d.getFullYear() + 1);
+                endDateStr = d.toLocaleDateString('ru-RU');
+            } else {
+                const d = new Date();
+                d.setFullYear(d.getFullYear() + 1);
+                endDateStr = d.toLocaleDateString('ru-RU');
+            }
+
+            // Compute probation text
+            let probationText;
+            if (emp.probation_months) {
+                const m = emp.probation_months;
+                const suffix = m === 1 ? '' : m < 5 ? 'а' : 'ев';
+                probationText = `${m} месяц${suffix} / ${m} ай`;
+            } else if (emp.probation_until && emp.hired_at) {
+                const months = Math.round((new Date(emp.probation_until) - new Date(emp.hired_at)) / (30 * 24 * 60 * 60 * 1000));
+                const suffix = months === 1 ? '' : months < 5 ? 'а' : 'ев';
+                probationText = `${months} месяц${suffix} / ${months} ай`;
+            } else {
+                probationText = 'три месяца / үш ай';
+            }
+
+            const baseRate = emp.base_rate ? Number(emp.base_rate) : 85000;
+            const startDateStr = emp.hired_at ? new Date(emp.hired_at).toLocaleDateString('ru-RU') : dateRu;
+
             htmlContent = fillTemplate(CONTRACT_TEMPLATE, {
-                contract_number: contractNum,
-                contract_day: contractDay,
-                contract_month: contractMonth,
-                contract_month_kz: contractMonthKz,
-                contract_year: String(contractYear),
-
-                // Employer
-                employer_name: employer.name,
-                employer_short_name: employer.short_name,
-                employer_director: employer.director_name,
-                employer_bin: employer.bin,
-                employer_bic: employer.bik,
-                employer_bank: employer.bank,
-                employer_bank_kz: '«Kaspi Bank» АҚ',
-                employer_address: employer.address,
-                employer_address_kz: 'Алматы қ.',
-                employer_iban: employer.iban,
-
-                // Employee
-                full_name: emp.full_name,
+                doc_number: contractNum,
+                sign_date: dateRu,
+                employee_fio: emp.full_name,
+                id_num: emp.id_card_number || '__________',
+                id_date: emp.id_card_issue_date ? new Date(emp.id_card_issue_date).toLocaleDateString('ru-RU') : '__________',
+                id_issuer: emp.id_card_issued_by || '__________',
                 iin: emp.iin || '__________',
-                id_card_number: emp.id_card_number || '__________',
-                id_card_issue_date: emp.id_card_issue_date ? new Date(emp.id_card_issue_date).toLocaleDateString('ru-RU') : '__________',
-                id_card_issued_by: emp.id_card_issued_by || '__________',
-                id_card_issued_by_kz: emp.id_card_issued_by || '__________',
-                registered_address: emp.registered_address || emp.address || '__________',
-                phone: emp.phone || '__________',
-                email: emp.email || '__________',
-                address: emp.address || 'не указан',
-                iban: emp.iban || 'не указан',
-
-                // Job Details
                 position: emp.role === 'rf' ? 'Региональный менеджер / Өңірлік менеджер' : 'Менеджер ПВЗ / ТҚО менеджері',
-                pvz_address: emp.pvz_address || 'не указан',
-                start_date: dateRu,
-                base_rate: emp.base_rate ? Number(emp.base_rate).toLocaleString('ru-RU') + ' (восемьдесят пять тысяч)' : '85 000 (восемьдесят пять тысяч)',
+                work_address: emp.pvz_address || 'не указан',
+                start_date: startDateStr,
+                end_date: endDateStr,
+                probation: probationText,
+                vacation_days: '24 календарных дня / 24 күнтізбелік күн',
+                salary: baseRate.toLocaleString('ru-RU'),
+                salary_words: `${numberToWordsRu(baseRate)} / ${numberToWordsKz(baseRate)}`,
+                emp_address: emp.registered_address || emp.address || '__________',
+                emp_phone: emp.phone || '__________',
+                emp_email: emp.email || '__________',
+                rules_link: '#',
             });
         } else if (type === 'order_hiring') {
             const contractRes = await query(
@@ -404,6 +423,22 @@ router.post('/documents/generate', async (req, res) => {
                 employer_name: employer.name,
                 employer_address: employer.address,
             });
+        } else if (type === 'addendum') {
+            // Дополнительное соглашение к трудовому договору
+            const { contractNumber, contractDate, changeTopic } = req.body;
+
+            // Generate addendum number
+            const addCntRes = await query(
+                `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type = 'addendum'`, [employeeId]
+            );
+            const addSeq = parseInt(addCntRes.rows[0].count, 10) + 1;
+            const addendumNum = `ДС-${String(addSeq).padStart(3, '0')}/${yearShort}`;
+
+            htmlContent = fillTemplate(ADDENDUM_TEMPLATE, {
+                doc_date: `${contractDay} ${contractMonth}`,
+                employee_full_name: emp.full_name,
+                pvz_address: emp.pvz_address || 'не указан',
+            });
         } else {
             return res.status(400).json({ error: 'Unsupported document type' });
         }
@@ -421,11 +456,28 @@ router.post('/documents/generate', async (req, res) => {
         }
 
         // Save to database
+        // Documents requiring employer signature per ст. 33 ТК РК
+        const typesRequiringEmployerSignature = ['contract', 'order_hiring', 'vacation_order', 'termination_order', 'employment_certificate', 'addendum'];
+        const requiresEmployerSignature = typesRequiringEmployerSignature.includes(type);
+
         const docResult = await query(`
-            INSERT INTO documents (employee_id, type, status, scan_url, created_at)
-            VALUES ($1, $2, 'draft', $3, NOW())
+            INSERT INTO documents (employee_id, type, status, scan_url, requires_employer_signature, created_at)
+            VALUES ($1, $2, 'draft', $3, $4, NOW())
             RETURNING *
-        `, [employeeId, type, htmlKey]);
+        `, [employeeId, type, htmlKey, requiresEmployerSignature]);
+
+        // Auto-sign employer for one-sided documents (e.g. employment certificate)
+        if (type === 'employment_certificate') {
+            await query(`
+                UPDATE documents
+                SET employer_signed_at = NOW(),
+                    status = 'signed',
+                    employer_cert_info = $1
+                WHERE id = $2
+            `, [JSON.stringify({ auto_signed: true, reason: 'employer_generated_certificate' }), docResult.rows[0].id]);
+            docResult.rows[0].status = 'signed';
+            docResult.rows[0].employer_signed_at = new Date().toISOString();
+        }
 
         // Log activity - document generated
         await logDocumentGenerated(employeeId, type, docResult.rows[0].id, req.user);
@@ -511,6 +563,109 @@ router.get('/documents/:id/pdf-base64', authenticateToken, async (req, res) => {
     }
 });
 
+// POST /documents/:id/sign-employer — Подписание работодателем (директор/ИП через NCALayer)
+// Требуется JWT аутентификация (HR/директор)
+router.post('/documents/:id/sign-employer', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { signature, certInfo } = req.body;
+
+        if (!signature) {
+            return res.status(400).json({ error: 'Подпись (signature) обязательна' });
+        }
+
+        // Get document info
+        const docCheck = await query(
+            'SELECT id, type, status, employer_signed_at, requires_employer_signature FROM documents WHERE id = $1',
+            [id]
+        );
+
+        if (docCheck.rows.length === 0) {
+            return res.status(404).json({ error: 'Документ не найден' });
+        }
+
+        const doc = docCheck.rows[0];
+        if (doc.employer_signed_at) {
+            return res.status(409).json({ error: 'Документ уже подписан работодателем' });
+        }
+
+        // Mark document as requiring employer signature if not already
+        if (!doc.requires_employer_signature) {
+            await query('UPDATE documents SET requires_employer_signature = TRUE WHERE id = $1', [id]);
+        }
+
+        const result = await query(`
+            UPDATE documents
+            SET signature_cms_employer = $1,
+                employer_signed_at = NOW(),
+                employer_cert_info = $2,
+                status = CASE
+                    WHEN status = 'signed' THEN 'fully_signed'
+                    WHEN status = 'draft' THEN 'employer_signed'
+                    ELSE status
+                END
+            WHERE id = $3
+            RETURNING *
+        `, [signature, certInfo ? JSON.stringify(certInfo) : null, id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Документ не найден' });
+        }
+
+        // Log activity
+        const { logActivity } = await import('../lib/activityLogger.js');
+        await logActivity({
+            employeeId: null, // Will be fetched if needed
+            actionType: 'document_signed_employer',
+            actionCategory: 'document',
+            title: `Документ подписан работодателем`,
+            description: doc.type,
+            metadata: {
+                document_id: id,
+                cert_serial: certInfo?.serialNumber || null,
+                cert_issuer: certInfo?.issuer || null
+            },
+            userId: req.user?.id || null
+        });
+
+        Logger.info(`[Docs] Employer signed document ${id} (${doc.type})`);
+
+        // Фаза 3: Автогенерация листа подписей если документ теперь fully_signed
+        if (result.rows[0].status === 'fully_signed') {
+            generateSignatureSheet(id).catch(err => {
+                Logger.error(`[Docs] Auto signature sheet generation failed for ${id}:`, err.message);
+            });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        Logger.error('[Docs] Employer sign failed:', err.message);
+        res.status(500).json({ error: 'Ошибка подписания работодателем', details: err.message });
+    }
+});
+
+// GET /documents/pending-employer-signature — Список документов, ожидающих подписи работодателя
+router.get('/documents/pending-employer-signature', authenticateToken, async (req, res) => {
+    try {
+        const result = await query(`
+            SELECT d.id, d.type, d.status, d.created_at, d.requires_employer_signature,
+                   d.employer_signed_at, d.signature_cms IS NOT NULL as employee_signed,
+                   e.full_name as employee_name, e.iin as employee_iin
+            FROM documents d
+            LEFT JOIN employees e ON d.employee_id = e.id
+            WHERE d.requires_employer_signature = TRUE
+              AND d.employer_signed_at IS NULL
+            ORDER BY d.created_at DESC
+            LIMIT 100
+        `);
+
+        res.json(result.rows);
+    } catch (err) {
+        Logger.error('[Docs] Fetch pending employer docs failed:', err.message);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // POST /documents/:id/sign - Sign a document (Sigex eGov QR)
 router.post('/documents/:id/sign', async (req, res) => {
     try {
@@ -522,7 +677,10 @@ router.post('/documents/:id/sign', async (req, res) => {
         
         const result = await query(`
             UPDATE documents
-            SET status = 'signed',
+            SET status = CASE
+                    WHEN employer_signed_at IS NOT NULL AND requires_employer_signature = TRUE THEN 'fully_signed'
+                    ELSE 'signed'
+                END,
                 signed_at = NOW(),
                 signature_cms = $1,
                 sigex_document_id = COALESCE($2, sigex_document_id),
@@ -578,6 +736,13 @@ router.post('/documents/:id/sign', async (req, res) => {
             `, [id]);
         } catch (linkErr) {
             Logger.warn('[Docs] deactivate signing link skipped:', linkErr.message);
+        }
+
+        // Фаза 3: Автогенерация листа подписей если документ теперь fully_signed
+        if (result.rows[0].status === 'fully_signed') {
+            generateSignatureSheet(id).catch(err => {
+                Logger.error(`[Docs] Auto signature sheet generation failed for ${id}:`, err.message);
+            });
         }
 
         res.json(result.rows[0]);
@@ -953,6 +1118,76 @@ router.get('/mappings', async (req, res) => {
         res.json(result.rows);
     } catch (err) {
         console.error('Error fetching mappings:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ───────────────────────────────────────────────
+// ФАЗА 3: ЛИСТ ПОДПИСЕЙ
+// ───────────────────────────────────────────────
+
+// POST /documents/:id/generate-signature-sheet — сгенерировать/пересоздать лист подписей
+router.post('/documents/:id/generate-signature-sheet', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await generateSignatureSheet(id);
+        if (!result) {
+            return res.status(400).json({ error: 'Документ должен быть подписан обеими сторонами' });
+        }
+        res.json({ success: true, ...result });
+    } catch (err) {
+        Logger.error('[Docs] Generate signature sheet failed:', err.message);
+        res.status(500).json({ error: 'Ошибка генерации листа подписей', details: err.message });
+    }
+});
+
+// GET /documents/:id/signature-sheet — получить URL листа подписей
+router.get('/documents/:id/signature-sheet', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await query(`
+            SELECT signature_sheet_url, signature_sheet_generated_at, final_pdf_url
+            FROM documents WHERE id = $1
+        `, [id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Документ не найден' });
+        }
+        res.json(result.rows[0]);
+    } catch (err) {
+        Logger.error('[Docs] Fetch signature sheet failed:', err.message);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// GET /documents/:id/final-pdf — получить URL финального PDF
+router.get('/documents/:id/final-pdf', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await query(`
+            SELECT final_pdf_url, final_pdf_generated_at
+            FROM documents WHERE id = $1
+        `, [id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Документ не найден' });
+        }
+        res.json(result.rows[0]);
+    } catch (err) {
+        Logger.error('[Docs] Fetch final PDF failed:', err.message);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// GET /documents/:id/verify — публичная верификация документа (без авторизации)
+router.get('/documents/:id/verify', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const data = await getDocumentVerificationData(id);
+        if (!data) {
+            return res.status(404).json({ error: 'Документ не найден' });
+        }
+        res.json(data);
+    } catch (err) {
+        Logger.error('[Docs] Verify document failed:', err.message);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

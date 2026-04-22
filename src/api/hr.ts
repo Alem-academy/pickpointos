@@ -107,6 +107,28 @@ export const hrApi = {
         return res.data;
     },
 
+    /** Подписание документа работодателем (директор/ИП через NCALayer) */
+    async signDocumentAsEmployer(id: string, signature: string, certInfo?: any): Promise<Document> {
+        const res = await axiosInstance.post(`/documents/${id}/sign-employer`, { signature, certInfo });
+        return res.data;
+    },
+
+    /** Список документов, ожидающих подписи работодателя */
+    async getPendingEmployerDocuments(): Promise<Array<{
+        id: string;
+        type: string;
+        status: string;
+        created_at: string;
+        requires_employer_signature: boolean;
+        employer_signed_at: string | null;
+        employee_signed: boolean;
+        employee_name: string;
+        employee_iin: string;
+    }>> {
+        const res = await axiosInstance.get('/documents/pending-employer-signature');
+        return res.data;
+    },
+
     async getDocumentPdfBase64(id: string): Promise<{ pdfBase64: string; fileName: string }> {
         const res = await axiosInstance.get(`/documents/${id}/pdf-base64`);
         return res.data;
@@ -114,5 +136,23 @@ export const hrApi = {
 
     async deleteDocument(id: string): Promise<void> {
         await axiosInstance.delete(`/documents/${id}`);
+    },
+
+    /** Фаза 3: Сгенерировать лист подписей */
+    async generateSignatureSheet(id: string): Promise<{ success: boolean; signatureSheetUrl: string; finalPdfUrl: string }> {
+        const res = await axiosInstance.post(`/documents/${id}/generate-signature-sheet`);
+        return res.data;
+    },
+
+    /** Фаза 3: Получить URL листа подписей */
+    async getSignatureSheet(id: string): Promise<{ signature_sheet_url: string | null; signature_sheet_generated_at: string | null; final_pdf_url: string | null }> {
+        const res = await axiosInstance.get(`/documents/${id}/signature-sheet`);
+        return res.data;
+    },
+
+    /** Фаза 3: Получить URL финального PDF */
+    async getFinalPdf(id: string): Promise<{ final_pdf_url: string | null; final_pdf_generated_at: string | null }> {
+        const res = await axiosInstance.get(`/documents/${id}/final-pdf`);
+        return res.data;
     },
 };

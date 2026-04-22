@@ -99,6 +99,26 @@ export function GeneralInfoStep({ formData, errors, handleChange, emergencyConta
                         placeholder="example@mail.com"
                     />
                 </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-semibold">Отчество</label>
+                    <input
+                        name="patronymic"
+                        value={formData.patronymic}
+                        onChange={handleChange}
+                        className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        placeholder="Например: Сергеевич"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-semibold">IBAN</label>
+                    <input
+                        name="iban"
+                        value={formData.iban}
+                        onChange={handleChange}
+                        className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-mono"
+                        placeholder="KZ..."
+                    />
+                </div>
                 <div className="space-y-2 md:col-span-2">
                     <label className="text-sm font-semibold">Фактический адрес места жительства <span className="text-destructive">*</span></label>
                     <input
@@ -116,6 +136,17 @@ export function GeneralInfoStep({ formData, errors, handleChange, emergencyConta
                     {errors.address && (
                         <p className="text-xs text-red-500">{errors.address}</p>
                     )}
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-semibold">Адрес регистрации (прописка)</label>
+                    <input
+                        name="registeredAddress"
+                        type="text"
+                        value={formData.registeredAddress}
+                        onChange={handleChange}
+                        className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        placeholder="г. Алматы, ул. Абая 1, кв 2"
+                    />
                 </div>
                 
                 {/* ID Card Section */}

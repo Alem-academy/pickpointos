@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api, type Document } from '@/services/api';
-import { FileText, Loader2, Upload, Eye, Trash2, File, IdCard, Image, Award, Banknote, MapPin, Stethoscope, Plane, UserX, CheckCircle, Share2 } from 'lucide-react';
+import { FileText, Loader2, Upload, Eye, Trash2, File, IdCard, Image, Award, Banknote, MapPin, Stethoscope, Plane, UserX, CheckCircle, Share2, PenTool } from 'lucide-react';
 import { SigexSignModal } from '../SigexSignModal';
+import { SignatureSheetModal } from './SignatureSheetModal';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { DocumentParamsModal, type DocumentType } from './DocumentParamsModal';
 import { cn } from '@/lib/utils';
@@ -20,6 +21,7 @@ const DOCUMENT_TYPES: any = {
     vacation_order: { label: 'Приказ на отпуск', icon: Plane, color: 'purple', category: 'generated' },
     termination_order: { label: 'Приказ об увольнении', icon: UserX, color: 'red', category: 'generated' },
     employment_certificate: { label: 'Справка с места работы', icon: Award, color: 'slate', category: 'generated' },
+    addendum: { label: 'Доп. соглашение', icon: FileText, color: 'indigo', category: 'generated' },
     id_main: { label: 'Удостоверение личности (лиц.)', icon: IdCard, color: 'indigo', category: 'uploaded' },
     id_register: { label: 'Удостоверение личности (обор.)', icon: IdCard, color: 'indigo', category: 'uploaded' },
     id_scan: { label: 'Скан документа', icon: IdCard, color: 'indigo', category: 'uploaded' },
@@ -38,6 +40,8 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     const [isUploading, setIsUploading] = useState(false);
     const [previewDoc, setPreviewDoc] = useState<{ content: string; type: string; title: string } | null>(null);
     const [signingDocId, setSigningDocId] = useState<string | null>(null);
+    const [employerSigningDocId, setEmployerSigningDocId] = useState<string | null>(null);
+    const [signatureSheetDocId, setSignatureSheetDocId] = useState<string | null>(null);
     const [paramsModalOpen, setParamsModalOpen] = useState(false);
     const [pendingDocType, setPendingDocType] = useState<DocumentType | null>(null);
     const [isIbanModalOpen, setIsIbanModalOpen] = useState(false);
@@ -129,6 +133,11 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                 setParamsModalOpen(true);
                 return;
             }
+            if (type === 'addendum') {
+                setPendingDocType(type as DocumentType);
+                setParamsModalOpen(true);
+                return;
+            }
         }
         
         setIsGenerating(type);
@@ -198,6 +207,19 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     };
 
     const getStatusBadge = (doc: Document) => {
+        // Extended status logic for employer signing
+        const requiresEmployer = (doc as any).requires_employer_signature;
+        const employerSigned = (doc as any).employer_signed_at;
+
+        if (doc.status === 'fully_signed' || (doc.status === 'signed' && employerSigned)) {
+            return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Подписан обеими сторонами</span>;
+        }
+        if (doc.status === 'employer_signed' && !employerSigned) {
+            return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">Работодатель подписал, ждёт работника</span>;
+        }
+        if (doc.status === 'signed' && requiresEmployer && !employerSigned) {
+            return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Работник подписал, ждёт работодателя</span>;
+        }
         if (doc.status === 'signed') return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Подписан</span>;
         if (doc.status === 'draft') return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">Черновик</span>;
         if (doc.status === 'rejected') return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">Отклонен</span>;
@@ -239,21 +261,48 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                         </button>
                                         {doc.status === 'draft' && (
                                             <>
-                                                <button 
-                                                    onClick={() => setSigningDocId(doc.id)} 
-                                                    className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors" 
+                                                <button
+                                                    onClick={() => setSigningDocId(doc.id)}
+                                                    className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors"
                                                     title="Подписать (eGov или NCALayer)"
                                                 >
                                                     <CheckCircle className="h-4 w-4" />
                                                 </button>
-                                                <button 
-                                                    onClick={() => handleGenerateSigningLink(doc.id)} 
-                                                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors" 
+                                                <button
+                                                    onClick={() => setEmployerSigningDocId(doc.id)}
+                                                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                                                    title="Подписать как работодатель (NCALayer)"
+                                                >
+                                                    <PenTool className="h-4 w-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleGenerateSigningLink(doc.id)}
+                                                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
                                                     title="Отправить ссылку на подписание"
                                                 >
                                                     <Share2 className="h-4 w-4" />
                                                 </button>
                                             </>
+                                        )}
+                                        {/* Работник подписал, но работодатель ещё нет — показать кнопку подписания работодателем */}
+                                        {doc.status === 'signed' && (doc as any).requires_employer_signature && !(doc as any).employer_signed_at && (
+                                            <button
+                                                onClick={() => setEmployerSigningDocId(doc.id)}
+                                                className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                                                title="Подписать как работодатель (NCALayer)"
+                                            >
+                                                <PenTool className="h-4 w-4" />
+                                            </button>
+                                        )}
+                                        {/* Документ подписан обеими сторонами — лист подписей */}
+                                        {(doc.status === 'fully_signed' || ((doc as any).employer_signed_at && doc.status === 'signed')) && (
+                                            <button
+                                                onClick={() => setSignatureSheetDocId(doc.id)}
+                                                className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors"
+                                                title="Лист подписей"
+                                            >
+                                                <FileText className="h-4 w-4" />
+                                            </button>
                                         )}
                                         <button onClick={() => handleDelete(doc.id, doc.type, doc.status)} className="p-2 text-slate-400 hover:text-red-600 transition-colors" title="Удалить" disabled={doc.status === 'signed'}>
                                             <Trash2 className={cn("h-4 w-4", doc.status === 'signed' ? 'opacity-30 cursor-not-allowed' : '')} />
@@ -461,6 +510,23 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                         </button>
 
                         <button
+                            onClick={() => handleGenerate('addendum')}
+                            disabled={!!isGenerating}
+                            className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-slate-200 hover:border-primary/50 hover:bg-primary/5 transition-all"
+                        >
+                            {isGenerating === 'addendum' ? (
+                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                            ) : (
+                                <div className="h-7 w-7 rounded bg-indigo-100 flex items-center justify-center">
+                                    <svg className="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                </div>
+                            )}
+                            <span className="text-xs font-medium text-slate-700">Доп. соглашение</span>
+                        </button>
+
+                        <button
                             onClick={() => handleGenerate('bank_details')}
                             disabled={!!isGenerating}
                             className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-slate-200 hover:border-primary/50 hover:bg-primary/5 transition-all"
@@ -535,18 +601,44 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
 
             {previewDoc && <DocumentPreviewModal isOpen={!!previewDoc} onClose={() => setPreviewDoc(null)} title={previewDoc.title} content={previewDoc.content} />}
             {signingDocId && (
-                <SigexSignModal 
-                    documentId={signingDocId} 
+                <SigexSignModal
+                    documentId={signingDocId}
                     documentTitle={(() => {
                         const doc = documents.find(d => d.id === signingDocId);
                         return doc ? (DOCUMENT_TYPES[doc.type]?.label || "Документ") : "Документ";
-                    })()} 
-                    onClose={() => setSigningDocId(null)} 
+                    })()}
+                    onClose={() => setSigningDocId(null)}
                     onSuccess={() => { setSigningDocId(null); loadDocuments(); }}
                     preRegisteredDocumentId={(() => {
                         const doc = documents.find(d => d.id === signingDocId);
                         return doc?.sigex_document_id;
                     })() || undefined}
+                />
+            )}
+
+            {/* Employer signing modal — NCALayer only */}
+            {employerSigningDocId && (
+                <SigexSignModal
+                    documentId={employerSigningDocId}
+                    documentTitle={(() => {
+                        const doc = documents.find(d => d.id === employerSigningDocId);
+                        return doc ? (DOCUMENT_TYPES[doc.type]?.label || "Документ") : "Документ";
+                    })()}
+                    onClose={() => setEmployerSigningDocId(null)}
+                    onSuccess={() => { setEmployerSigningDocId(null); loadDocuments(); }}
+                    signingRole="employer"
+                />
+            )}
+
+            {/* Signature sheet modal */}
+            {signatureSheetDocId && (
+                <SignatureSheetModal
+                    documentId={signatureSheetDocId}
+                    documentTitle={(() => {
+                        const doc = documents.find(d => d.id === signatureSheetDocId);
+                        return doc ? (DOCUMENT_TYPES[doc.type]?.label || "Документ") : "Документ";
+                    })()}
+                    onClose={() => setSignatureSheetDocId(null)}
                 />
             )}
             <DocumentParamsModal

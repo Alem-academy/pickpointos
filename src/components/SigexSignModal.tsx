@@ -13,10 +13,14 @@ interface SigexSignModalProps {
     preRegisteredDocumentId?: string; // If provided, uses this exact SIGEX document
     /** Публичная ссылка /sign/:token — сохраняем operationId и шлём подпись на /api/sign/.../submit-signature (без JWT) */
     publicSigningToken?: string;
+    /** Режим подписания: 'employee' (по умолчанию) или 'employer' (директор/ИП через NCALayer) */
+    signingRole?: 'employee' | 'employer';
 }
 
-export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, preRegisteredDocumentId, publicSigningToken }: SigexSignModalProps) {
-    const [step, setStep] = useState<'method-selection' | 'init' | 'qr' | 'ncalayer_init' | 'signing' | 'success' | 'error'>('method-selection');
+export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, preRegisteredDocumentId, publicSigningToken, signingRole = 'employee' }: SigexSignModalProps) {
+    const [step, setStep] = useState<'method-selection' | 'init' | 'qr' | 'ncalayer_init' | 'signing' | 'success' | 'error'>(
+        signingRole === 'employer' ? 'ncalayer_init' : 'method-selection'
+    );
     const [qrCode, setQrCode] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [eGovLinks, setEGovLinks] = useState<{ mobile: string; business: string } | null>(null);
@@ -258,35 +262,44 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
 
     const finalizeSignature = async (signature?: string) => {
         try {
-            const payload = {
-                signature: signature || undefined,
-                signType: 'cms' as const,
-                sigex_document_id: preRegisteredDocumentId || undefined,
-                sigex_operation_id: operationIdRef.current || undefined
-            };
-
-            if (publicSigningToken) {
-                const res = await fetch(`/api/sign/${publicSigningToken}/submit-signature`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        signature: payload.signature,
-                        sigex_document_id: payload.sigex_document_id,
-                        sigex_operation_id: payload.sigex_operation_id
-                    })
-                });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) {
-                    throw new Error((data as { error?: string }).error || `Ошибка сервера: ${res.status}`);
-                }
+            if (signingRole === 'employer') {
+                // Employer signing — uses NCALayer, saves via dedicated endpoint
+                const certInfo = signature ? extractCertInfo(signature) : undefined;
+                await api.signDocumentAsEmployer(documentId, signature || '', certInfo);
+                console.log(`[Sigex] Employer signed document ${documentId}`);
             } else {
-                await api.signDocument(documentId, payload);
+                // Employee signing — eGov QR or NCALayer
+                const payload = {
+                    signature: signature || undefined,
+                    signType: 'cms' as const,
+                    sigex_document_id: preRegisteredDocumentId || undefined,
+                    sigex_operation_id: operationIdRef.current || undefined
+                };
+
+                if (publicSigningToken) {
+                    const res = await fetch(`/api/sign/${publicSigningToken}/submit-signature`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            signature: payload.signature,
+                            sigex_document_id: payload.sigex_document_id,
+                            sigex_operation_id: payload.sigex_operation_id
+                        })
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                        throw new Error((data as { error?: string }).error || `Ошибка сервера: ${res.status}`);
+                    }
+                } else {
+                    await api.signDocument(documentId, payload);
+                }
             }
 
             console.log('✅ Signed with signature:', signature?.substring(0, 30) + '...');
             console.log('📝 Sigex document ID:', preRegisteredDocumentId);
             console.log('🔗 Operation ID:', operationIdRef.current);
-            
+            console.log('👤 Signing role:', signingRole);
+
             setStep('success');
             setTimeout(() => {
                 onSuccess();
@@ -299,12 +312,21 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
         }
     };
 
+    /** Extract basic cert info from CMS signature for logging */
+    const extractCertInfo = (_signature: string) => {
+        // In production, parse CMS and extract certificate details
+        // For now, just return a placeholder — actual parsing happens on backend
+        return { parsed: true, timestamp: new Date().toISOString() };
+    };
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
             <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
                 {/* Header */}
                 <div className="mb-6 flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Электронная подпись</h3>
+                    <h3 className="text-lg font-semibold">
+                        {signingRole === 'employer' ? 'Подпись работодателя' : 'Электронная подпись'}
+                    </h3>
                     <button onClick={onClose} className="rounded-full p-1 hover:bg-slate-100">
                         <X className="h-5 w-5 text-slate-500" />
                     </button>
@@ -313,10 +335,10 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
                 {/* Content */}
                 <div className="min-h-[300px] flex flex-col items-center justify-center text-center">
 
-                    {step === 'method-selection' && (
+                    {step === 'method-selection' && signingRole === 'employee' && (
                         <div className="space-y-4 w-full animate-in fade-in duration-300">
                             <p className="text-muted-foreground mb-6">Выберите удобный для вас способ подписания документа:</p>
-                            
+
                             <button
                                 onClick={startEgovSigningProcess}
                                 className="w-full flex items-center p-4 border-2 border-primary/20 rounded-xl hover:border-primary hover:bg-primary/5 transition-colors text-left group"
@@ -404,16 +426,25 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
                             </div>
                             <h4 className="text-xl font-bold text-slate-900">Ошибка подписания</h4>
                             <p className="text-red-600/90 whitespace-pre-wrap">{error}</p>
-                            
+
                             <div className="pt-4 flex gap-3 flex-col sm:flex-row w-full justify-center">
+                                {signingRole === 'employee' ? (
+                                    <button
+                                        onClick={() => setStep('method-selection')}
+                                        className="flex items-center justify-center gap-2 rounded-lg bg-slate-100 px-6 py-2.5 font-medium text-slate-700 hover:bg-slate-200 transition-colors w-full"
+                                    >
+                                        Выбрать способ
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={onClose}
+                                        className="flex items-center justify-center gap-2 rounded-lg bg-slate-100 px-6 py-2.5 font-medium text-slate-700 hover:bg-slate-200 transition-colors w-full"
+                                    >
+                                        Закрыть
+                                    </button>
+                                )}
                                 <button
-                                    onClick={() => setStep('method-selection')}
-                                    className="flex items-center justify-center gap-2 rounded-lg bg-slate-100 px-6 py-2.5 font-medium text-slate-700 hover:bg-slate-200 transition-colors w-full"
-                                >
-                                    Выбрать способ
-                                </button>
-                                <button
-                                    onClick={() => error?.includes('NCALayer') ? startNcaLayerSigning() : startEgovSigningProcess()}
+                                    onClick={() => startNcaLayerSigning()}
                                     className="flex items-center justify-center gap-2 rounded-lg bg-red-50 px-6 py-2.5 font-medium text-red-600 hover:bg-red-100 transition-colors w-full"
                                 >
                                     <RefreshCw className="h-4 w-4" />

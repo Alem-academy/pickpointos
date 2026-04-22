@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export type DocumentType = 'vacation_order' | 'vacation_application' | 'termination_order' | 'employment_certificate';
+export type DocumentType = 'vacation_order' | 'vacation_application' | 'termination_order' | 'employment_certificate' | 'addendum';
 
 interface VacationData {
     vacationDays: number;
@@ -19,6 +19,12 @@ interface TerminationData {
 
 interface CertificateData {
     salary: string;
+}
+
+interface AddendumData {
+    contractNumber: string;
+    contractDate: string;
+    changeTopic: string;
 }
 
 interface DocumentParamsModalProps {
@@ -46,6 +52,12 @@ export function DocumentParamsModal({ isOpen, documentType, onClose, onConfirm }
         salary: '85000'
     });
 
+    const [addendumData, setAddendumData] = useState<AddendumData>({
+        contractNumber: '',
+        contractDate: '',
+        changeTopic: ''
+    });
+
     if (!isOpen || !documentType) return null;
 
     const handleSubmit = () => {
@@ -70,6 +82,14 @@ export function DocumentParamsModal({ isOpen, documentType, onClose, onConfirm }
             case 'employment_certificate':
                 onConfirm(certificateData);
                 break;
+
+            case 'addendum':
+                if (!addendumData.contractNumber || !addendumData.contractDate) {
+                    alert('Укажите номер и дату договора');
+                    return;
+                }
+                onConfirm(addendumData);
+                break;
         }
     };
 
@@ -79,6 +99,7 @@ export function DocumentParamsModal({ isOpen, documentType, onClose, onConfirm }
             case 'vacation_application': return '✉️ Заявление на отпуск';
             case 'termination_order': return '📄 Приказ об увольнении';
             case 'employment_certificate': return '📋 Справка с места работы';
+            case 'addendum': return '📄 Дополнительное соглашение';
         }
     };
 
@@ -198,6 +219,43 @@ export function DocumentParamsModal({ isOpen, documentType, onClose, onConfirm }
                             />
                             <p className="text-xs text-slate-500">Укажите среднюю месячную зарплату</p>
                         </div>
+                    )}
+
+                    {/* Addendum Fields */}
+                    {documentType === 'addendum' && (
+                        <>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold">№ Договора</label>
+                                    <input
+                                        type="text"
+                                        value={addendumData.contractNumber}
+                                        onChange={(e) => setAddendumData({ ...addendumData, contractNumber: e.target.value })}
+                                        className="w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                        placeholder="ТД-001/26"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold">Дата договора</label>
+                                    <input
+                                        type="date"
+                                        value={addendumData.contractDate}
+                                        onChange={(e) => setAddendumData({ ...addendumData, contractDate: e.target.value })}
+                                        className="w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold">Тема изменений</label>
+                                <input
+                                    type="text"
+                                    value={addendumData.changeTopic}
+                                    onChange={(e) => setAddendumData({ ...addendumData, changeTopic: e.target.value })}
+                                    className="w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                    placeholder="Изменение адреса ПВЗ, должности и т.д."
+                                />
+                            </div>
+                        </>
                     )}
                 </div>
 

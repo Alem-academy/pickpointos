@@ -69,6 +69,14 @@ export const DOCUMENT_TYPES: Record<string, DocumentTypeConfig> = {
         category: 'generated',
         color: 'slate'
     },
+    addendum: {
+        type: 'addendum',
+        label: 'Дополнительное соглашение',
+        labelShort: 'Доп. соглашение',
+        icon: 'FileSignature',
+        category: 'generated',
+        color: 'indigo'
+    },
     // Uploaded documents
     id_main: {
         type: 'id_main',
