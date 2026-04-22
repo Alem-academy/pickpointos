@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api, type Employee } from "@/services/api";
 import { DocumentsList } from "@/components/hr/DocumentsList";
-import { Edit2, Save, Loader2, User, Phone, Mail, IdCard, Calendar, MapPin, Briefcase, CreditCard, Users } from "lucide-react";
+import { Edit2, Save, Loader2, User, Phone, Mail, IdCard, Calendar, MapPin, Briefcase, CreditCard, Users, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TransferModal } from "@/components/hr/TransferModal";
 import { TerminationModal } from "@/components/hr/TerminationModal";
@@ -70,7 +70,9 @@ export default function EmployeeProfile() {
             id_card_number: employee?.id_card_number || '',
             id_card_issued_by: employee?.id_card_issued_by || '',
             id_card_issue_date: employee?.id_card_issue_date ? new Date(employee.id_card_issue_date).toISOString().split('T')[0] : '',
-            probation_until: employee?.probation_until ? new Date(employee.probation_until).toISOString().split('T')[0] : ''
+            probation_until: employee?.probation_until ? new Date(employee.probation_until).toISOString().split('T')[0] : '',
+            contract_end_date: employee?.contract_end_date ? new Date(employee.contract_end_date).toISOString().split('T')[0] : '',
+            probation_months: employee?.probation_months || ''
         });
         setIsEditing(true);
     };
@@ -174,6 +176,8 @@ export default function EmployeeProfile() {
                                     <>
                                         <EditField label="Ставка (тенге)" type="number" value={editData.base_rate} onChange={v => setEditData({...editData, base_rate: v})} />
                                         <EditField label="Окончание испытательного срока" type="date" value={editData.probation_until} onChange={v => setEditData({...editData, probation_until: v})} />
+                                        <EditField label="Дата окончания договора" type="date" value={editData.contract_end_date} onChange={v => setEditData({...editData, contract_end_date: v})} />
+                                        <EditField label="Испытательный срок (мес.)" type="number" value={editData.probation_months} onChange={v => setEditData({...editData, probation_months: v})} />
                                     </>
                                 ) : (
                                     <>
@@ -183,6 +187,8 @@ export default function EmployeeProfile() {
                                         <InfoRow icon={<CreditCard className="w-4 h-4" />} label="Ставка" value={employee.base_rate ? `${employee.base_rate.toLocaleString()} ₸` : 'Не установлена'} />
                                         <InfoRow icon={<Calendar className="w-4 h-4" />} label="Дата найма" value={employee.hired_at ? new Date(employee.hired_at).toLocaleDateString('ru-RU') : 'Не нанят'} />
                                         <InfoRow icon={<Calendar className="w-4 h-4" />} label="Испытательный срок" value={employee.probation_until ? `до ${new Date(employee.probation_until).toLocaleDateString('ru-RU')}` : undefined} />
+                                        <InfoRow icon={<Calendar className="w-4 h-4" />} label="Дата окончания договора" value={employee.contract_end_date ? new Date(employee.contract_end_date).toLocaleDateString('ru-RU') : 'Не указана'} />
+                                        <InfoRow icon={<Clock className="w-4 h-4" />} label="Испытательный срок" value={employee.probation_months ? `${employee.probation_months} мес.` : undefined} />
                                         <InfoRow icon={<Calendar className="w-4 h-4" />} label="Дата создания" value={new Date(employee.created_at).toLocaleDateString('ru-RU')} />
                                     </>
                                 )}

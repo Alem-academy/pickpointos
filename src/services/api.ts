@@ -94,6 +94,8 @@ export interface Employee {
     id_card_issued_by?: string;
     id_card_issue_date?: string;
     registered_address?: string;
+    contract_end_date?: string;
+    probation_months?: number;
     onboarding_checklist?: Record<string, boolean>;
     rejection_reason?: string | null; // Reason for revision status
     emergency_contacts?: EmergencyContact[]; // Array of emergency contacts

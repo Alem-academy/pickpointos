@@ -42,6 +42,9 @@ export interface EmployeeFormData {
     idCardNumber?: string;
     idCardIssueDate?: string;
     idCardIssuedBy?: string;
+    // Contract fields
+    contractEndDate?: string;
+    probationMonths?: string;
 }
 
 export function useEmployeeForm() {
@@ -62,7 +65,9 @@ export function useEmployeeForm() {
         iban: '',
         idCardNumber: '',
         idCardIssueDate: '',
-        idCardIssuedBy: ''
+        idCardIssuedBy: '',
+        contractEndDate: '',
+        probationMonths: '3'
     });
 
     const [files, setFiles] = useState<FileUploadState>({

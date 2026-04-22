@@ -57,6 +57,31 @@ export function WorkConditionsStep({ formData, handleChange, pvzList }: WorkCond
                         />
                     </div>
                 </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-semibold">Дата окончания договора</label>
+                    <input
+                        name="contractEndDate"
+                        type="date"
+                        value={formData.contractEndDate || ''}
+                        onChange={handleChange}
+                        className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    />
+                    <p className="text-xs text-muted-foreground">Если не указано — +1 год от даты приема</p>
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-semibold">Испытательный срок (месяцев)</label>
+                    <select
+                        name="probationMonths"
+                        value={formData.probationMonths || '3'}
+                        onChange={handleChange}
+                        className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                        <option value="1">1 месяц</option>
+                        <option value="2">2 месяца</option>
+                        <option value="3">3 месяца</option>
+                        <option value="6">6 месяцев</option>
+                    </select>
+                </div>
             </div>
         </div>
     );
