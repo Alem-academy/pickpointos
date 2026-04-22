@@ -302,7 +302,7 @@ router.post('/documents/generate', async (req, res) => {
                 emp_address: emp.registered_address || emp.address || '__________',
                 emp_phone: emp.phone || '__________',
                 emp_email: emp.email || '__________',
-                rules_link: '#',
+                rules_link: 'https://drive.google.com/file/d/1Du_Sw3n9NmrTZB4CQZeiavH0OI3rUOEa/view',
             });
         } else if (type === 'order_hiring') {
             const contractRes = await query(
