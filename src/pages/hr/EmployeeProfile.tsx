@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api, type Employee } from "@/services/api";
 import { DocumentsList } from "@/components/hr/DocumentsList";
-import { Edit2, Save, Loader2, User, Phone, Mail, IdCard, Calendar, MapPin, Briefcase, CreditCard, Users, Clock } from "lucide-react";
+import { Edit2, Save, Loader2, User, Phone, Mail, IdCard, Calendar, MapPin, Briefcase, CreditCard, Users, Clock, Trash2, Plus } from "lucide-react";
+import { PhoneInput, IBANInput, IdCardInput, NumberInput } from "@/components/ui/masked-input";
 import { cn } from "@/lib/utils";
 import { TransferModal } from "@/components/hr/TransferModal";
 import { TerminationModal } from "@/components/hr/TerminationModal";
@@ -61,10 +62,11 @@ export default function EmployeeProfile() {
     const handleEdit = () => {
         setEditData({
             full_name: employee?.full_name || '',
+            patronymic: employee?.patronymic || '',
             phone: employee?.phone || '',
             email: employee?.email || '',
             iban: employee?.iban || '',
-            base_rate: employee?.base_rate || '',
+            base_rate: employee?.base_rate ? String(employee.base_rate) : '',
             address: employee?.address || '',
             registered_address: employee?.registered_address || '',
             id_card_number: employee?.id_card_number || '',
@@ -72,7 +74,8 @@ export default function EmployeeProfile() {
             id_card_issue_date: employee?.id_card_issue_date ? new Date(employee.id_card_issue_date).toISOString().split('T')[0] : '',
             probation_until: employee?.probation_until ? new Date(employee.probation_until).toISOString().split('T')[0] : '',
             contract_end_date: employee?.contract_end_date ? new Date(employee.contract_end_date).toISOString().split('T')[0] : '',
-            probation_months: employee?.probation_months || ''
+            probation_months: employee?.probation_months ? String(employee.probation_months) : '',
+            emergency_contacts: employee?.emergency_contacts && Array.isArray(employee.emergency_contacts) ? employee.emergency_contacts : [{ name: '', phone: '', relationship: '' }]
         });
         setIsEditing(true);
     };
@@ -138,12 +141,22 @@ export default function EmployeeProfile() {
                                 {isEditing ? (
                                     <>
                                         <EditField label="ФИО" value={editData.full_name} onChange={v => setEditData({...editData, full_name: v})} />
-                                        <EditField label="Телефон" value={editData.phone} onChange={v => setEditData({...editData, phone: v})} />
+                                        <EditField label="Отчество" value={editData.patronymic || ''} onChange={v => setEditData({...editData, patronymic: v})} />
+                                        <div className="py-2.5 border-b border-slate-100 last:border-0">
+                                            <label className="block text-xs text-slate-500 font-medium mb-1">Телефон</label>
+                                            <PhoneInput name="phone" value={editData.phone || ''} onChange={(e) => setEditData({...editData, phone: e.target.value})} />
+                                        </div>
                                         <EditField label="Email" value={editData.email} onChange={v => setEditData({...editData, email: v})} />
-                                        <EditField label="IBAN" value={editData.iban} onChange={v => setEditData({...editData, iban: v.toUpperCase()})} />
+                                        <div className="py-2.5 border-b border-slate-100 last:border-0">
+                                            <label className="block text-xs text-slate-500 font-medium mb-1">IBAN</label>
+                                            <IBANInput name="iban" value={editData.iban || ''} onChange={(e) => setEditData({...editData, iban: e.target.value})} />
+                                        </div>
                                         <EditField label="Адрес прописки" value={editData.registered_address} onChange={v => setEditData({...editData, registered_address: v})} />
                                         <EditField label="Фактический адрес" value={editData.address} onChange={v => setEditData({...editData, address: v})} />
-                                        <EditField label="Номер УДЛ" value={editData.id_card_number} onChange={v => setEditData({...editData, id_card_number: v})} />
+                                        <div className="py-2.5 border-b border-slate-100 last:border-0">
+                                            <label className="block text-xs text-slate-500 font-medium mb-1">Номер УДЛ</label>
+                                            <IdCardInput name="id_card_number" value={editData.id_card_number || ''} onChange={(e) => setEditData({...editData, id_card_number: e.target.value})} />
+                                        </div>
                                         <EditField label="Кем выдан" value={editData.id_card_issued_by} onChange={v => setEditData({...editData, id_card_issued_by: v})} />
                                         <EditField label="Дата выдачи УДЛ" type="date" value={editData.id_card_issue_date} onChange={v => setEditData({...editData, id_card_issue_date: v})} />
                                     </>
@@ -174,7 +187,10 @@ export default function EmployeeProfile() {
                             <div className="p-5 space-y-0.5">
                                 {isEditing ? (
                                     <>
-                                        <EditField label="Ставка (тенге)" type="number" value={editData.base_rate} onChange={v => setEditData({...editData, base_rate: v})} />
+                                        <div className="py-2.5 border-b border-slate-100 last:border-0">
+                                            <label className="block text-xs text-slate-500 font-medium mb-1">Ставка (тенге)</label>
+                                            <NumberInput name="base_rate" value={String(editData.base_rate || '')} onChange={(e) => setEditData({...editData, base_rate: e.target.value})} />
+                                        </div>
                                         <EditField label="Окончание испытательного срока" type="date" value={editData.probation_until} onChange={v => setEditData({...editData, probation_until: v})} />
                                         <EditField label="Дата окончания договора" type="date" value={editData.contract_end_date} onChange={v => setEditData({...editData, contract_end_date: v})} />
                                         <EditField label="Испытательный срок (мес.)" type="number" value={editData.probation_months} onChange={v => setEditData({...editData, probation_months: v})} />
@@ -198,13 +214,83 @@ export default function EmployeeProfile() {
                 </div>
 
                 {/* Emergency Contacts */}
-                {employee.emergency_contacts && employee.emergency_contacts.length > 0 && (
-                    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden mb-6">
-                        <div className="bg-slate-50 px-5 py-3 border-b border-slate-200">
-                            <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide flex items-center gap-2"><Users className="w-4 h-4" /> Экстренные контакты</h2>
-                        </div>
-                        <div className="p-5">
-                            {employee.emergency_contacts && Array.isArray(employee.emergency_contacts) && employee.emergency_contacts.length > 0 ? (
+                <div className="bg-white rounded-lg border border-slate-200 overflow-hidden mb-6">
+                    <div className="bg-slate-50 px-5 py-3 border-b border-slate-200">
+                        <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide flex items-center gap-2"><Users className="w-4 h-4" /> Экстренные контакты</h2>
+                    </div>
+                    <div className="p-5">
+                        {isEditing ? (
+                            <div className="space-y-4">
+                                {(editData.emergency_contacts || []).map((contact: any, idx: number) => (
+                                    <div key={idx} className="grid gap-3 md:grid-cols-4 items-end p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                        <div>
+                                            <label className="block text-xs text-slate-500 font-medium mb-1">ФИО</label>
+                                            <input
+                                                value={contact.name || ''}
+                                                onChange={e => {
+                                                    const updated = [...(editData.emergency_contacts || [])];
+                                                    updated[idx] = { ...updated[idx], name: e.target.value };
+                                                    setEditData({ ...editData, emergency_contacts: updated });
+                                                }}
+                                                className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                                placeholder="Иванов Иван"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-slate-500 font-medium mb-1">Телефон</label>
+                                            <PhoneInput
+                                                name={`ec_phone_${idx}`}
+                                                value={contact.phone || ''}
+                                                onChange={(e) => {
+                                                    const updated = [...(editData.emergency_contacts || [])];
+                                                    updated[idx] = { ...updated[idx], phone: e.target.value };
+                                                    setEditData({ ...editData, emergency_contacts: updated });
+                                                }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-slate-500 font-medium mb-1">Кем приходится</label>
+                                            <select
+                                                value={contact.relationship || ''}
+                                                onChange={e => {
+                                                    const updated = [...(editData.emergency_contacts || [])];
+                                                    updated[idx] = { ...updated[idx], relationship: e.target.value };
+                                                    setEditData({ ...editData, emergency_contacts: updated });
+                                                }}
+                                                className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                            >
+                                                <option value="">Выберите...</option>
+                                                <option value="мать">Мать</option>
+                                                <option value="отец">Отец</option>
+                                                <option value="супруг(а)">Супруг(а)</option>
+                                                <option value="брат/сестра">Брат/Сестра</option>
+                                                <option value="друг/подруга">Друг/Подруга</option>
+                                                <option value="другое">Другое</option>
+                                            </select>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                const updated = (editData.emergency_contacts || []).filter((_: any, i: number) => i !== idx);
+                                                setEditData({ ...editData, emergency_contacts: updated });
+                                            }}
+                                            className="flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                                        >
+                                            <Trash2 className="w-4 h-4" /> Удалить
+                                        </button>
+                                    </div>
+                                ))}
+                                <button
+                                    onClick={() => {
+                                        const updated = [...(editData.emergency_contacts || []), { name: '', phone: '', relationship: '' }];
+                                        setEditData({ ...editData, emergency_contacts: updated });
+                                    }}
+                                    className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
+                                >
+                                    <Plus className="w-4 h-4" /> Добавить контакт
+                                </button>
+                            </div>
+                        ) : (
+                            employee.emergency_contacts && Array.isArray(employee.emergency_contacts) && employee.emergency_contacts.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {employee.emergency_contacts.map((contact: any, idx: number) => (
                                         <div key={idx} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
@@ -216,10 +302,10 @@ export default function EmployeeProfile() {
                                 </div>
                             ) : (
                                 <p className="text-sm text-slate-500 text-center py-4">Экстренные контакты не указаны</p>
-                            )}
-                        </div>
+                            )
+                        )}
                     </div>
-                )}
+                </div>
 
                 {/* Tabs */}
                 <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">

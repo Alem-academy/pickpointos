@@ -174,6 +174,14 @@ router.post('/employees', async (req, res) => {
             return res.status(400).json({ error: 'Missing required fields (IIN, Full Name, Role)' });
         }
 
+        // Auto-compute probation_until from hired_at + probation_months
+        let computedProbationUntil = probation_until || null;
+        if (!computedProbationUntil && hired_at && probation_months) {
+            const d = new Date(hired_at);
+            d.setMonth(d.getMonth() + Number(probation_months));
+            computedProbationUntil = d.toISOString().split('T')[0];
+        }
+
         const result = await query(`
             INSERT INTO employees (
                 iin, full_name, phone, email, role, main_pvz_id, status,
@@ -193,7 +201,7 @@ router.post('/employees', async (req, res) => {
             status || 'new',
             address || null,
             base_rate || null,
-            probation_until || null,
+            computedProbationUntil,
             hired_at || null,
             iban || null,
             emergency_contacts ? JSON.stringify(emergency_contacts) : null,
@@ -380,6 +388,14 @@ router.patch('/employees/:id/status', async (req, res) => {
         if (req.body.address !== undefined) {
             sql += `, address = $${paramIdx++}`;
             params.push(req.body.address);
+        }
+
+        // Auto-compute probation_until if hired_at and probation_months are present
+        if (req.body.probation_until === undefined && req.body.hired_at && req.body.probation_months) {
+            const d = new Date(req.body.hired_at);
+            d.setMonth(d.getMonth() + Number(req.body.probation_months));
+            sql += `, probation_until = $${paramIdx++}`;
+            params.push(d.toISOString().split('T')[0]);
         }
 
         sql += ` WHERE id = $2 RETURNING *`;

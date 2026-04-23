@@ -252,12 +252,21 @@ router.post('/documents/generate', async (req, res) => {
         const contractNum = `ТД-${String(seq).padStart(3, '0')}/${yearShort}`;
 
         if (type === 'contract') {
+            // Allow overriding start date from request
+            const startDateParam = req.body.startDate;
+            let effectiveHiredAt = emp.hired_at;
+            if (startDateParam) {
+                effectiveHiredAt = startDateParam;
+                // Update hired_at in DB so it's persisted for future docs
+                await query('UPDATE employees SET hired_at = $1 WHERE id = $2', [startDateParam, employeeId]);
+            }
+
             // Compute contract end date
             let endDateStr;
             if (emp.contract_end_date) {
                 endDateStr = new Date(emp.contract_end_date).toLocaleDateString('ru-RU');
-            } else if (emp.hired_at) {
-                const d = new Date(emp.hired_at);
+            } else if (effectiveHiredAt) {
+                const d = new Date(effectiveHiredAt);
                 d.setFullYear(d.getFullYear() + 1);
                 endDateStr = d.toLocaleDateString('ru-RU');
             } else {
@@ -272,8 +281,8 @@ router.post('/documents/generate', async (req, res) => {
                 const m = emp.probation_months;
                 const suffix = m === 1 ? '' : m < 5 ? 'а' : 'ев';
                 probationText = `${m} месяц${suffix} / ${m} ай`;
-            } else if (emp.probation_until && emp.hired_at) {
-                const months = Math.round((new Date(emp.probation_until) - new Date(emp.hired_at)) / (30 * 24 * 60 * 60 * 1000));
+            } else if (emp.probation_until && effectiveHiredAt) {
+                const months = Math.round((new Date(emp.probation_until) - new Date(effectiveHiredAt)) / (30 * 24 * 60 * 60 * 1000));
                 const suffix = months === 1 ? '' : months < 5 ? 'а' : 'ев';
                 probationText = `${months} месяц${suffix} / ${months} ай`;
             } else {
@@ -281,7 +290,7 @@ router.post('/documents/generate', async (req, res) => {
             }
 
             const baseRate = emp.base_rate ? Number(emp.base_rate) : 85000;
-            const startDateStr = emp.hired_at ? new Date(emp.hired_at).toLocaleDateString('ru-RU') : dateRu;
+            const startDateStr = effectiveHiredAt ? new Date(effectiveHiredAt).toLocaleDateString('ru-RU') : dateRu;
 
             htmlContent = fillTemplate(CONTRACT_TEMPLATE, {
                 doc_number: contractNum,

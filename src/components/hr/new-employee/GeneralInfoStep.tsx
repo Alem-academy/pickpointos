@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from "@/lib/utils";
 import { type EmergencyContact, type FormErrors, type EmployeeFormData } from "@/hooks/useEmployeeForm";
+import { IINInput, PhoneInput, IBANInput, IdCardInput } from "@/components/ui/masked-input";
 
 interface GeneralInfoStepProps {
     formData: EmployeeFormData;
@@ -54,17 +55,12 @@ export function GeneralInfoStep({ formData, errors, handleChange, emergencyConta
                 </div>
                 <div className="space-y-2">
                     <label className="text-sm font-semibold">ИИН <span className="text-destructive">*</span></label>
-                    <input
-                        required
+                    <IINInput
                         name="iin"
-                        maxLength={12}
                         value={formData.iin}
                         onChange={handleChange}
-                        className={cn(
-                            "w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50",
-                            errors.iin && "border-red-500 focus:ring-red-500"
-                        )}
-                        placeholder="12 цифр"
+                        error={!!errors.iin}
+                        placeholder="000 000 000 000"
                     />
                     {errors.iin && (
                         <p className="text-xs text-red-500">{errors.iin}</p>
@@ -72,17 +68,12 @@ export function GeneralInfoStep({ formData, errors, handleChange, emergencyConta
                 </div>
                 <div className="space-y-2">
                     <label className="text-sm font-semibold">Телефон <span className="text-destructive">*</span></label>
-                    <input
-                        required
+                    <PhoneInput
                         name="phone"
-                        type="tel"
                         value={formData.phone}
                         onChange={handleChange}
-                        className={cn(
-                            "w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50",
-                            errors.phone && "border-red-500 focus:ring-red-500"
-                        )}
-                        placeholder="+7..."
+                        error={!!errors.phone}
+                        placeholder="+7 (___) ___-__-__"
                     />
                     {errors.phone && (
                         <p className="text-xs text-red-500">{errors.phone}</p>
@@ -111,12 +102,11 @@ export function GeneralInfoStep({ formData, errors, handleChange, emergencyConta
                 </div>
                 <div className="space-y-2">
                     <label className="text-sm font-semibold">IBAN</label>
-                    <input
+                    <IBANInput
                         name="iban"
                         value={formData.iban}
                         onChange={handleChange}
-                        className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-mono"
-                        placeholder="KZ..."
+                        placeholder="KZ__ ____ ____ ____ ____"
                     />
                 </div>
                 <div className="space-y-2 md:col-span-2">
@@ -155,11 +145,10 @@ export function GeneralInfoStep({ formData, errors, handleChange, emergencyConta
                     <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2">
                             <label className="text-xs font-medium">Номер удостоверения</label>
-                            <input
+                            <IdCardInput
                                 name="idCardNumber"
                                 value={formData.idCardNumber || ''}
                                 onChange={handleChange}
-                                className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                                 placeholder="AB 1234567"
                             />
                         </div>

@@ -93,6 +93,17 @@ CREATE TABLE employees (
     -- Financials & Legal
     base_rate DECIMAL(10, 2), -- Ставка
     probation_until DATE, -- Испытательный срок
+    probation_months INT DEFAULT 3, -- Срок испытательного срока в месяцах
+    contract_end_date DATE, -- Дата окончания договора
+    iban VARCHAR(34), -- Расчетный счет
+    patronymic VARCHAR(100), -- Отчество
+
+    -- Address & ID
+    address TEXT, -- Фактический адрес
+    registered_address TEXT, -- Адрес прописки
+    id_card_number VARCHAR(50), -- Номер удостоверения личности
+    id_card_issued_by VARCHAR(255), -- Кем выдано УДЛ
+    id_card_issue_date DATE, -- Дата выдачи УДЛ
 
     -- Meta
     hired_at TIMESTAMP WITH TIME ZONE,

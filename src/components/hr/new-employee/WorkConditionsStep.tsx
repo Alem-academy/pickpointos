@@ -1,6 +1,7 @@
 import React from 'react';
 import { type PVZ } from "@/services/api";
 import { type EmployeeFormData } from "@/hooks/useEmployeeForm";
+import { NumberInput } from "@/components/ui/masked-input";
 
 interface WorkConditionsStepProps {
     formData: EmployeeFormData;
@@ -49,11 +50,13 @@ export function WorkConditionsStep({ formData, handleChange, pvzList }: WorkCond
                     <label className="text-sm font-semibold">Оклад (МЗП) <span className="text-destructive">*</span></label>
                     <div className="relative">
                         <span className="absolute left-4 top-3 text-muted-foreground font-bold">₸</span>
-                        <input
-                            readOnly
-                            type="text"
-                            value="85 000"
-                            className="w-full rounded-lg border bg-slate-100 text-slate-500 pl-10 pr-4 py-3 text-sm focus:outline-none cursor-not-allowed font-semibold"
+                        <NumberInput
+                            name="baseRate"
+                            value={formData.baseRate || '85000'}
+                            onChange={handleChange}
+                            prefix=""
+                            className="pl-10"
+                            placeholder="85 000"
                         />
                     </div>
                 </div>

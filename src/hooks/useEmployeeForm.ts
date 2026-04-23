@@ -23,6 +23,7 @@ export interface FormErrors {
     iin?: string;
     phone?: string;
     address?: string;
+    baseRate?: string;
 }
 
 export interface EmployeeFormData {
@@ -115,7 +116,7 @@ export function useEmployeeForm() {
                 return null;
             case 'phone':
                 if (!value) return 'Телефон обязателен';
-                if (!value.startsWith('+')) return 'Телефон должен начинаться с +';
+                if (value.length < 10) return 'Введите полный номер телефона';
                 return null;
             case 'firstName':
                 if (!value) return 'Имя обязательно';
@@ -125,6 +126,9 @@ export function useEmployeeForm() {
                 return null;
             case 'address':
                 if (!value) return 'Адрес обязателен';
+                return null;
+            case 'baseRate':
+                if (!value || Number(value) <= 0) return 'Укажите оклад';
                 return null;
             default:
                 return null;
@@ -176,6 +180,10 @@ export function useEmployeeForm() {
             }
             if (!formData.address) {
                 newErrors.address = 'Адрес обязателен';
+                isValid = false;
+            }
+            if (!formData.baseRate || Number(formData.baseRate) <= 0) {
+                newErrors.baseRate = 'Укажите оклад';
                 isValid = false;
             }
 
