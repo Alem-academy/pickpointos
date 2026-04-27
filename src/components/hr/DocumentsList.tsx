@@ -388,6 +388,28 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                     </button>
 
                     <button
+                        onClick={() => handleGenerate('addendum')}
+                        disabled={!!isGenerating}
+                        className={cn(
+                            "flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all hover:shadow-md",
+                            isGenerating === 'addendum'
+                                ? "border-primary bg-primary/10"
+                                : "border-slate-200 bg-white hover:border-primary/50 hover:bg-primary/5"
+                        )}
+                    >
+                        {isGenerating === 'addendum' ? (
+                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        ) : (
+                            <div className="h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                                <svg className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                        )}
+                        <span className="text-sm font-medium text-slate-900">Доп. соглашение</span>
+                    </button>
+
+                    <button
                         onClick={() => handleGenerate('order_hiring')}
                         disabled={!!isGenerating}
                         className={cn(
@@ -430,34 +452,29 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                         )}
                         <span className="text-sm font-medium text-slate-900">Заявление</span>
                     </button>
-
-                    <button
-                        onClick={() => handleGenerate('vacation_application')}
-                        disabled={!!isGenerating}
-                        className={cn(
-                            "flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all hover:shadow-md",
-                            isGenerating === 'vacation_application'
-                                ? "border-primary bg-primary/10"
-                                : "border-slate-200 bg-white hover:border-primary/50 hover:bg-primary/5"
-                        )}
-                    >
-                        {isGenerating === 'vacation_application' ? (
-                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                        ) : (
-                            <div className="h-8 w-8 rounded-lg bg-purple-100 flex items-center justify-center">
-                                <svg className="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                        )}
-                        <span className="text-sm font-medium text-slate-900">Заявление на отпуск</span>
-                    </button>
                 </div>
                 
                 {/* Additional Documents */}
                 <div className="border-t border-primary/20 pt-4">
                     <p className="text-xs font-semibold text-slate-600 mb-3">📄 Дополнительные документы</p>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <button
+                            onClick={() => handleGenerate('vacation_application')}
+                            disabled={!!isGenerating}
+                            className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-slate-200 hover:border-primary/50 hover:bg-primary/5 transition-all"
+                        >
+                            {isGenerating === 'vacation_application' ? (
+                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                            ) : (
+                                <div className="h-7 w-7 rounded bg-purple-100 flex items-center justify-center">
+                                    <svg className="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                            )}
+                            <span className="text-xs font-medium text-slate-700">Заявление на отпуск</span>
+                        </button>
+
                         <button
                             onClick={() => handleGenerate('vacation_order')}
                             disabled={!!isGenerating}
@@ -507,40 +524,6 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                 </div>
                             )}
                             <span className="text-xs font-medium text-slate-700">Справка с места работы</span>
-                        </button>
-
-                        <button
-                            onClick={() => handleGenerate('addendum')}
-                            disabled={!!isGenerating}
-                            className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-slate-200 hover:border-primary/50 hover:bg-primary/5 transition-all"
-                        >
-                            {isGenerating === 'addendum' ? (
-                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                            ) : (
-                                <div className="h-7 w-7 rounded bg-indigo-100 flex items-center justify-center">
-                                    <svg className="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                </div>
-                            )}
-                            <span className="text-xs font-medium text-slate-700">Доп. соглашение</span>
-                        </button>
-
-                        <button
-                            onClick={() => handleGenerate('bank_details')}
-                            disabled={!!isGenerating}
-                            className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-slate-200 hover:border-primary/50 hover:bg-primary/5 transition-all"
-                        >
-                            {isGenerating === 'bank_details' ? (
-                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                            ) : (
-                                <div className="h-7 w-7 rounded bg-emerald-100 flex items-center justify-center">
-                                    <svg className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                    </svg>
-                                </div>
-                            )}
-                            <span className="text-xs font-medium text-slate-700">Реквизиты</span>
                         </button>
                     </div>
                 </div>
