@@ -47,7 +47,7 @@ export interface Document {
     id: string;
     employee_id: string;
     type: 'contract' | 'order_hiring' | 'application' | 'vacation_application' | 'vacation_order' | 'termination_order' | 'employment_certificate' | 'addendum' | 'id_main' | 'id_register' | 'id_scan' | 'cert_075' | 'photo' | 'bank_details' | 'cert_tb' | 'address_cert' | 'other';
-    status: 'draft' | 'sent_to_employee' | 'signed' | 'rejected' | 'archived';
+    status: 'draft' | 'sent_to_employee' | 'signed' | 'fully_signed' | 'employer_signed' | 'rejected' | 'archived';
     scan_url?: string;
     thumbnail_url?: string;
     created_at: string;
