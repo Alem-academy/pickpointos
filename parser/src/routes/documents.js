@@ -23,6 +23,7 @@ import { Logger } from '../lib/logger.js';
 import { logDocumentGenerated } from '../lib/activityLogger.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { generateSignatureSheet, getDocumentVerificationData } from '../services/signatureSheet.service.js';
+import { getTemplate, getSchema, listAllTemplates } from '../services/templateRegistry.js';
 
 // Sigex integration is handled via frontend SigexService
 // Documents are pre-registered on generation and signed via eGov QR
@@ -39,7 +40,19 @@ const DOC_SIGN_FILE_NAME_ASCII = {
     vacation_order: 'vacation_order.pdf',
     termination_order: 'termination_order.pdf',
     employment_certificate: 'employment_certificate.pdf',
-    addendum: 'addendum.pdf'
+    addendum: 'addendum.pdf',
+    '01_zayavlenie-o-vyhode-s-dekreta': 'maternity_return.pdf',
+    '02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom': 'childcare_leave.pdf',
+    '03_zayavlenie-ob-izmenenii-personalnyh-dannyh': 'personal_data_change.pdf',
+    '04_prikaz-ob-otpuske-po-beremennosti-i-rodam': 'maternity_leave_order.pdf',
+    '05_prikaz-o-prodlenii-otpuska-po-beremennosti': 'maternity_extension_order.pdf',
+    '06_prikaz-o-vnesenii-izmeneniy-v-fio': 'name_change_order.pdf',
+    '07_prikaz-o-vyhode-iz-otpuska-po-uhodu': 'childcare_return_order.pdf',
+    '08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu': 'unpaid_childcare_order.pdf',
+    '09_zayavlenie-na-otpusk-po-beremennosti': 'maternity_leave_app.pdf',
+    '10_zayavlenie-na-prodlenie-otpuska-po-beremennosti': 'maternity_extension_app.pdf',
+    '11_soglashenie-o-rastorzhenii-trudovogo-dogovora': 'termination_agreement.pdf',
+    '12_dop-soglashenie-ob-izmenenii-familii': 'surname_addendum.pdf',
 };
 
 /**
@@ -179,6 +192,89 @@ router.get('/documents/stats', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
+// GET /templates/schemas - List all available document templates with schemas
+router.get('/templates/schemas', async (req, res) => {
+    try {
+        const templates = listAllTemplates();
+        res.json({ templates });
+    } catch (err) {
+        Logger.error('Error fetching templates:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// GET /templates/schemas/:type - Get schema for a specific template
+router.get('/templates/schemas/:type', async (req, res) => {
+    try {
+        const { type } = req.params;
+        const schema = getSchema(type);
+        const template = getTemplate(type);
+        if (!schema || !template) {
+            return res.status(404).json({ error: 'Template not found' });
+        }
+        res.json({ schema, hasTemplate: !!template });
+    } catch (err) {
+        Logger.error('Error fetching template schema:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+/**
+ * Build template data by mapping employee/employer fields to template variables.
+ * Auto-fills known variables; leaves unknown ones for manual input.
+ */
+function buildTemplateData(emp, employer, schema, params = {}) {
+    const now = new Date();
+    const MONTHS_RU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+
+    const autoData = {
+        // Employee fields
+        employeeFullName: emp.full_name || '',
+        employeePosition: emp.role === 'rf' ? 'Регионального менеджера' : 'Менеджера ПВЗ',
+        employeeIIN: emp.iin || '',
+        employeeAddress: emp.registered_address || emp.address || '',
+        employeePhone: emp.phone || '',
+        employeeEmail: emp.email || '',
+        employeeIBAN: emp.iban || '',
+        employeeIdCard: emp.id_card_number || '',
+        employeeIdCardIssuedBy: emp.id_card_issued_by || '',
+        employeeIdCardIssueDate: emp.id_card_issue_date ? new Date(emp.id_card_issue_date).toLocaleDateString('ru-RU') : '',
+
+        // Employer fields
+        employerName: employer.name || '',
+        employerShortName: employer.short_name || '',
+        employerBIN: employer.bin || '',
+        employerDirector: employer.director_name || '',
+        employerDirectorDative: employer.director_name_dative || '',
+        employerAddress: employer.address || '',
+        employerBank: employer.bank || '',
+        employerBIK: employer.bik || '',
+        employerIBAN: employer.iban || '',
+
+        // Current date components
+        currentDate: `${now.getDate()} ${MONTHS_RU[now.getMonth()]} ${now.getFullYear()} г.`,
+        currentDateDay: String(now.getDate()),
+        currentDateMonth: MONTHS_RU[now.getMonth()],
+        currentDateYear: String(now.getFullYear()),
+        currentDateShort: `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}`,
+
+        // PVZ
+        pvzAddress: emp.pvz_address || '',
+        pvzName: emp.pvz_name || '',
+    };
+
+    // Merge auto + manual params (manual overrides auto)
+    const merged = { ...autoData, ...params };
+
+    // Ensure all required fields have at least placeholder
+    const result = {};
+    for (const key of Object.keys(schema.variables || {})) {
+        result[key] = merged[key] !== undefined && merged[key] !== '' ? merged[key] : '__________';
+    }
+
+    return result;
+}
 
 // POST /documents/generate - Generate a new document with employer data
 // Employer is automatically selected based on employee's main_pvz_id
@@ -449,7 +545,17 @@ router.post('/documents/generate', async (req, res) => {
                 pvz_address: emp.pvz_address || 'не указан',
             });
         } else {
-            return res.status(400).json({ error: 'Unsupported document type' });
+            // Universal template generation for document-templates/ files
+            const template = getTemplate(type);
+            const schema = getSchema(type);
+
+            if (!template || !schema) {
+                return res.status(400).json({ error: 'Unsupported document type' });
+            }
+
+            const userParams = req.body.params || {};
+            const data = buildTemplateData(emp, employer, schema, userParams);
+            htmlContent = fillTemplate(template, data);
         }
 
         // Save generated HTML to S3
@@ -466,7 +572,16 @@ router.post('/documents/generate', async (req, res) => {
 
         // Save to database
         // Documents requiring employer signature per ст. 33 ТК РК
-        const typesRequiringEmployerSignature = ['contract', 'order_hiring', 'vacation_order', 'termination_order', 'employment_certificate', 'addendum'];
+        const typesRequiringEmployerSignature = [
+            'contract', 'order_hiring', 'vacation_order', 'termination_order', 'employment_certificate', 'addendum',
+            '04_prikaz-ob-otpuske-po-beremennosti-i-rodam',
+            '05_prikaz-o-prodlenii-otpuska-po-beremennosti',
+            '06_prikaz-o-vnesenii-izmeneniy-v-fio',
+            '07_prikaz-o-vyhode-iz-otpuska-po-uhodu',
+            '08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu',
+            '11_soglashenie-o-rastorzhenii-trudovogo-dogovora',
+            '12_dop-soglashenie-ob-izmenenii-familii',
+        ];
         const requiresEmployerSignature = typesRequiringEmployerSignature.includes(type);
 
         const docResult = await query(`

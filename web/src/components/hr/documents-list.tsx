@@ -37,6 +37,18 @@ const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   bank_details: "Справка IBAN",
   address_cert: "Адресная справка",
   other: "Другой документ",
+  "01_zayavlenie-o-vyhode-s-dekreta": "Заявление о выходе с декрета",
+  "02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom": "Заявление на отпуск по уходу",
+  "03_zayavlenie-ob-izmenenii-personalnyh-dannyh": "Заявление об изменении данных",
+  "04_prikaz-ob-otpuske-po-beremennosti-i-rodam": "Приказ об отпуске по беременности",
+  "05_prikaz-o-prodlenii-otpuska-po-beremennosti": "Приказ о продлении отпуска",
+  "06_prikaz-o-vnesenii-izmeneniy-v-fio": "Приказ об изменении ФИО",
+  "07_prikaz-o-vyhode-iz-otpuska-po-uhodu": "Приказ о выходе из отпуска",
+  "08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu": "Приказ об отпуске без сохранения ЗП",
+  "09_zayavlenie-na-otpusk-po-beremennosti": "Заявление на отпуск по беременности",
+  "10_zayavlenie-na-prodlenie-otpuska-po-beremennosti": "Заявление на продление отпуска",
+  "11_soglashenie-o-rastorzhenii-trudovogo-dogovora": "Соглашение о расторжении",
+  "12_dop-soglashenie-ob-izmenenii-familii": "Доп. согл. об изменении фамилии",
 };
 
 export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps) {
@@ -77,6 +89,18 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
         "termination_order",
         "employment_certificate",
         "addendum",
+        "01_zayavlenie-o-vyhode-s-dekreta",
+        "02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom",
+        "03_zayavlenie-ob-izmenenii-personalnyh-dannyh",
+        "04_prikaz-ob-otpuske-po-beremennosti-i-rodam",
+        "05_prikaz-o-prodlenii-otpuska-po-beremennosti",
+        "06_prikaz-o-vnesenii-izmeneniy-v-fio",
+        "07_prikaz-o-vyhode-iz-otpuska-po-uhodu",
+        "08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu",
+        "09_zayavlenie-na-otpusk-po-beremennosti",
+        "10_zayavlenie-na-prodlenie-otpuska-po-beremennosti",
+        "11_soglashenie-o-rastorzhenii-trudovogo-dogovora",
+        "12_dop-soglashenie-ob-izmenenii-familii",
       ];
       if (needsParams.includes(type)) {
         setPendingDocType(type as DocumentType);

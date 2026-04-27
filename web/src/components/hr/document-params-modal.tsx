@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -18,35 +18,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { api } from "@/services/api";
+import { Loader2 } from "lucide-react";
 
-export type DocumentType =
-  | "vacation_order"
-  | "vacation_application"
-  | "termination_order"
-  | "employment_certificate"
-  | "addendum";
+export type DocumentType = string;
 
-interface VacationData {
-  vacationDays: number;
-  vacationStart: string;
-  vacationEnd: string;
+interface SchemaVariable {
+  type: "string" | "date" | "number" | "boolean" | "select";
+  description: string;
+  required?: boolean;
+  options?: string[];
 }
 
-interface TerminationData {
-  terminationDate: string;
-  terminationReason: string;
-  contractNumber: string;
-  contractDate: string;
-}
-
-interface CertificateData {
-  salary: string;
-}
-
-interface AddendumData {
-  contractNumber: string;
-  contractDate: string;
-  changeTopic: string;
+interface TemplateSchema {
+  templateName: string;
+  fileName: string;
+  type: string;
+  required: string[];
+  variables: Record<string, SchemaVariable>;
 }
 
 interface DocumentParamsModalProps {
@@ -56,71 +45,133 @@ interface DocumentParamsModalProps {
   onConfirm: (data: any) => void;
 }
 
+const LEGACY_FIELDS: Record<string, Record<string, any>> = {
+  vacation_order: {
+    vacationDays: 14,
+    vacationStart: "",
+    vacationEnd: "",
+  },
+  vacation_application: {
+    vacationDays: 14,
+    vacationStart: "",
+    vacationEnd: "",
+  },
+  termination_order: {
+    terminationDate: "",
+    terminationReason: "по собственному желанию",
+    contractNumber: "",
+    contractDate: "",
+  },
+  employment_certificate: {
+    salary: "85000",
+  },
+  addendum: {
+    contractNumber: "",
+    contractDate: "",
+    changeTopic: "",
+  },
+};
+
 export function DocumentParamsModal({
   isOpen,
   documentType,
   onClose,
   onConfirm,
 }: DocumentParamsModalProps) {
-  const [vacationData, setVacationData] = useState<VacationData>({
-    vacationDays: 14,
-    vacationStart: "",
-    vacationEnd: "",
-  });
+  const [schema, setSchema] = useState<TemplateSchema | null>(null);
+  const [params, setParams] = useState<Record<string, any>>({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [terminationData, setTerminationData] = useState<TerminationData>({
-    terminationDate: "",
-    terminationReason: "по собственному желанию",
-    contractNumber: "",
-    contractDate: "",
-  });
+  useEffect(() => {
+    if (!isOpen || !documentType) return;
 
-  const [certificateData, setCertificateData] = useState<CertificateData>({
-    salary: "85000",
-  });
+    // Legacy hardcoded types — keep existing behavior
+    if (LEGACY_FIELDS[documentType]) {
+      setSchema(null);
+      setParams({ ...LEGACY_FIELDS[documentType] });
+      return;
+    }
 
-  const [addendumData, setAddendumData] = useState<AddendumData>({
-    contractNumber: "",
-    contractDate: "",
-    changeTopic: "",
-  });
+    setIsLoading(true);
+    api
+      .getTemplateSchema(documentType)
+      .then((data) => {
+        setSchema(data);
+        const defaults: Record<string, any> = {};
+        Object.entries(data.variables || {}).forEach(([key, variable]) => {
+          if (variable.type === "number") defaults[key] = 0;
+          else if (variable.type === "boolean") defaults[key] = false;
+          else if (variable.type === "select" && variable.options)
+            defaults[key] = variable.options[0] || "";
+          else defaults[key] = "";
+        });
+        setParams(defaults);
+      })
+      .catch((err) => {
+        console.error("Failed to load template schema:", err);
+        setSchema(null);
+        setParams({});
+      })
+      .finally(() => setIsLoading(false));
+  }, [isOpen, documentType]);
 
   if (!isOpen || !documentType) return null;
 
   const handleSubmit = () => {
+    if (schema) {
+      // Dynamic schema validation
+      const missing = schema.required.filter(
+        (field) =>
+          params[field] === undefined ||
+          params[field] === null ||
+          params[field] === ""
+      );
+      if (missing.length > 0) {
+        alert(
+          `Заполните обязательные поля: ${missing
+            .map((f) => schema.variables[f]?.description || f)
+            .join(", ")}`
+        );
+        return;
+      }
+      onConfirm(params);
+      return;
+    }
+
+    // Legacy submission logic
     switch (documentType) {
       case "vacation_order":
       case "vacation_application":
-        if (!vacationData.vacationStart || !vacationData.vacationEnd) {
+        if (!params.vacationStart || !params.vacationEnd) {
           alert("Укажите даты отпуска");
           return;
         }
-        onConfirm(vacationData);
+        onConfirm(params);
         break;
-
       case "termination_order":
-        if (!terminationData.terminationDate) {
+        if (!params.terminationDate) {
           alert("Укажите дату увольнения");
           return;
         }
-        onConfirm(terminationData);
+        onConfirm(params);
         break;
-
       case "employment_certificate":
-        onConfirm(certificateData);
+        onConfirm(params);
         break;
-
       case "addendum":
-        if (!addendumData.contractNumber || !addendumData.contractDate) {
+        if (!params.contractNumber || !params.contractDate) {
           alert("Укажите номер и дату договора");
           return;
         }
-        onConfirm(addendumData);
+        onConfirm(params);
         break;
+      default:
+        onConfirm(params);
     }
   };
 
   const getTitle = () => {
+    if (schema) return schema.templateName;
     switch (documentType) {
       case "vacation_order":
         return "📄 Приказ на отпуск";
@@ -132,205 +183,277 @@ export function DocumentParamsModal({
         return "📋 Справка с места работы";
       case "addendum":
         return "📄 Дополнительное соглашение";
+      default:
+        return "📄 Параметры документа";
     }
+  };
+
+  const renderDynamicFields = () => {
+    if (!schema) return null;
+    return Object.entries(schema.variables).map(([key, variable]) => {
+      const isRequired = schema.required.includes(key);
+      return (
+        <div key={key} className="space-y-2">
+          <Label>
+            {variable.description}
+            {isRequired && <span className="text-red-500 ml-1">*</span>}
+          </Label>
+          {variable.type === "date" ? (
+            <Input
+              type="date"
+              value={params[key] || ""}
+              onChange={(e) =>
+                setParams((prev) => ({ ...prev, [key]: e.target.value }))
+              }
+            />
+          ) : variable.type === "number" ? (
+            <Input
+              type="number"
+              value={params[key] || ""}
+              onChange={(e) =>
+                setParams((prev) => ({
+                  ...prev,
+                  [key]:
+                    e.target.value === ""
+                      ? ""
+                      : parseFloat(e.target.value),
+                }))
+              }
+            />
+          ) : variable.type === "select" && variable.options ? (
+            <Select
+              value={params[key] || ""}
+              onValueChange={(value) =>
+                setParams((prev) => ({ ...prev, [key]: value }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {variable.options.map((opt) => (
+                  <SelectItem key={opt} value={opt}>
+                    {opt}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Input
+              type="text"
+              value={params[key] || ""}
+              onChange={(e) =>
+                setParams((prev) => ({ ...prev, [key]: e.target.value }))
+              }
+              placeholder={variable.description}
+            />
+          )}
+        </div>
+      );
+    });
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{getTitle()}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          {(documentType === "vacation_order" ||
-            documentType === "vacation_application") && (
-            <>
-              <div className="space-y-2">
-                <Label>Дней отпуска</Label>
-                <Input
-                  type="number"
-                  value={vacationData.vacationDays}
-                  onChange={(e) =>
-                    setVacationData({
-                      ...vacationData,
-                      vacationDays: parseInt(e.target.value) || 14,
-                    })
-                  }
-                  min={14}
-                  max={30}
-                />
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Дата начала</Label>
-                  <Input
-                    type="date"
-                    value={vacationData.vacationStart}
-                    onChange={(e) =>
-                      setVacationData({
-                        ...vacationData,
-                        vacationStart: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Дата окончания</Label>
-                  <Input
-                    type="date"
-                    value={vacationData.vacationEnd}
-                    onChange={(e) =>
-                      setVacationData({
-                        ...vacationData,
-                        vacationEnd: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          {documentType === "termination_order" && (
-            <>
-              <div className="space-y-2">
-                <Label>Дата увольнения</Label>
-                <Input
-                  type="date"
-                  value={terminationData.terminationDate}
-                  onChange={(e) =>
-                    setTerminationData({
-                      ...terminationData,
-                      terminationDate: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Причина</Label>
-                <Select
-                  value={terminationData.terminationReason}
-                  onValueChange={(value) =>
-                    setTerminationData({
-                      ...terminationData,
-                      terminationReason: value,
-                    })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="по собственному желанию">
-                      По собственному желанию
-                    </SelectItem>
-                    <SelectItem value="по соглашению сторон">
-                      По соглашению сторон
-                    </SelectItem>
-                    <SelectItem value="в связи с переходом на другую работу">
-                      В связи с переходом на другую работу
-                    </SelectItem>
-                    <SelectItem value="в связи с сокращением штата">
-                      В связи с сокращением штата
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>№ Договора</Label>
-                  <Input
-                    value={terminationData.contractNumber}
-                    onChange={(e) =>
-                      setTerminationData({
-                        ...terminationData,
-                        contractNumber: e.target.value,
-                      })
-                    }
-                    placeholder="ТД-001/26"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Дата договора</Label>
-                  <Input
-                    type="date"
-                    value={terminationData.contractDate}
-                    onChange={(e) =>
-                      setTerminationData({
-                        ...terminationData,
-                        contractDate: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          {documentType === "employment_certificate" && (
-            <div className="space-y-2">
-              <Label>Зарплата (₸)</Label>
-              <Input
-                type="number"
-                value={certificateData.salary}
-                onChange={(e) =>
-                  setCertificateData({
-                    ...certificateData,
-                    salary: e.target.value,
-                  })
-                }
-                placeholder="85000"
-              />
-              <p className="text-xs text-muted-foreground">
-                Укажите среднюю месячную зарплату
-              </p>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
-          )}
-
-          {documentType === "addendum" && (
+          ) : schema ? (
+            renderDynamicFields()
+          ) : (
             <>
-              <div className="grid gap-4 md:grid-cols-2">
+              {/* Legacy fields */}
+              {(documentType === "vacation_order" ||
+                documentType === "vacation_application") && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Дней отпуска</Label>
+                    <Input
+                      type="number"
+                      value={params.vacationDays}
+                      onChange={(e) =>
+                        setParams({
+                          ...params,
+                          vacationDays: parseInt(e.target.value) || 14,
+                        })
+                      }
+                      min={14}
+                      max={30}
+                    />
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Дата начала</Label>
+                      <Input
+                        type="date"
+                        value={params.vacationStart}
+                        onChange={(e) =>
+                          setParams({
+                            ...params,
+                            vacationStart: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Дата окончания</Label>
+                      <Input
+                        type="date"
+                        value={params.vacationEnd}
+                        onChange={(e) =>
+                          setParams({
+                            ...params,
+                            vacationEnd: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {documentType === "termination_order" && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Дата увольнения</Label>
+                    <Input
+                      type="date"
+                      value={params.terminationDate}
+                      onChange={(e) =>
+                        setParams({
+                          ...params,
+                          terminationDate: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Причина</Label>
+                    <Select
+                      value={params.terminationReason}
+                      onValueChange={(value) =>
+                        setParams({
+                          ...params,
+                          terminationReason: value,
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="по собственному желанию">
+                          По собственному желанию
+                        </SelectItem>
+                        <SelectItem value="по соглашению сторон">
+                          По соглашению сторон
+                        </SelectItem>
+                        <SelectItem value="в связи с переходом на другую работу">
+                          В связи с переходом на другую работу
+                        </SelectItem>
+                        <SelectItem value="в связи с сокращением штата">
+                          В связи с сокращением штата
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>№ Договора</Label>
+                      <Input
+                        value={params.contractNumber}
+                        onChange={(e) =>
+                          setParams({
+                            ...params,
+                            contractNumber: e.target.value,
+                          })
+                        }
+                        placeholder="ТД-001/26"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Дата договора</Label>
+                      <Input
+                        type="date"
+                        value={params.contractDate}
+                        onChange={(e) =>
+                          setParams({
+                            ...params,
+                            contractDate: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {documentType === "employment_certificate" && (
                 <div className="space-y-2">
-                  <Label>№ Договора</Label>
+                  <Label>Зарплата (₸)</Label>
                   <Input
-                    value={addendumData.contractNumber}
+                    type="number"
+                    value={params.salary}
                     onChange={(e) =>
-                      setAddendumData({
-                        ...addendumData,
-                        contractNumber: e.target.value,
-                      })
+                      setParams({ ...params, salary: e.target.value })
                     }
-                    placeholder="ТД-001/26"
+                    placeholder="85000"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Укажите среднюю месячную зарплату
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <Label>Дата договора</Label>
-                  <Input
-                    type="date"
-                    value={addendumData.contractDate}
-                    onChange={(e) =>
-                      setAddendumData({
-                        ...addendumData,
-                        contractDate: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Тема изменений</Label>
-                <Input
-                  value={addendumData.changeTopic}
-                  onChange={(e) =>
-                    setAddendumData({
-                      ...addendumData,
-                      changeTopic: e.target.value,
-                    })
-                  }
-                  placeholder="Изменение адреса ПВЗ, должности и т.д."
-                />
-              </div>
+              )}
+
+              {documentType === "addendum" && (
+                <>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>№ Договора</Label>
+                      <Input
+                        value={params.contractNumber}
+                        onChange={(e) =>
+                          setParams({
+                            ...params,
+                            contractNumber: e.target.value,
+                          })
+                        }
+                        placeholder="ТД-001/26"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Дата договора</Label>
+                      <Input
+                        type="date"
+                        value={params.contractDate}
+                        onChange={(e) =>
+                          setParams({
+                            ...params,
+                            contractDate: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Тема изменений</Label>
+                    <Input
+                      value={params.changeTopic}
+                      onChange={(e) =>
+                        setParams({ ...params, changeTopic: e.target.value })
+                      }
+                      placeholder="Изменение адреса ПВЗ, должности и т.д."
+                    />
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>
@@ -339,7 +462,9 @@ export function DocumentParamsModal({
           <Button variant="outline" onClick={onClose}>
             Отмена
           </Button>
-          <Button onClick={handleSubmit}>Сформировать</Button>
+          <Button onClick={handleSubmit} disabled={isLoading}>
+            Сформировать
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -46,7 +46,13 @@ export interface ActivityLog {
 export interface Document {
     id: string;
     employee_id: string;
-    type: 'contract' | 'order_hiring' | 'application' | 'vacation_application' | 'vacation_order' | 'termination_order' | 'employment_certificate' | 'addendum' | 'id_main' | 'id_register' | 'id_scan' | 'cert_075' | 'photo' | 'bank_details' | 'cert_tb' | 'address_cert' | 'other';
+    type: 'contract' | 'order_hiring' | 'application' | 'vacation_application' | 'vacation_order' | 'termination_order' | 'employment_certificate' | 'addendum' | 'id_main' | 'id_register' | 'id_scan' | 'cert_075' | 'photo' | 'bank_details' | 'cert_tb' | 'address_cert' | 'other'
+        | '01_zayavlenie-o-vyhode-s-dekreta' | '02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom'
+        | '03_zayavlenie-ob-izmenenii-personalnyh-dannyh' | '04_prikaz-ob-otpuske-po-beremennosti-i-rodam'
+        | '05_prikaz-o-prodlenii-otpuska-po-beremennosti' | '06_prikaz-o-vnesenii-izmeneniy-v-fio'
+        | '07_prikaz-o-vyhode-iz-otpuska-po-uhodu' | '08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu'
+        | '09_zayavlenie-na-otpusk-po-beremennosti' | '10_zayavlenie-na-prodlenie-otpuska-po-beremennosti'
+        | '11_soglashenie-o-rastorzhenii-trudovogo-dogovora' | '12_dop-soglashenie-ob-izmenenii-familii';
     status: 'draft' | 'sent_to_employee' | 'signed' | 'fully_signed' | 'employer_signed' | 'rejected' | 'archived';
     scan_url?: string;
     thumbnail_url?: string;

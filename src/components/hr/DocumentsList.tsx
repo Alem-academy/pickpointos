@@ -22,6 +22,20 @@ const DOCUMENT_TYPES: any = {
     termination_order: { label: 'Приказ об увольнении', icon: UserX, color: 'red', category: 'generated' },
     employment_certificate: { label: 'Справка с места работы', icon: Award, color: 'slate', category: 'generated' },
     addendum: { label: 'Доп. соглашение', icon: FileText, color: 'indigo', category: 'generated' },
+    // Maternity / Childcare documents
+    '01_zayavlenie-o-vyhode-s-dekreta': { label: 'Заявление о выходе с декрета', icon: FileText, color: 'pink', category: 'maternity' },
+    '02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom': { label: 'Заявление на отпуск по уходу', icon: FileText, color: 'pink', category: 'maternity' },
+    '03_zayavlenie-ob-izmenenii-personalnyh-dannyh': { label: 'Заявление об изменении данных', icon: FileText, color: 'orange', category: 'hr_change' },
+    '04_prikaz-ob-otpuske-po-beremennosti-i-rodam': { label: 'Приказ об отпуске по беременности', icon: FileText, color: 'pink', category: 'maternity' },
+    '05_prikaz-o-prodlenii-otpuska-po-beremennosti': { label: 'Приказ о продлении отпуска', icon: FileText, color: 'pink', category: 'maternity' },
+    '06_prikaz-o-vnesenii-izmeneniy-v-fio': { label: 'Приказ об изменении ФИО', icon: FileText, color: 'orange', category: 'hr_change' },
+    '07_prikaz-o-vyhode-iz-otpuska-po-uhodu': { label: 'Приказ о выходе из отпуска', icon: FileText, color: 'pink', category: 'maternity' },
+    '08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu': { label: 'Приказ об отпуске без ЗП', icon: FileText, color: 'pink', category: 'maternity' },
+    '09_zayavlenie-na-otpusk-po-beremennosti': { label: 'Заявление на отпуск по беременности', icon: FileText, color: 'pink', category: 'maternity' },
+    '10_zayavlenie-na-prodlenie-otpuska-po-beremennosti': { label: 'Заявление на продление отпуска', icon: FileText, color: 'pink', category: 'maternity' },
+    '11_soglashenie-o-rastorzhenii-trudovogo-dogovora': { label: 'Соглашение о расторжении ТД', icon: FileText, color: 'red', category: 'termination' },
+    '12_dop-soglashenie-ob-izmenenii-familii': { label: 'Доп. соглашение об изменении фамилии', icon: FileText, color: 'indigo', category: 'hr_change' },
+    // Uploaded docs
     id_main: { label: 'Удостоверение личности (лиц.)', icon: IdCard, color: 'indigo', category: 'uploaded' },
     id_register: { label: 'Удостоверение личности (обор.)', icon: IdCard, color: 'indigo', category: 'uploaded' },
     id_scan: { label: 'Скан документа', icon: IdCard, color: 'indigo', category: 'uploaded' },
@@ -49,11 +63,16 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [selectedDocType, setSelectedDocType] = useState('');
     const [pendingFile, setPendingFile] = useState<File | null>(null);
+    const [employeeData, setEmployeeData] = useState<any>(null);
 
     const loadDocuments = useCallback(async () => {
         try {
-            const docs = await api.getDocuments(employeeId);
+            const [docs, emp] = await Promise.all([
+                api.getDocuments(employeeId),
+                api.getEmployee(employeeId).catch(() => null)
+            ]);
             setDocuments(docs);
+            setEmployeeData(emp);
         } catch (err) { console.error('Failed to load documents:', err); }
         finally { setIsLoading(false); }
     }, [employeeId]);
@@ -118,22 +137,23 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
         
         // Show params modal for documents that need additional data
         if (!params) {
-            if (type === 'vacation_order' || type === 'vacation_application') {
-                setPendingDocType(type as DocumentType);
-                setParamsModalOpen(true);
-                return;
-            }
-            if (type === 'termination_order') {
-                setPendingDocType(type as DocumentType);
-                setParamsModalOpen(true);
-                return;
-            }
-            if (type === 'employment_certificate') {
-                setPendingDocType(type as DocumentType);
-                setParamsModalOpen(true);
-                return;
-            }
-            if (type === 'addendum') {
+            const needsParams = [
+                'vacation_order', 'vacation_application', 'termination_order',
+                'employment_certificate', 'addendum',
+                '01_zayavlenie-o-vyhode-s-dekreta',
+                '02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom',
+                '03_zayavlenie-ob-izmenenii-personalnyh-dannyh',
+                '04_prikaz-ob-otpuske-po-beremennosti-i-rodam',
+                '05_prikaz-o-prodlenii-otpuska-po-beremennosti',
+                '06_prikaz-o-vnesenii-izmeneniy-v-fio',
+                '07_prikaz-o-vyhode-iz-otpuska-po-uhodu',
+                '08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu',
+                '09_zayavlenie-na-otpusk-po-beremennosti',
+                '10_zayavlenie-na-prodlenie-otpuska-po-beremennosti',
+                '11_soglashenie-o-rastorzhenii-trudovogo-dogovora',
+                '12_dop-soglashenie-ob-izmenenii-familii',
+            ];
+            if (needsParams.includes(type)) {
                 setPendingDocType(type as DocumentType);
                 setParamsModalOpen(true);
                 return;
@@ -527,6 +547,94 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                         </button>
                     </div>
                 </div>
+
+                {/* Maternity / Childcare Documents */}
+                <div className="border-t border-primary/20 pt-4">
+                    <p className="text-xs font-semibold text-pink-600 mb-3">🍼 Декрет / Отпуск по уходу</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {[
+                            { key: '01_zayavlenie-o-vyhode-s-dekreta', label: 'Выход с декрета' },
+                            { key: '02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom', label: 'Отпуск по уходу' },
+                            { key: '04_prikaz-ob-otpuske-po-beremennosti-i-rodam', label: 'Отпуск по беременности' },
+                            { key: '05_prikaz-o-prodlenii-otpuska-po-beremennosti', label: 'Продление отпуска' },
+                            { key: '07_prikaz-o-vyhode-iz-otpuska-po-uhodu', label: 'Выход из отпуска' },
+                            { key: '08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu', label: 'Отпуск без ЗП' },
+                            { key: '09_zayavlenie-na-otpusk-po-beremennosti', label: 'Заявл. по беременности' },
+                            { key: '10_zayavlenie-na-prodlenie-otpuska-po-beremennosti', label: 'Заявл. на продление' },
+                        ].map(({ key, label }) => (
+                            <button
+                                key={key}
+                                onClick={() => handleGenerate(key)}
+                                disabled={!!isGenerating}
+                                className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-slate-200 hover:border-pink-300 hover:bg-pink-50 transition-all"
+                            >
+                                {isGenerating === key ? (
+                                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                                ) : (
+                                    <div className="h-7 w-7 rounded bg-pink-100 flex items-center justify-center">
+                                        <svg className="h-4 w-4 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                    </div>
+                                )}
+                                <span className="text-xs font-medium text-slate-700">{label}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* HR Changes */}
+                <div className="border-t border-primary/20 pt-4">
+                    <p className="text-xs font-semibold text-orange-600 mb-3">📝 Кадровые изменения</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {[
+                            { key: '03_zayavlenie-ob-izmenenii-personalnyh-dannyh', label: 'Изменение данных' },
+                            { key: '06_prikaz-o-vnesenii-izmeneniy-v-fio', label: 'Изменение ФИО' },
+                            { key: '12_dop-soglashenie-ob-izmenenii-familii', label: 'Доп. согл. фамилия' },
+                        ].map(({ key, label }) => (
+                            <button
+                                key={key}
+                                onClick={() => handleGenerate(key)}
+                                disabled={!!isGenerating}
+                                className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-slate-200 hover:border-orange-300 hover:bg-orange-50 transition-all"
+                            >
+                                {isGenerating === key ? (
+                                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                                ) : (
+                                    <div className="h-7 w-7 rounded bg-orange-100 flex items-center justify-center">
+                                        <svg className="h-4 w-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                    </div>
+                                )}
+                                <span className="text-xs font-medium text-slate-700">{label}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Termination */}
+                <div className="border-t border-primary/20 pt-4">
+                    <p className="text-xs font-semibold text-red-600 mb-3">🔚 Расторжение</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <button
+                            onClick={() => handleGenerate('11_soglashenie-o-rastorzhenii-trudovogo-dogovora')}
+                            disabled={!!isGenerating}
+                            className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-slate-200 hover:border-red-300 hover:bg-red-50 transition-all"
+                        >
+                            {isGenerating === '11_soglashenie-o-rastorzhenii-trudovogo-dogovora' ? (
+                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                            ) : (
+                                <div className="h-7 w-7 rounded bg-red-100 flex items-center justify-center">
+                                    <svg className="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </div>
+                            )}
+                            <span className="text-xs font-medium text-slate-700">Соглашение о расторжении</span>
+                        </button>
+                    </div>
+                </div>
                 
                 <p className="text-xs text-slate-500 mt-3">
                     💡 Документы формируются автоматически на основе данных сотрудника
@@ -627,6 +735,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
             <DocumentParamsModal
                 isOpen={paramsModalOpen}
                 documentType={pendingDocType}
+                employeeData={employeeData}
                 onClose={() => { setParamsModalOpen(false); setPendingDocType(null); }}
                 onConfirm={handleParamsConfirm}
             />

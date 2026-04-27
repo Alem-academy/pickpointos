@@ -50,7 +50,11 @@ export const hrApi = {
     },
 
     async generateDocument(employeeId: string, type: string, iban?: string, params?: any): Promise<{ document: Document; content: string }> {
-        const res = await axiosInstance.post('/documents/generate', { employeeId, type, iban, ...params });
+        const body: any = { employeeId, type, iban };
+        if (params) {
+            body.params = params;
+        }
+        const res = await axiosInstance.post('/documents/generate', body);
         return res.data;
     },
 
@@ -136,6 +140,16 @@ export const hrApi = {
 
     async deleteDocument(id: string): Promise<void> {
         await axiosInstance.delete(`/documents/${id}`);
+    },
+
+    async getTemplateSchemas(): Promise<Array<{ key: string; name: string; type: string; required: string[]; variables: string[] }>> {
+        const res = await axiosInstance.get('/templates/schemas');
+        return res.data.templates;
+    },
+
+    async getTemplateSchema(type: string): Promise<any> {
+        const res = await axiosInstance.get(`/templates/schemas/${type}`);
+        return res.data.schema;
     },
 
     /** Фаза 3: Сгенерировать лист подписей */
