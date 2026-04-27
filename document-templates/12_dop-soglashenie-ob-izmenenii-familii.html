@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Дополнительное соглашение к трудовому договору об изменении фамилии</title>
+  <style>
+    @page { size: A4; margin: 20mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 12pt;
+      line-height: 1.4;
+      color: #000;
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 15mm 20mm;
+    }
+    .doc-title {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .doc-subtitle {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .meta-header {
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    .meta-header td {
+      vertical-align: top;
+      padding: 5px;
+    }
+    .meta-header .left { text-align: left; }
+    .meta-header .right { text-align: right; }
+    .meta-header p { margin: 0; }
+    .body-text {
+      text-align: justify;
+      margin: 8px 0;
+      text-indent: 20px;
+    }
+    .body-text.no-indent {
+      text-indent: 0;
+    }
+    .clauses {
+      margin: 10px 0;
+    }
+    .clause {
+      margin: 8px 0;
+      text-align: justify;
+    }
+    .clause p {
+      margin: 5px 0;
+      text-indent: 20px;
+    }
+    .signature-section {
+      margin-top: 40px;
+      width: 100%;
+    }
+    .signature-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+    }
+    .signature-col {
+      width: 45%;
+    }
+    .sign-line {
+      display: inline-block;
+      width: 100%;
+      border-bottom: 1px solid #000;
+      margin-bottom: 5px;
+    }
+    .sign-label {
+      font-size: 10pt;
+      text-align: center;
+      margin-top: 5px;
+    }
+    .requisites {
+      margin-top: 30px;
+      font-size: 11pt;
+    }
+    .requisites p {
+      margin: 3px 0;
+    }
+    .stamp-area {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .acknowledge {
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <!--
+    Переменные:
+    {{agreementNumber}}         — номер дополнительного соглашения
+    {{contractNumber}}          — номер трудового договора
+    {{contractDate}}            — дата трудового договора
+    {{agreementDate}}           — дата соглашения
+    {{employerName}}            — наименование работодателя
+    {{directorName}}            — ФИО директора полностью
+    {{directorNameShort}}       — ФИО директора с инициалами
+    {{directorBasis}}           — основание полномочий (Устава, Доверенности)
+    {{employeeFullName}}        — ФИО работника полностью (новое)
+    {{employeeFullNameOld}}     — ФИО работника полностью (старое)
+    {{employeeIIN}}             — ИИН работника
+    {{employeeAddress}}         — адрес работника
+    {{employeePosition}}        — должность работника
+    {{oldLastName}}             — старая фамилия
+    {{newLastName}}             — новая фамилия
+    {{changeReason}}            — причина изменения (вступление в брак)
+    {{marriageCertNumber}}      — номер свидетельства о браке
+    {{marriageCertDate}}        — дата свидетельства о браке
+    {{idCardNumber}}            — номер удостоверения личности
+    {{idCardIssueDate}}         — дата выдачи удостоверения
+    {{employeeBank}}            — банк работника
+    {{employeeBankDetails}}     — реквизиты счета
+  -->
+
+  <div class="doc-title">Дополнительное соглашение № {{agreementNumber}}</div>
+  <div class="doc-subtitle">
+    к трудовому договору № {{contractNumber}} от {{contractDate}} 
+    об изменении персональных данных
+  </div>
+
+  <table class="meta-header">
+    <tr>
+      <td class="left">
+        <p>г. {{city}}</p>
+      </td>
+      <td class="right">
+        <p>{{agreementDate}}</p>
+      </td>
+    </tr>
+  </table>
+
+  <p class="body-text no-indent">
+    {{employerName}} в лице директора {{directorName}} (далее — Работодатель), 
+    действующего на основании {{directorBasis}}, ИИН {{employerIIN}}, 
+    с одной стороны, и гражданин(ка) {{employeeFullNameOld}} (далее — Работник), 
+    ИИН {{employeeIIN}}, проживающий(ая) по адресу: {{employeeAddress}}, 
+    с другой стороны, в соответствии со ст. 37 Трудового кодекса Республики Казахстан, 
+    заключили настоящее дополнительное соглашение о нижеследующем:
+  </p>
+
+  <div class="clauses">
+    <div class="clause">
+      <p>
+        <strong>1.</strong> Внести изменения в трудовой договор № {{contractNumber}} 
+        от {{contractDate}} в связи с {{changeReason}} работника {{employeeFullNameOld}}:
+      </p>
+      <p>
+        изменить фамилию работника с «{{oldLastName}}» на «{{newLastName}}» 
+        во всех учетных и кадровых документах.
+      </p>
+    </div>
+
+    <div class="clause">
+      <p>
+        <strong>2.</strong> Изменить паспортные данные работника на следующие:<br>
+        Удостоверение личности № {{idCardNumber}}, выдано {{idCardIssueDate}}.
+      </p>
+    </div>
+
+    <div class="clause">
+      <p>
+        <strong>3.</strong> Настоящее дополнительное соглашение является неотъемлемой 
+        частью трудового договора № {{contractNumber}} от {{contractDate}}.
+      </p>
+    </div>
+
+    <div class="clause">
+      <p>
+        <strong>4.</strong> Настоящее дополнительное соглашение составлено в двух 
+        экземплярах, имеющих одинаковую юридическую силу, по одному для каждой из сторон.
+      </p>
+    </div>
+  </div>
+
+  <div class="requisites">
+    <p><strong>Реквизиты и адреса сторон:</strong></p>
+    <p><strong>Работодатель:</strong></p>
+    <p>{{employerName}}</p>
+    <p>Директор: {{directorNameShort}}</p>
+    <p>ИИН: {{employerIIN}}</p>
+    <p>БИН: {{employerBIN}}</p>
+    <p>Банк: {{employerBank}}</p>
+    <p>Р/с: {{employerAccount}}</p>
+    <p>БИК: {{employerBIC}}</p>
+    <p>Адрес: {{employerAddress}}</p>
+    <br>
+    <p><strong>Работник:</strong></p>
+    <p>{{employeeFullName}}</p>
+    <p>ИИН: {{employeeIIN}}</p>
+    <p>Удостоверение личности № {{idCardNumber}} от {{idCardIssueDate}}</p>
+    <p>Адрес: {{employeeAddress}}</p>
+    <p>Банк: {{employeeBank}}</p>
+    <p>Р/с: {{employeeBankDetails}}</p>
+  </div>
+
+  <div class="signature-section">
+    <div class="signature-row">
+      <div class="signature-col">
+        <p><strong>РАБОТОДАТЕЛЬ:</strong></p>
+        <p>{{employerName}}</p>
+        <p>Директор: {{directorNameShort}}</p>
+        <div style="margin-top: 20px;">
+          <span class="sign-line"></span>
+          <p class="sign-label">(подпись)</p>
+        </div>
+      </div>
+      <div class="signature-col">
+        <p><strong>РАБОТНИК:</strong></p>
+        <p>{{employeeFullName}}</p>
+        <p>ИИН: {{employeeIIN}}</p>
+        <div style="margin-top: 20px;">
+          <span class="sign-line"></span>
+          <p class="sign-label">(подпись)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="acknowledge">
+    <p>С дополнительным соглашением ознакомлен(-а):</p>
+    <p>«___» ________ {{dateYear}} г. ________________ {{employeeFullNameShort}}</p>
+    <p style="font-size: 10pt; margin-left: 200px;">(подпись)</p>
+  </div>
+</body>
+</html>

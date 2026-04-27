@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Заявление о выходе с декрета</title>
+  <style>
+    @page { size: A4; margin: 20mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 14pt;
+      line-height: 1.5;
+      color: #000;
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 20mm;
+    }
+    .header-right {
+      text-align: right;
+      margin-bottom: 20px;
+    }
+    .header-right p {
+      margin: 0;
+      line-height: 1.4;
+    }
+    .title {
+      text-align: center;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+    .body-text {
+      text-align: justify;
+      text-indent: 0;
+      margin: 10px 0;
+    }
+    .signature-block {
+      margin-top: 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .signature-block .date {
+      text-align: left;
+    }
+    .signature-block .sign {
+      text-align: center;
+    }
+    .line {
+      display: inline-block;
+      width: 150px;
+      border-bottom: 1px solid #000;
+    }
+  </style>
+</head>
+<body>
+  <!-- 
+    Переменные:
+    {{employerName}}     — наименование работодателя (например: ИП «Жасмин»)
+    {{directorNameShort}}— ФИО директора в дательном падеже (например: Карабаевой Г.Е.)
+    {{employeePosition}} — должность сотрудника (например: менеджера по работе с клиентами)
+    {{employeeFullName}} — ФИО сотрудника полностью
+    {{returnDateDay}}    — день выхода на работу
+    {{returnDateMonth}}  — месяц выхода на работу
+    {{returnDateYear}}   — год выхода на работу
+    {{currentDateDay}}   — день подписания
+    {{currentDateMonth}} — месяц подписания
+    {{currentDateYear}}  — год подписания
+  -->
+
+  <div class="header-right">
+    <p>Директору {{employerName}}</p>
+    <p>{{directorNameShort}}</p>
+    <p>от {{employeePosition}}</p>
+    <p>{{employeeFullName}}</p>
+  </div>
+
+  <div class="title">Заявление</div>
+
+  <p class="body-text">
+    Прошу Вас прервать отпуск по уходу за ребёнком и допустить меня к работе 
+    с «{{returnDateDay}}» {{returnDateMonth}} {{returnDateYear}} года.
+  </p>
+
+  <div class="signature-block">
+    <div class="date">
+      «{{currentDateDay}}» {{currentDateMonth}} {{currentDateYear}} г.
+    </div>
+    <div class="sign">
+      <span class="line"></span>
+      <p style="font-size: 10pt; margin: 4px 0 0;">(подпись)</p>
+    </div>
+  </div>
+</body>
+</html>

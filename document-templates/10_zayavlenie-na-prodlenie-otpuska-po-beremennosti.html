@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Заявление на продление отпуска по беременности и родам</title>
+  <style>
+    @page { size: A4; margin: 20mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 14pt;
+      line-height: 1.5;
+      color: #000;
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 20mm;
+    }
+    .header-right {
+      text-align: left;
+      margin-bottom: 20px;
+    }
+    .header-right p {
+      margin: 0;
+      line-height: 1.4;
+    }
+    .title {
+      text-align: center;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+    .body-text {
+      text-align: justify;
+      margin: 10px 0;
+    }
+    .attachments {
+      margin-top: 15px;
+    }
+    .signature-block {
+      margin-top: 40px;
+    }
+    .line {
+      display: inline-block;
+      width: 200px;
+      border-bottom: 1px solid #000;
+    }
+  </style>
+</head>
+<body>
+  <!--
+    Переменные:
+    {{employerName}}        — наименование работодателя
+    {{directorNameShort}}   — ФИО директора в дательном падеже
+    {{employeePosition}}    — должность сотрудника
+    {{employeeFullName}}    — ФИО сотрудника
+    {{employeeIIN}}         — ИИН
+    {{employeeAddress}}     — адрес
+    {{employeePhone}}       — телефон
+    {{vacationStartDay}}    — день начала продления
+    {{vacationStartMonth}}  — месяц начала
+    {{vacationStartYear}}   — год начала
+    {{vacationEndDay}}      — день окончания
+    {{vacationEndMonth}}    — месяц окончания
+    {{vacationEndYear}}     — год окончания
+    {{sickLeaveNumber}}     — номер листка нетрудоспособности
+    {{sickLeaveDay}}        — день листка
+    {{sickLeaveMonth}}      — месяц листка
+    {{sickLeaveYear}}       — год листка
+    {{currentDate}}         — дата подписания
+  -->
+
+  <div class="header-right">
+    <p>Директору {{employerName}}</p>
+    <p>{{directorNameShort}}</p>
+    <p>от {{employeePosition}}</p>
+    <p><span class="line"></span></p>
+    <p>ИИН <span class="line" style="width: 120px;"></span>, проживающей по адресу</p>
+    <p><span class="line"></span>, сот. <span class="line" style="width: 120px;"></span></p>
+  </div>
+
+  <div class="title">Заявление</div>
+
+  <p class="body-text">
+    Прошу продлить отпуск по беременности и родам с 
+    «{{vacationStartDay}}» {{vacationStartMonth}} {{vacationStartYear}} года 
+    по «{{vacationEndDay}}» {{vacationEndMonth}} {{vacationEndYear}} года. 
+    Копия листка временной нетрудоспособности прилагается.
+  </p>
+
+  <div class="attachments">
+    <p>Прилагаемый документ:</p>
+    <ul>
+      <li>
+        копия листка временной нетрудоспособности № {{sickLeaveNumber}} 
+        от «{{sickLeaveDay}}» {{sickLeaveMonth}} {{sickLeaveYear}} года.
+      </li>
+    </ul>
+  </div>
+
+  <div class="signature-block">
+    <p>{{currentDate}}</p>
+    <p>{{employeeFullName}}, подпись <span class="line" style="width: 150px;"></span></p>
+  </div>
+</body>
+</html>

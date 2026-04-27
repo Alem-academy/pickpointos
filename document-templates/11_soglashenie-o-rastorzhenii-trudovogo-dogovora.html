@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Соглашение о расторжении трудового договора</title>
+  <style>
+    @page { size: A4; margin: 20mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 12pt;
+      line-height: 1.4;
+      color: #000;
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 15mm 20mm;
+    }
+    .doc-title {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .doc-subtitle {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    .meta-header {
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    .meta-header td {
+      vertical-align: top;
+      padding: 5px;
+    }
+    .meta-header .left { text-align: left; }
+    .meta-header .right { text-align: right; }
+    .meta-header p { margin: 0; }
+    .body-text {
+      text-align: justify;
+      margin: 8px 0;
+      text-indent: 20px;
+    }
+    .body-text.no-indent {
+      text-indent: 0;
+    }
+    .clauses {
+      margin: 10px 0;
+    }
+    .clause {
+      margin: 8px 0;
+      text-align: justify;
+    }
+    .clause p {
+      margin: 5px 0;
+      text-indent: 20px;
+    }
+    .signature-section {
+      margin-top: 40px;
+      width: 100%;
+    }
+    .signature-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+    }
+    .signature-col {
+      width: 45%;
+    }
+    .sign-line {
+      display: inline-block;
+      width: 100%;
+      border-bottom: 1px solid #000;
+      margin-bottom: 5px;
+    }
+    .sign-label {
+      font-size: 10pt;
+      text-align: center;
+      margin-top: 5px;
+    }
+    .stamp-area {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .requisites {
+      margin-top: 20px;
+      font-size: 11pt;
+    }
+    .requisites p {
+      margin: 3px 0;
+    }
+  </style>
+</head>
+<body>
+  <!--
+    Переменные:
+    {{employerName}}           — наименование работодателя
+    {{directorName}}           — ФИО директора полностью
+    {{directorNameShort}}      — ФИО директора с инициалами
+    {{directorBasis}}          — основание полномочий директора (Устава, Доверенности)
+    {{employeeFullName}}       — ФИО работника полностью
+    {{employeeFullNameShort}}  — ФИО работника с инициалами
+    {{employeeIIN}}            — ИИН работника
+    {{employeeAddress}}        — адрес работника
+    {{employeeBank}}           — банк работника
+    {{employeeBankDetails}}    — реквизиты счета работника
+    {{employeeIdNumber}}       — номер удостоверения личности
+    {{employeeIdDate}}         — дата выдачи удостоверения
+    {{contractNumber}}         — номер трудового договора
+    {{contractDate}}           — дата трудового договора
+    {{terminationDate}}        — дата расторжения
+    {{agreementDate}}          — дата соглашения
+    {{city}}                   — город
+    {{lastWorkingDay}}         — последний рабочий день
+    {{compensationAmount}}     — сумма компенсации (если применимо)
+  -->
+
+  <div class="doc-title">СОГЛАШЕНИЕ</div>
+  <div class="doc-subtitle">о расторжении трудового договора</div>
+
+  <table class="meta-header">
+    <tr>
+      <td class="left">
+        <p>г. {{city}}</p>
+      </td>
+      <td class="right">
+        <p>{{agreementDate}}</p>
+      </td>
+    </tr>
+  </table>
+
+  <p class="body-text no-indent">
+    {{employerName}} в лице директора компании {{directorName}} (далее — Работодатель), 
+    действующего на основании {{directorBasis}}, с одной стороны, и гражданин(ка) 
+    {{employeeFullName}} (далее — Работник) с другой стороны, в соответствии с 
+    пп. 1 п. 1 ст. 49 Трудового кодекса Республики Казахстан заключили настоящее 
+    соглашение о нижеследующем:
+  </p>
+
+  <div class="clauses">
+    <div class="clause">
+      <p>
+        <strong>1.</strong> Работодатель и Работник пришли к соглашению о расторжении 
+        трудового договора № {{contractNumber}} от {{contractDate}} по соглашению сторон 
+        (пп. 1 ст. 49 Трудового кодекса Республики Казахстан).
+      </p>
+    </div>
+
+    <div class="clause">
+      <p>
+        <strong>2.</strong> Датой расторжения трудового договора является «{{terminationDate}}».
+      </p>
+    </div>
+
+    <div class="clause">
+      <p>
+        <strong>3.</strong> С момента подписания данного соглашения и до дня увольнения, 
+        указанного в пункте 2 настоящего соглашения, Работник обязан:
+      </p>
+      <p>— выполнять работу согласно занимаемой должности, в полном объеме;</p>
+      <p>— подчиняться правилам внутреннего трудового распорядка и не допускать нарушений 
+        трудовой дисциплины. В противном случае Работник может быть привлечен к дисциплинарной 
+        ответственности или уволен по инициативе Работодателя, согласно ст. 52, 53, 54, 55 
+        Трудового кодекса Республики Казахстан.
+      </p>
+    </div>
+
+    <div class="clause">
+      <p>
+        <strong>4.</strong> Работодатель обязан в день прекращения трудового договора 
+        выдать Работнику документы, связанные с работой, и произвести полный расчет 
+        в соответствии со ст. 115 Трудового кодекса Республики Казахстан.
+      </p>
+    </div>
+
+    <div class="clause">
+      <p>
+        <strong>5.</strong> Настоящее соглашение составлено в двух экземплярах, 
+        имеющих одинаковую юридическую силу, по одному экземпляру для каждой из сторон.
+      </p>
+    </div>
+  </div>
+
+  <div class="signature-section">
+    <div class="signature-row">
+      <div class="signature-col">
+        <p><strong>РАБОТОДАТЕЛЬ:</strong></p>
+        <p>{{employerName}}</p>
+        <p>Директор: {{directorNameShort}}</p>
+        <div style="margin-top: 20px;">
+          <span class="sign-line"></span>
+          <p class="sign-label">(подпись)</p>
+        </div>
+      </div>
+      <div class="signature-col">
+        <p><strong>РАБОТНИК:</strong></p>
+        <p>{{employeeFullName}}</p>
+        <p>ИИН: {{employeeIIN}}</p>
+        <div style="margin-top: 20px;">
+          <span class="sign-line"></span>
+          <p class="sign-label">(подпись)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="requisites">
+    <p><strong>Реквизиты и адреса сторон:</strong></p>
+    <p><strong>Работодатель:</strong> {{employerName}}, директор {{directorNameShort}}</p>
+    <p><strong>Работник:</strong> {{employeeFullName}}, ИИН {{employeeIIN}}, адрес: {{employeeAddress}}</p>
+    <p>Банк: {{employeeBank}}, {{employeeBankDetails}}</p>
+  </div>
+</body>
+</html>
