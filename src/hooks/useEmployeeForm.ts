@@ -182,6 +182,17 @@ export function useEmployeeForm() {
                 newErrors.address = 'Адрес обязателен';
                 isValid = false;
             }
+            setErrors(newErrors);
+            return isValid;
+        }
+        if (stepIndex === 1) {
+            const newErrors: FormErrors = {};
+            let isValid = true;
+
+            if (!formData.role) {
+                // role has default value 'employee', but keep check just in case
+                isValid = false;
+            }
             if (!formData.baseRate || Number(formData.baseRate) <= 0) {
                 newErrors.baseRate = 'Укажите оклад';
                 isValid = false;
@@ -189,14 +200,6 @@ export function useEmployeeForm() {
 
             setErrors(newErrors);
             return isValid;
-        }
-        if (stepIndex === 1) {
-            if (!formData.role) {
-                setErrors({} as FormErrors);
-                return false;
-            }
-            setErrors({} as FormErrors);
-            return true;
         }
         return true;
     };

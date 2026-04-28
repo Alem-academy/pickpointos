@@ -1,15 +1,17 @@
 import React from 'react';
+import { cn } from "@/lib/utils";
 import { type PVZ } from "@/services/api";
-import { type EmployeeFormData } from "@/hooks/useEmployeeForm";
+import { type EmployeeFormData, type FormErrors } from "@/hooks/useEmployeeForm";
 import { NumberInput } from "@/components/ui/masked-input";
 
 interface WorkConditionsStepProps {
     formData: EmployeeFormData;
+    errors: FormErrors;
     handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
     pvzList: PVZ[];
 }
 
-export function WorkConditionsStep({ formData, handleChange, pvzList }: WorkConditionsStepProps) {
+export function WorkConditionsStep({ formData, errors, handleChange, pvzList }: WorkConditionsStepProps) {
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
             <div className="mb-6">
@@ -55,10 +57,13 @@ export function WorkConditionsStep({ formData, handleChange, pvzList }: WorkCond
                             value={formData.baseRate || '85000'}
                             onChange={handleChange}
                             prefix=""
-                            className="pl-10"
+                            className={cn("pl-10", errors.baseRate && "border-red-500 focus:ring-red-500")}
                             placeholder="85 000"
                         />
                     </div>
+                    {errors.baseRate && (
+                        <p className="text-xs text-red-500">{errors.baseRate}</p>
+                    )}
                 </div>
                 <div className="space-y-2">
                     <label className="text-sm font-semibold">Дата окончания договора</label>

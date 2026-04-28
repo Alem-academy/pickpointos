@@ -193,6 +193,7 @@ export default function NewEmployeePage() {
                             {currentStep === 1 && (
                                 <WorkConditionsStep
                                     formData={formData}
+                                    errors={errors}
                                     handleChange={handleChange}
                                     pvzList={pvzList}
                                 />
