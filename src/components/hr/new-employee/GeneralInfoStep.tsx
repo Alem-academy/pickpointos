@@ -149,7 +149,7 @@ export function GeneralInfoStep({ formData, errors, handleChange, emergencyConta
                                 name="idCardNumber"
                                 value={formData.idCardNumber || ''}
                                 onChange={handleChange}
-                                placeholder="AB 1234567"
+                                placeholder="123456789"
                             />
                         </div>
                         <div className="space-y-2">

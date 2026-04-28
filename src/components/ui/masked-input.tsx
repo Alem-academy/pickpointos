@@ -74,11 +74,11 @@ export function IdCardInput({ value, onChange, className, error, ...props }: Mas
     return (
         <PatternFormat
             {...props}
-            format="AA #######"
+            format="#########"
             mask="_"
             value={value}
             onValueChange={(vals) => {
-                onChange({ target: { name: props.name, value: vals.value.toUpperCase() } } as React.ChangeEvent<HTMLInputElement>);
+                onChange({ target: { name: props.name, value: vals.value } } as React.ChangeEvent<HTMLInputElement>);
             }}
             className={cn(
                 "w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50",
