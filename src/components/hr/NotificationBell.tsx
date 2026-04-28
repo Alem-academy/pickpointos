@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Bell, FileText, CheckCircle, UserPlus, Edit2, Loader2, X } from 'lucide-react';
 import { api } from '@/services/api';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 interface ActivityItem {
     id: string;
@@ -82,21 +83,22 @@ export function NotificationBell() {
 
     return (
         <div className="relative" ref={dropdownRef}>
-            <button
-                onClick={() => { setIsOpen(!isOpen); if (!isOpen) loadActivities(); }}
-                className="relative p-2 rounded-lg hover:bg-primary/10 transition-colors"
-                title="Уведомления HR"
-            >
-                <Bell className="h-5 w-5 text-primary" />
-                {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                        {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                )}
-            </button>
+            <Tooltip text="Уведомления HR">
+                <button
+                    onClick={() => { setIsOpen(!isOpen); if (!isOpen) loadActivities(); }}
+                    className="relative p-2 rounded-lg hover:bg-primary/10 transition-colors"
+                >
+                    <Bell className="h-5 w-5 text-primary" />
+                    {unreadCount > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                    )}
+                </button>
+            </Tooltip>
 
             {isOpen && (
-                <div className="absolute right-0 top-full mt-2 w-80 rounded-xl bg-white shadow-xl border border-slate-200 z-50 overflow-hidden">
+                <div className="absolute left-0 top-full mt-2 w-80 rounded-xl bg-white shadow-xl border border-slate-200 z-50 overflow-hidden">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
                         <h3 className="text-sm font-semibold text-slate-900">Уведомления</h3>
                         <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-slate-100 rounded">

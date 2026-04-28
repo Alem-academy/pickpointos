@@ -6,6 +6,7 @@ import { SignatureSheetModal } from './SignatureSheetModal';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { DocumentParamsModal, type DocumentType } from './DocumentParamsModal';
 import { cn } from '@/lib/utils';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 interface DocumentsListProps {
     employeeId: string;
@@ -291,57 +292,66 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                     </div>
                                     <div className="flex items-center gap-2">
                                         {getStatusBadge(doc)}
-                                        <button onClick={() => handlePreview(doc)} className="p-2 text-slate-400 hover:text-slate-600 transition-colors" title="Просмотр">
-                                            <Eye className="h-4 w-4" />
-                                        </button>
+                                        <Tooltip text="Просмотр документа">
+                                            <button onClick={() => handlePreview(doc)} className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                                                <Eye className="h-4 w-4" />
+                                            </button>
+                                        </Tooltip>
                                         {doc.status === 'draft' && (
                                             <>
-                                                <button
-                                                    onClick={() => setSigningDocId(doc.id)}
-                                                    className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors"
-                                                    title="Подписать (eGov или NCALayer)"
-                                                >
-                                                    <CheckCircle className="h-4 w-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => setEmployerSigningDocId(doc.id)}
-                                                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
-                                                    title="Подписать как работодатель (NCALayer)"
-                                                >
-                                                    <PenTool className="h-4 w-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleGenerateSigningLink(doc.id)}
-                                                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
-                                                    title="Отправить ссылку на подписание"
-                                                >
-                                                    <Share2 className="h-4 w-4" />
-                                                </button>
+                                                <Tooltip text="Подписать (eGov или NCALayer)">
+                                                    <button
+                                                        onClick={() => setSigningDocId(doc.id)}
+                                                        className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors"
+                                                    >
+                                                        <CheckCircle className="h-4 w-4" />
+                                                    </button>
+                                                </Tooltip>
+                                                <Tooltip text="Подписать как работодатель (NCALayer)">
+                                                    <button
+                                                        onClick={() => setEmployerSigningDocId(doc.id)}
+                                                        className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                                                    >
+                                                        <PenTool className="h-4 w-4" />
+                                                    </button>
+                                                </Tooltip>
+                                                <Tooltip text="Отправить ссылку на подписание">
+                                                    <button
+                                                        onClick={() => handleGenerateSigningLink(doc.id)}
+                                                        className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                                                    >
+                                                        <Share2 className="h-4 w-4" />
+                                                    </button>
+                                                </Tooltip>
                                             </>
                                         )}
                                         {/* Работник подписал, но работодатель ещё нет — показать кнопку подписания работодателем */}
                                         {doc.status === 'signed' && (doc as any).requires_employer_signature && !(doc as any).employer_signed_at && (
-                                            <button
-                                                onClick={() => setEmployerSigningDocId(doc.id)}
-                                                className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
-                                                title="Подписать как работодатель (NCALayer)"
-                                            >
-                                                <PenTool className="h-4 w-4" />
-                                            </button>
+                                            <Tooltip text="Подписать как работодатель (NCALayer)">
+                                                <button
+                                                    onClick={() => setEmployerSigningDocId(doc.id)}
+                                                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                                                >
+                                                    <PenTool className="h-4 w-4" />
+                                                </button>
+                                            </Tooltip>
                                         )}
                                         {/* Документ подписан обеими сторонами — лист подписей */}
                                         {(doc.status === 'fully_signed' || ((doc as any).employer_signed_at && doc.status === 'signed')) && (
-                                            <button
-                                                onClick={() => setSignatureSheetDocId(doc.id)}
-                                                className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors"
-                                                title="Лист подписей"
-                                            >
-                                                <FileText className="h-4 w-4" />
-                                            </button>
+                                            <Tooltip text="Лист подписей">
+                                                <button
+                                                    onClick={() => setSignatureSheetDocId(doc.id)}
+                                                    className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors"
+                                                >
+                                                    <FileText className="h-4 w-4" />
+                                                </button>
+                                            </Tooltip>
                                         )}
-                                        <button onClick={() => handleDelete(doc.id, doc.type, doc.status)} className="p-2 text-slate-400 hover:text-red-600 transition-colors" title="Удалить" disabled={doc.status === 'signed'}>
-                                            <Trash2 className={cn("h-4 w-4", doc.status === 'signed' ? 'opacity-30 cursor-not-allowed' : '')} />
-                                        </button>
+                                        <Tooltip text="Удалить документ">
+                                            <button onClick={() => handleDelete(doc.id, doc.type, doc.status)} className="p-2 text-slate-400 hover:text-red-600 transition-colors" disabled={doc.status === 'signed'}>
+                                                <Trash2 className={cn("h-4 w-4", doc.status === 'signed' ? 'opacity-30 cursor-not-allowed' : '')} />
+                                            </button>
+                                        </Tooltip>
                                     </div>
                                 </div>
                             );
@@ -377,12 +387,16 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <button onClick={() => window.open(doc.scan_url, '_blank')} className="p-2 text-slate-400 hover:text-slate-600 transition-colors" title="Открыть">
-                                            <Eye className="h-4 w-4" />
-                                        </button>
-                                        <button onClick={() => handleDelete(doc.id, doc.type, doc.status)} className="p-2 text-slate-400 hover:text-red-600 transition-colors" title="Удалить" disabled={doc.status === 'signed'}>
-                                            <Trash2 className={cn("h-4 w-4", doc.status === 'signed' ? 'opacity-30 cursor-not-allowed' : '')} />
-                                        </button>
+                                        <Tooltip text="Открыть документ">
+                                            <button onClick={() => window.open(doc.scan_url, '_blank')} className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                                                <Eye className="h-4 w-4" />
+                                            </button>
+                                        </Tooltip>
+                                        <Tooltip text="Удалить документ">
+                                            <button onClick={() => handleDelete(doc.id, doc.type, doc.status)} className="p-2 text-slate-400 hover:text-red-600 transition-colors" disabled={doc.status === 'signed'}>
+                                                <Trash2 className={cn("h-4 w-4", doc.status === 'signed' ? 'opacity-30 cursor-not-allowed' : '')} />
+                                            </button>
+                                        </Tooltip>
                                     </div>
                                 </div>
                             );
