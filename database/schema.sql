@@ -105,6 +105,10 @@ CREATE TABLE employees (
     id_card_issued_by VARCHAR(255), -- Кем выдано УДЛ
     id_card_issue_date DATE, -- Дата выдачи УДЛ
 
+    -- Contacts & HR
+    emergency_contacts JSONB, -- Контакты для экстренных случаев
+    rejection_reason TEXT, -- Причина отказа/доработки
+
     -- Meta
     hired_at TIMESTAMP WITH TIME ZONE,
     fired_at TIMESTAMP WITH TIME ZONE,
