@@ -16,6 +16,7 @@ import {
     FileCode
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/hr/NotificationBell";
 
 interface SidebarLink {
     to: string;
@@ -103,8 +104,9 @@ export function Sidebar() {
     return (
         <div className="flex h-screen w-64 flex-col border-r bg-card text-card-foreground">
             {/* Header */}
-            <div className="flex h-16 shrink-0 items-center border-b px-6">
+            <div className="flex h-16 shrink-0 items-center justify-between border-b px-6">
                 <span className="text-xl font-bold tracking-tight text-primary">PVZ OS</span>
+                <NotificationBell />
             </div>
 
             {/* Navigation */}

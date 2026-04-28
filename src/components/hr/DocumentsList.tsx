@@ -227,23 +227,38 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     };
 
     const getStatusBadge = (doc: Document) => {
-        // Extended status logic for employer signing
-        const requiresEmployer = (doc as any).requires_employer_signature;
-        const employerSigned = (doc as any).employer_signed_at;
+        const requiresEmployer = doc.requires_employer_signature;
+        const employerSigned = doc.employer_signed_at;
+        const signedAt = doc.signed_at;
+        const completedAt = doc.signing_completed_at;
 
-        if (doc.status === 'fully_signed' || (doc.status === 'signed' && employerSigned)) {
-            return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Подписан обеими сторонами</span>;
-        }
-        if (doc.status === 'employer_signed' && !employerSigned) {
-            return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">Работодатель подписал, ждёт работника</span>;
-        }
-        if (doc.status === 'signed' && requiresEmployer && !employerSigned) {
-            return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Работник подписал, ждёт работодателя</span>;
-        }
-        if (doc.status === 'signed') return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Подписан</span>;
-        if (doc.status === 'draft') return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">Черновик</span>;
-        if (doc.status === 'rejected') return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">Отклонен</span>;
-        return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">На подписании</span>;
+        const tooltip = [
+            signedAt ? `Подписан сотрудником: ${new Date(signedAt).toLocaleString('ru-RU')}` : null,
+            employerSigned ? `Подписан работодателем: ${new Date(employerSigned).toLocaleString('ru-RU')}` : null,
+            completedAt ? `Завершено: ${new Date(completedAt).toLocaleString('ru-RU')}` : null,
+        ].filter(Boolean).join('\n');
+
+        const badge = (() => {
+            if (doc.status === 'fully_signed' || (doc.status === 'signed' && employerSigned)) {
+                return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Подписан обеими сторонами</span>;
+            }
+            if (doc.status === 'employer_signed') {
+                return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">Работодатель подписал, ждёт работника</span>;
+            }
+            if (doc.status === 'signed' && requiresEmployer && !employerSigned) {
+                return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Работник подписал, ждёт работодателя</span>;
+            }
+            if (doc.status === 'signed') return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Подписан</span>;
+            if (doc.status === 'draft') return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">Черновик</span>;
+            if (doc.status === 'rejected') return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">Отклонен</span>;
+            return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">На подписании</span>;
+        })();
+
+        return (
+            <span title={tooltip || undefined} className="cursor-help">
+                {badge}
+            </span>
+        );
     };
 
     if (isLoading) return <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-slate-400" /></div>;

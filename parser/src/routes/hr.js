@@ -300,6 +300,27 @@ router.get('/employees/:id/activity', async (req, res) => {
     }
 });
 
+// GET /activity - Get global activity log for HR dashboard
+router.get('/activity', authenticateToken, async (req, res) => {
+    try {
+        const { limit = 50, category } = req.query;
+
+        const result = await query(`
+            SELECT a.*, e.full_name as employee_name
+            FROM employee_activity_logs a
+            LEFT JOIN employees e ON a.employee_id = e.id
+            WHERE ($2::text IS NULL OR a.action_category = $2)
+            ORDER BY a.created_at DESC
+            LIMIT $1
+        `, [parseInt(limit), category || null]);
+
+        res.json(result.rows);
+    } catch (err) {
+        Logger.error('Error fetching global activity:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // PATCH /employees/:id/status - Update employee status
 router.patch('/employees/:id/status', async (req, res) => {
     try {

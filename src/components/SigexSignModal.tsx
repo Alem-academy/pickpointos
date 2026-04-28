@@ -151,6 +151,19 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
                     if (statusRes.status === 'done') {
                         isDone = true;
 
+                        // If dataPromise is still pending, wait for it before finalizing
+                        // Sigex requires PDF upload to complete before signature is valid
+                        if (dataPromise) {
+                            try {
+                                const dataRes = await dataPromise;
+                                if (!dataRes) {
+                                    console.warn('[Sigex] PDF upload failed, but status is done. Using polling signature.');
+                                }
+                            } catch (dataErr: any) {
+                                console.warn('[Sigex] PDF upload error:', dataErr.message);
+                            }
+                        }
+
                         if (statusRes.signatures && statusRes.signatures.length > 0) {
                             setStep('signing');
                             await finalizeSignature(statusRes.signatures[0]);
@@ -189,7 +202,9 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
                                  return;
                              }
                         }
-                    } catch (e) {}
+                    } catch (e: any) {
+                        console.error('[Sigex] Timeout fallback dataPromise error:', e);
+                    }
                 }
                 
                 setError('Время ожидания подписания истекло');
@@ -261,6 +276,12 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
     };
 
     const finalizeSignature = async (signature?: string) => {
+        if (!signature || signature.trim() === '') {
+            console.error('[Sigex] finalizeSignature called with empty signature');
+            setError('Подпись пустая — возможно, PDF не был загружен в eGov. Попробуйте ещё раз.');
+            setStep('error');
+            return;
+        }
         try {
             if (signingRole === 'employer') {
                 // Employer signing — uses NCALayer, saves via dedicated endpoint

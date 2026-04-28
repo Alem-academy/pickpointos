@@ -89,6 +89,11 @@ export const hrApi = {
         return res.data;
     },
 
+    async getGlobalActivity(limit?: number, category?: string): Promise<ActivityLog[]> {
+        const res = await axiosInstance.get('/activity', { params: { limit, category } });
+        return res.data;
+    },
+
     async getBonuses(): Promise<any[]> {
         const res = await axiosInstance.get('/motivation/bonuses');
         return res.data;

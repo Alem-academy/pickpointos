@@ -65,6 +65,13 @@ export interface Document {
     sigex_document_id?: string;
     sigex_operation_id?: string;
     signature_cms?: string;
+    // Signing tracking
+    requires_employer_signature?: boolean;
+    employer_signed_at?: string;
+    signing_sent_at?: string;
+    signing_method?: 'egov_qr' | 'ncalayer' | 'public_link';
+    signing_completed_at?: string;
+    signing_canceled_at?: string;
 }
 
 export interface EmergencyContact {

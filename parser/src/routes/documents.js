@@ -55,6 +55,37 @@ const DOC_SIGN_FILE_NAME_ASCII = {
     '12_dop-soglashenie-ob-izmenenii-familii': 'surname_addendum.pdf',
 };
 
+const DOC_SIGN_FILE_NAME_RU = {
+    contract: 'Трудовой_договор',
+    order_hiring: 'Приказ_о_приеме',
+    application: 'Заявление_на_прием',
+    vacation_application: 'Заявление_на_отпуск',
+    vacation_order: 'Приказ_на_отпуск',
+    termination_order: 'Приказ_об_увольнении',
+    employment_certificate: 'Справка_с_места_работы',
+    addendum: 'Доп_соглашение',
+    '01_zayavlenie-o-vyhode-s-dekreta': 'Заявление_о_выходе_с_декрета',
+    '02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom': 'Заявление_на_отпуск_по_уходу',
+    '03_zayavlenie-ob-izmenenii-personalnyh-dannyh': 'Заявление_об_изменении_данных',
+    '04_prikaz-ob-otpuske-po-beremennosti-i-rodam': 'Приказ_об_отпуске_по_беременности',
+    '05_prikaz-o-prodlenii-otpuska-po-beremennosti': 'Приказ_о_продлении_отпуска',
+    '06_prikaz-o-vnesenii-izmeneniy-v-fio': 'Приказ_об_изменении_ФИО',
+    '07_prikaz-o-vyhode-iz-otpuska-po-uhodu': 'Приказ_о_выходе_из_отпуска',
+    '08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu': 'Приказ_об_отпуске_без_ЗП',
+    '09_zayavlenie-na-otpusk-po-beremennosti': 'Заявление_на_отпуск_по_беременности',
+    '10_zayavlenie-na-prodlenie-otpuska-po-beremennosti': 'Заявление_на_продление_отпуска',
+    '11_soglashenie-o-rastorzhenii-trudovogo-dogovora': 'Соглашение_о_расторжении',
+    '12_dop-soglashenie-ob-izmenenii-familii': 'Доп_соглашение_об_изменении_фамилии',
+};
+
+function buildSignFileName(docType, employeeFullName) {
+    const safeName = (employeeFullName || 'Sotrudnik')
+        .replace(/\s+/g, '_')
+        .replace(/[^\w\-_А-Яа-яЁё]/g, '');
+    const docLabel = DOC_SIGN_FILE_NAME_RU[docType] || DOC_SIGN_FILE_NAME_ASCII[docType]?.replace('.pdf', '') || 'Dokument';
+    return `${safeName}_${docLabel}.pdf`;
+}
+
 /**
  * PDF (base64) for eGov Mobile: HTML шаблоны рендерим через Puppeteer; готовый PDF из S3 отдаём как есть.
  */
@@ -668,12 +699,17 @@ router.get('/documents/:id/content', async (req, res) => {
 router.get('/documents/:id/pdf-base64', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await query('SELECT * FROM documents WHERE id = $1', [id]);
+        const result = await query(`
+            SELECT d.*, e.full_name as employee_full_name
+            FROM documents d
+            LEFT JOIN employees e ON d.employee_id = e.id
+            WHERE d.id = $1
+        `, [id]);
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Document not found' });
         }
         const doc = result.rows[0];
-        const fileName = DOC_SIGN_FILE_NAME_ASCII[doc.type] || 'document.pdf';
+        const fileName = buildSignFileName(doc.type, doc.employee_full_name);
         const pdfBase64 = await getPdfBase64ForSigningDoc(doc);
         res.json({
             pdfBase64,
@@ -727,7 +763,9 @@ router.post('/documents/:id/sign-employer', authenticateToken, async (req, res) 
                     WHEN status = 'signed' THEN 'fully_signed'
                     WHEN status = 'draft' THEN 'employer_signed'
                     ELSE status
-                END
+                END,
+                signing_completed_at = NOW(),
+                signing_method = COALESCE(signing_method, 'ncalayer')
             WHERE id = $3
             RETURNING *
         `, [signature, certInfo ? JSON.stringify(certInfo) : null, id]);
@@ -796,8 +834,10 @@ router.post('/documents/:id/sign', async (req, res) => {
         const { id } = req.params;
         const { signature, signType, sigex_document_id, sigex_operation_id } = req.body;
 
+        Logger.info(`[Docs] Document sign request received: id=${id}, sigex_doc=${sigex_document_id}, sigex_op=${sigex_operation_id}, hasSignature=${!!signature}, sigLength=${signature?.length || 0}`);
+
         // Get document info for activity logging
-        const docInfo = await query('SELECT employee_id, type FROM documents WHERE id = $1', [id]);
+        const docInfo = await query('SELECT employee_id, type, status FROM documents WHERE id = $1', [id]);
         
         const result = await query(`
             UPDATE documents
@@ -809,7 +849,9 @@ router.post('/documents/:id/sign', async (req, res) => {
                 signature_cms = $1,
                 sigex_document_id = COALESCE($2, sigex_document_id),
                 sigex_operation_id = COALESCE($3, sigex_operation_id),
-                external_id = $4
+                external_id = $4,
+                signing_completed_at = NOW(),
+                signing_method = COALESCE(signing_method, 'egov_qr')
             WHERE id = $5
             RETURNING *
         `, [
@@ -821,8 +863,11 @@ router.post('/documents/:id/sign', async (req, res) => {
         ]);
 
         if (result.rows.length === 0) {
+            Logger.warn(`[Docs] Document sign failed: document ${id} not found`);
             return res.status(404).json({ error: 'Document not found' });
         }
+
+        Logger.info(`[Docs] Document signed successfully: id=${id}, type=${result.rows[0].type}, oldStatus=${docInfo.rows[0]?.status}, newStatus=${result.rows[0].status}`);
 
         // Update employee status to 'active' if signing contract or hiring order
         const docType = result.rows[0].type;
@@ -1113,9 +1158,11 @@ router.get('/sign/:token/pdf-base64', async (req, res) => {
         const { token } = req.params;
 
         const linkResult = await query(`
-            SELECT sl.*, d.type as document_type, d.status as document_status
+            SELECT sl.*, d.type as document_type, d.status as document_status,
+                   e.full_name as employee_full_name
             FROM document_signing_links sl
             JOIN documents d ON sl.document_id = d.id
+            LEFT JOIN employees e ON d.employee_id = e.id
             WHERE sl.token = $1
         `, [token]);
 
@@ -1139,7 +1186,7 @@ router.get('/sign/:token/pdf-base64', async (req, res) => {
             return res.status(404).json({ error: 'Document not found' });
         }
         const doc = docResult.rows[0];
-        const fileName = DOC_SIGN_FILE_NAME_ASCII[doc.type] || 'document.pdf';
+        const fileName = buildSignFileName(doc.type, link.employee_full_name);
         const pdfBase64 = await getPdfBase64ForSigningDoc(doc);
 
         res.json({
