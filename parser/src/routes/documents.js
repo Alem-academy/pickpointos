@@ -53,6 +53,9 @@ const DOC_SIGN_FILE_NAME_ASCII = {
     '10_zayavlenie-na-prodlenie-otpuska-po-beremennosti': 'maternity_extension_app.pdf',
     '11_soglashenie-o-rastorzhenii-trudovogo-dogovora': 'termination_agreement.pdf',
     '12_dop-soglashenie-ob-izmenenii-familii': 'surname_addendum.pdf',
+    '13_zayavlenie-o-prieme-na-rabotu': 'job_application.pdf',
+    '14_prikaz-o-prieme-na-rabotu': 'hiring_order_new.pdf',
+    '15_trudovoy-dogovor': 'employment_contract_new.pdf',
 };
 
 const DOC_SIGN_FILE_NAME_RU = {
@@ -76,6 +79,9 @@ const DOC_SIGN_FILE_NAME_RU = {
     '10_zayavlenie-na-prodlenie-otpuska-po-beremennosti': 'Заявление_на_продление_отпуска',
     '11_soglashenie-o-rastorzhenii-trudovogo-dogovora': 'Соглашение_о_расторжении',
     '12_dop-soglashenie-ob-izmenenii-familii': 'Доп_соглашение_об_изменении_фамилии',
+    '13_zayavlenie-o-prieme-na-rabotu': 'Заявление_на_прием',
+    '14_prikaz-o-prieme-na-rabotu': 'Приказ_о_приеме',
+    '15_trudovoy-dogovor': 'Трудовой_договор',
 };
 
 function buildSignFileName(docType, employeeFullName) {
@@ -258,41 +264,149 @@ router.get('/templates/schemas/:type', async (req, res) => {
 function buildTemplateData(emp, employer, schema, params = {}) {
     const now = new Date();
     const MONTHS_RU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+    const MONTHS_RU_NOM = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
+    const MONTHS_KZ = ['қаңтар','ақпан','наурыз','сәуір','мамыр','маусым','шілде','тамыз','қыркүйек','қазан','қараша','желтоқсан'];
+    const MONTHS_KZ_DAT = ['қаңтарда','ақпанда','наурызда','сәуірде','мамырда','маусымда','шілдеде','тамызда','қыркүйекте','қазанда','қарашада','желтоқсанда'];
+
+    // Helper: simple FIO case declension (basic Russian rules)
+    // For production, use petrovich or store pre-declined forms in DB
+    function declineFIO(fullName, case_) {
+        if (!fullName) return '';
+        const parts = fullName.trim().split(/\s+/);
+        if (parts.length < 2) return fullName;
+        const [last, first, mid = ''] = parts;
+        // Very basic declension - for proper handling use petrovich library
+        if (case_ === 'rod') { // родительный
+            if (last.endsWith('а')) return `${last.slice(0,-1)}ой ${first} ${mid}`;
+            if (last.endsWith('ев') || last.endsWith('ов')) return `${last.slice(0,-2)}овой ${first} ${mid}`;
+            return `${last}а ${first} ${mid}`;
+        }
+        if (case_ === 'dat') { // дательный
+            if (last.endsWith('а')) return `${last.slice(0,-1)}ой ${first} ${mid}`;
+            return `${last}у ${first} ${mid}`;
+        }
+        if (case_ === 'vin') { // винительный
+            if (last.endsWith('а')) return `${last.slice(0,-1)}у ${first} ${mid}`;
+            return `${last}а ${first} ${mid}`;
+        }
+        return fullName;
+    }
+
+    function declineShortFIO(fullName, case_) {
+        if (!fullName) return '';
+        const [last, rest] = fullName.split(/\s(.+)/);
+        if (case_ === 'rod' || case_ === 'dat') {
+            if (last.endsWith('а')) return `${last.slice(0,-1)}ой ${rest || ''}`;
+            if (last.endsWith('ев') || last.endsWith('ов')) return `${last.slice(0,-2)}овой ${rest || ''}`;
+            return `${last}а ${rest || ''}`;
+        }
+        if (case_ === 'vin') {
+            if (last.endsWith('а')) return `${last.slice(0,-1)}у ${rest || ''}`;
+            return `${last}а ${rest || ''}`;
+        }
+        return fullName;
+    }
+
+    function declinePosition(position, case_) {
+        if (!position) return '';
+        if (case_ === 'rod') {
+            return position
+                .replace(/менеджер по работе с клиентами/i, 'менеджера по работе с клиентами')
+                .replace(/менеджер ПВЗ/i, 'менеджера ПВЗ')
+                .replace(/региональный менеджер/i, 'регионального менеджера');
+        }
+        return position;
+    }
+
+    const fullName = emp.full_name || '';
+    const shortName = fullName.split(' ').map((p, i) => i === 0 ? p : `${p[0]}.`).join(' ');
+    const position = emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ';
 
     const autoData = {
-        // Employee fields
-        employeeFullName: emp.full_name || '',
-        employeePosition: emp.role === 'rf' ? 'Регионального менеджера' : 'Менеджера ПВЗ',
+        // Employee fields (base)
+        employeeFullName: fullName,
+        employeeFullNameRod: declineFIO(fullName, 'rod'),
+        employeeFullNameDat: declineFIO(fullName, 'dat'),
+        employeeFullNameVin: declineFIO(fullName, 'vin'),
+        employeeFullNameShort: declineShortFIO(shortName, 'rod'), // backward compat for orders
+        employeeFullNameShortRod: declineShortFIO(shortName, 'rod'),
+        employeeFullNameShortDat: declineShortFIO(shortName, 'dat'),
+        employeeFullNameShortVin: declineShortFIO(shortName, 'vin'),
+        employeePosition: position,
+        employeePositionRod: declinePosition(position, 'rod'),
         employeeIIN: emp.iin || '',
         employeeAddress: emp.registered_address || emp.address || '',
+        employeeAddressRu: emp.registered_address || emp.address || '',
+        employeeAddressKz: emp.registered_address || emp.address || '', // TODO: translate address to Kazakh
+        employeeAddressResidentRu: emp.address || '',
+        employeeAddressRegRu: emp.registered_address || emp.address || '',
         employeePhone: emp.phone || '',
         employeeEmail: emp.email || '',
         employeeIBAN: emp.iban || '',
         employeeIdCard: emp.id_card_number || '',
         employeeIdCardIssuedBy: emp.id_card_issued_by || '',
         employeeIdCardIssueDate: emp.id_card_issue_date ? new Date(emp.id_card_issue_date).toLocaleDateString('ru-RU') : '',
+        employeeBank: emp.bank || '',
+        employeeBankDetails: emp.iban || '',
+        employeeIdNumber: emp.id_card_number || '',
+        employeeIdDate: emp.id_card_issue_date ? new Date(emp.id_card_issue_date).toLocaleDateString('ru-RU') : '',
 
         // Employer fields
         employerName: employer.name || '',
         employerShortName: employer.short_name || '',
         employerBIN: employer.bin || '',
+        employerIIN: employer.iin || employer.bin || '',
         employerDirector: employer.director_name || '',
         employerDirectorDative: employer.director_name_dative || '',
+        employerDirectorKz: employer.director_name || '',
+        employerDirectorRu: employer.director_name || '',
         employerAddress: employer.address || '',
+        employerAddressRu: employer.address || '',
+        employerAddressKz: employer.address || '', // TODO: translate
         employerBank: employer.bank || '',
         employerBIK: employer.bik || '',
+        employerBIC: employer.bik || '',
         employerIBAN: employer.iban || '',
+        employerAccount: employer.iban || '',
+
+        // Director fields (individual variables for templates)
+        directorName: employer.director_name || '',
+        directorNameShort: employer.director_name_dative || employer.director_name || '', // backward compat
+        directorNameShortDat: employer.director_name_dative || '',
+        directorNameShortRod: declineShortFIO(employer.director_name, 'rod'),
+        directorNameShortKz: employer.director_name || '',
+        directorNameShortRu: employer.director_name || '',
+        directorNameKz: employer.director_name || '',
+        directorNameRu: employer.director_name || '',
+        directorBasis: 'Устава',
+        directorBasisKz: 'Жарғысы',
+        directorBasisRu: 'Устава',
 
         // Current date components
         currentDate: `${now.getDate()} ${MONTHS_RU[now.getMonth()]} ${now.getFullYear()} г.`,
         currentDateDay: String(now.getDate()),
         currentDateMonth: MONTHS_RU[now.getMonth()],
+        currentDateMonthRu: MONTHS_RU[now.getMonth()],
+        currentDateMonthKz: MONTHS_KZ[now.getMonth()],
         currentDateYear: String(now.getFullYear()),
         currentDateShort: `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}`,
 
-        // PVZ
+        // Generic date
+        dateDay: String(now.getDate()),
+        dateMonthRu: MONTHS_RU[now.getMonth()],
+        dateMonthKz: MONTHS_KZ[now.getMonth()],
+        dateYear: String(now.getFullYear()),
+
+        // City
+        city: 'Алматы',
+        cityRu: 'Алматы',
+        cityKz: 'Алматы',
+
+        // PVZ / Workplace
         pvzAddress: emp.pvz_address || '',
         pvzName: emp.pvz_name || '',
+        workplaceAddressRu: emp.pvz_address || '',
+        workplaceAddressKz: emp.pvz_address || '', // TODO: translate
     };
 
     // Merge auto + manual params (manual overrides auto)
@@ -612,6 +726,8 @@ router.post('/documents/generate', async (req, res) => {
             '08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu',
             '11_soglashenie-o-rastorzhenii-trudovogo-dogovora',
             '12_dop-soglashenie-ob-izmenenii-familii',
+            '14_prikaz-o-prieme-na-rabotu',
+            '15_trudovoy-dogovor',
         ];
         const requiresEmployerSignature = typesRequiringEmployerSignature.includes(type);
 

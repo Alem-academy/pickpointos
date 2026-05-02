@@ -97,7 +97,7 @@
     {{vacationDaysText}}     — количество дней прописью
     {{vacationStartDate}}    — дата начала отпуска
     {{vacationEndDate}}      — дата окончания отпуска
-    {{employeeFullNameShort}}— ФИО с инициалами в родительном падеже
+    {{employeeFullNameShortRod}}— ФИО с инициалами в родительном падеже
     {{applicationDate}}      — дата заявления
     {{sickLeaveDate}}        — дата листка нетрудоспособности
     {{sickLeaveSeries}}      — серия листка нетрудоспособности
@@ -150,7 +150,7 @@
   </p>
 
   <p class="body-text basis">
-    <strong>Основание:</strong> заявление <strong>{{employeeFullNameShort}}</strong> 
+    <strong>Основание:</strong> заявление <strong>{{employeeFullNameShortRod}}</strong> 
     от {{applicationDate}}, лист о временной нетрудоспособности от {{sickLeaveDate}}, 
     серия {{sickLeaveSeries}} № {{sickLeaveNumber}}.
   </p>
@@ -166,7 +166,7 @@
   <div class="acknowledge">
     <p>С приказом ознакомлен(а):</p>
     <p>«{{dateDay}}» {{dateMonthRu}} {{dateYear}} г.</p>
-    <p><span class="sign-line"></span> {{employeeFullNameShort}}</p>
+    <p><span class="sign-line"></span> {{employeeFullNameShortRod}}</p>
   </div>
 </body>
 </html>

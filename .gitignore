@@ -6,3 +6,4 @@ playwright/.cache/
 
 # Environment variables
 .env.test
+document-templates/test-output/
