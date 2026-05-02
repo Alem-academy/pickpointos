@@ -87,10 +87,10 @@
     {{orderNumber}}          — номер приказа
     {{dateDay}}              — день
     {{dateMonthKz}}          — месяц на казахском
-    {{dateMonth}}            — месяц на русском
+    {{dateMonthRu}}          — месяц на русском
     {{dateYear}}             — год
     {{cityKz}}               — город на казахском
-    {{city}}                 — город на русском
+    {{cityRu}}               — город на русском
     {{employeePositionRod}}  — должность в родительном падеже
     {{employeeFullNameRod}}  — ФИО в родительном падеже
     {{vacationDays}}         — количество дней продления
@@ -128,7 +128,7 @@
       </td>
       <td class="right">
         <p>№ {{orderNumber}}</p>
-        <p>город {{city}}</p>
+        <p>город {{cityRu}}</p>
       </td>
     </tr>
   </table>
@@ -165,7 +165,7 @@
 
   <div class="acknowledge">
     <p>С приказом ознакомлен(а):</p>
-    <p>«{{dateDay}}» {{dateMonth}} {{dateYear}} г.</p>
+    <p>«{{dateDay}}» {{dateMonthRu}} {{dateYear}} г.</p>
     <p><span class="sign-line"></span> {{employeeFullNameShort}}</p>
   </div>
 </body>

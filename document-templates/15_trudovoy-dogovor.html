@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Трудовой договор</title>
+  <style>
+    @page { size: A4; margin: 20mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 11pt;
+      line-height: 1.4;
+      color: #000;
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 15mm 20mm;
+    }
+    .bilingual-header {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 10px;
+    }
+    .bilingual-header td {
+      width: 50%;
+      vertical-align: top;
+      padding: 5px;
+    }
+    .bilingual-header .kz { text-align: left; }
+    .bilingual-header .ru { text-align: right; }
+    .bilingual-header p {
+      margin: 0;
+      font-weight: bold;
+      line-height: 1.3;
+    }
+    .meta-row {
+      width: 100%;
+      margin: 10px 0;
+    }
+    .meta-row td {
+      width: 50%;
+      vertical-align: top;
+      padding: 5px;
+    }
+    .meta-row .left { text-align: left; }
+    .meta-row .right { text-align: right; }
+    .meta-row p { margin: 0; }
+    .doc-title {
+      text-align: center;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+    .doc-subtitle {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .body-text {
+      text-align: justify;
+      margin: 8px 0;
+      text-indent: 20px;
+    }
+    .body-text.no-indent {
+      text-indent: 0;
+    }
+    .clauses {
+      margin: 10px 0;
+    }
+    .clause {
+      margin: 8px 0;
+      text-align: justify;
+    }
+    .clause p {
+      margin: 5px 0;
+      text-indent: 20px;
+    }
+    .signature-section {
+      margin-top: 40px;
+      width: 100%;
+    }
+    .signature-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+    }
+    .signature-col {
+      width: 45%;
+    }
+    .sign-line {
+      display: inline-block;
+      width: 100%;
+      border-bottom: 1px solid #000;
+      margin-bottom: 5px;
+    }
+    .sign-label {
+      font-size: 10pt;
+      text-align: center;
+      margin-top: 5px;
+    }
+    .requisites {
+      margin-top: 20px;
+      font-size: 10pt;
+    }
+    .requisites p {
+      margin: 3px 0;
+    }
+  </style>
+</head>
+<body>
+  <!--
+    Переменные:
+    {{contractNumber}}          — номер договора
+    {{contractDateDay}}         — день заключения
+    {{contractDateMonthKz}}     — месяц заключения (казахский)
+    {{contractDateMonthRu}}     — месяц заключения (русский)
+    {{contractDateYear}}        — год заключения
+    {{employerName}}            — наименование работодателя
+    {{directorNameKz}}          — ФИО директора (казахский блок, именительный)
+    {{directorNameRu}}          — ФИО директора (русский блок, именительный)
+    {{directorNameShortKz}}     — ФИО директора с инициалами (каз)
+    {{directorNameShortRu}}     — ФИО директора с инициалами (рус)
+    {{directorBasisKz}}         — основание полномочий (каз)
+    {{directorBasisRu}}         — основание полномочий (рус)
+    {{employeeFullNameKz}}      — ФИО работника (казахский блок, именительный)
+    {{employeeFullNameRu}}      — ФИО работника (русский блок, именительный)
+    {{employeeIIN}}             — ИИН / ЖСН
+    {{idCardNumber}}            — номер удостоверения / куәлік
+    {{idCardIssueDate}}         — дата выдачи удостоверения
+    {{idCardIssuerKz}}          — кем выдано (казахский) — например: ҚР ІІМ
+    {{idCardIssuerRu}}          — кем выдано (русский) — например: МВД РК
+    {{employeeAddressKz}}       — адрес регистрации (казахский)
+    {{employeeAddressRu}}       — адрес регистрации (русский)
+    {{employeePhone}}           — телефон
+    {{employeeEmail}}           — email
+    {{employeePositionKz}}      — должность (казахский)
+    {{employeePositionRu}}      — должность (русский)
+    {{workplaceAddressKz}}      — адрес места работы (казахский)
+    {{workplaceAddressRu}}      — адрес места работы (русский)
+    {{salaryAmount}}            — размер оплаты труда
+    {{workSchedule}}            — график работы
+    {{cityKz}}                  — город (казахский)
+    {{cityRu}}                  — город (русский)
+  -->
+
+  <table class="bilingual-header">
+    <tr>
+      <td class="kz">
+        <p>«{{employerName}}»</p>
+        <p>Жеке Кәсіпкер</p>
+      </td>
+      <td class="ru">
+        <p>Индивидуальный предприниматель</p>
+        <p>«{{employerName}}»</p>
+      </td>
+    </tr>
+  </table>
+
+  <div class="doc-title">Еңбек шарты № {{contractNumber}} / Трудовой договор № {{contractNumber}}</div>
+  <div class="doc-subtitle">
+    Тараптар {{contractDateDay}} {{contractDateMonthRu}} {{contractDateYear}} электрондық цифрлық қолтаңбамен қол қойды.
+  </div>
+
+  <p class="body-text no-indent">
+    <strong>Қазақша:</strong> Жұмыс беруші – «{{employerName}}» ЖК, {{directorNameKz}}, бұдан әрі – Жұмыс беруші, 
+    бір тараптан, азамат(-ша) <strong>{{employeeFullNameKz}}</strong> жеке куәлік/паспорт № {{idCardNumber}}, 
+    {{idCardIssueDate}} ж. {{idCardIssuerKz}} берген, ЖСН {{employeeIIN}}, бұдан әрі – Жұмысшы, 
+    осы еңбек шартын (бұдан әрі – Шарт) төмендегідей жасасты:
+  </p>
+
+  <p class="body-text no-indent">
+    <strong>Русский:</strong> Работодатель – {{employerName}} в лице {{directorNameRu}}, действующего на основании 
+    {{directorBasisRu}}, с одной стороны, и гражданин(ка) <strong>{{employeeFullNameRu}}</strong>, 
+    удостоверение личности № {{idCardNumber}}, выданное {{idCardIssuerRu}} {{idCardIssueDate}}, 
+    ИИН {{employeeIIN}}, с другой стороны, заключили настоящий трудовой договор (далее – Договор) 
+    о нижеследующем:
+  </p>
+
+  <div class="clauses">
+    <div class="clause">
+      <p><strong>1. Шарттың мәні / Предмет Договора</strong></p>
+      <p>
+        1.1. Жұмыс беруші Жұмысшыны <strong>{{employeePositionKz}}</strong> лауазымына қабылдайды, 
+        осы лауазым бойынша Жұмысшы Қазақстан Республикасының заңнасын сақтай отырып және 
+        Жұмыс берушінің актілеріне сәйкес қызметтік міндеттерін орындайды. 
+        Еңбек орны: {{workplaceAddressKz}}.
+      </p>
+      <p>
+        1.1. Работодатель принимает Работника на должность <strong>{{employeePositionRu}}</strong>. 
+        Работник обязуется выполнять свои должностные обязанности в соответствии с законодательством 
+        Республики Казахстан и актами Работодателя. Место работы: {{workplaceAddressRu}}.
+      </p>
+    </div>
+
+    <div class="clause">
+      <p><strong>2. Жұмыс уақыты мен демалыс / Рабочее время и отдых</strong></p>
+      <p>
+        2.1. Жұмыс уақыты – {{workSchedule}}.
+      </p>
+      <p>
+        2.1. Рабочее время – {{workSchedule}}.
+      </p>
+    </div>
+
+    <div class="clause">
+      <p><strong>3. Еңбекақы / Оплата труда</strong></p>
+      <p>
+        3.1. Жұмыс беруші Жұмысшыға {{salaryAmount}} мөлшерінде ай сайынғы еңбекақы төлеуді міндеттендіреді.
+      </p>
+      <p>
+        3.1. Работодатель обязуется выплачивать Работнику ежемесячную заработную плату 
+        в размере {{salaryAmount}}.
+      </p>
+    </div>
+  </div>
+
+  <div class="requisites">
+    <p><strong>Жұмысшы / Работник:</strong></p>
+    <p>Аты-жөні / ФИО: {{employeeFullNameRu}}</p>
+    <p>ЖСН / ИИН: {{employeeIIN}}</p>
+    <p>Мекенжайы / Адрес: {{employeeAddressRu}}</p>
+    <p>Ұялы тел / Тел: {{employeePhone}}</p>
+    <p>Email: {{employeeEmail}}</p>
+    <br>
+    <p><strong>Жұмыс беруші / Работодатель:</strong></p>
+    <p>{{employerName}}</p>
+    <p>Директор / Директор: {{directorNameShortRu}}</p>
+  </div>
+
+  <div class="signature-section">
+    <div class="signature-row">
+      <div class="signature-col">
+        <p><strong>Жұмыс беруші / РАБОТОДАТЕЛЬ:</strong></p>
+        <p>{{employerName}}</p>
+        <p>Директор: {{directorNameShortRu}}</p>
+        <div style="margin-top: 20px;">
+          <span class="sign-line"></span>
+          <p class="sign-label">(электрондық қолтаңба / электронная подпись)</p>
+        </div>
+      </div>
+      <div class="signature-col">
+        <p><strong>Жұмысшы / РАБОТНИК:</strong></p>
+        <p>{{employeeFullNameRu}}</p>
+        <p>ИИН: {{employeeIIN}}</p>
+        <div style="margin-top: 20px;">
+          <span class="sign-line"></span>
+          <p class="sign-label">(электрондық қолтаңба / электронная подпись)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

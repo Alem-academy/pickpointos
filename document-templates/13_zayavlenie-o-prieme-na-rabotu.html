@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Заявление о приеме на работу</title>
+  <style>
+    @page { size: A4; margin: 20mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 14pt;
+      line-height: 1.5;
+      color: #000;
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 20mm;
+    }
+    .header-right {
+      text-align: right;
+      margin-bottom: 20px;
+    }
+    .header-right p {
+      margin: 0;
+      line-height: 1.4;
+    }
+    .title {
+      text-align: center;
+      font-weight: bold;
+      margin: 20px 0;
+      letter-spacing: 2px;
+    }
+    .body-text {
+      text-align: justify;
+      text-indent: 0;
+      margin: 10px 0;
+    }
+    .signature-block {
+      margin-top: 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .signature-block .date {
+      text-align: left;
+    }
+    .signature-block .sign {
+      text-align: center;
+    }
+    .line {
+      display: inline-block;
+      width: 150px;
+      border-bottom: 1px solid #000;
+    }
+  </style>
+</head>
+<body>
+  <!--
+    Переменные:
+    {{employerName}}        — наименование работодателя (например: ИП «Жасмин»)
+    {{directorNameShortDat}}— ФИО директора в дательном падеже (например: Карабаевой Г.Е.)
+    {{employeeFullName}}    — ФИО сотрудника полностью (именительный)
+    {{employeeAddressResidentRu}} — адрес проживания (русский)
+    {{employeeAddressRegRu}}— адрес регистрации (русский)
+    {{employeePhone}}       — телефон
+    {{startDateDay}}        — день начала работы
+    {{startDateMonthRu}}    — месяц начала работы (русский)
+    {{startDateYear}}       — год начала работы
+    {{employeePosition}}    — должность
+    {{currentDateDay}}      — день подписания
+    {{currentDateMonthRu}}  — месяц подписания (русский)
+    {{currentDateYear}}     — год подписания
+  -->
+
+  <div class="header-right">
+    <p>Директору {{employerName}}</p>
+    <p>{{directorNameShortDat}}</p>
+    <p>от {{employeeFullName}}</p>
+    <p>Проживающий по адресу: {{employeeAddressResidentRu}}</p>
+    <p>Зарегистрированный по адресу: {{employeeAddressRegRu}}</p>
+    <p>Тел: {{employeePhone}}</p>
+  </div>
+
+  <div class="title">ЗАЯВЛЕНИЕ</div>
+
+  <p class="body-text">
+    Прошу Вас принять меня на работу с «{{startDateDay}}» {{startDateMonthRu}} {{startDateYear}} года 
+    на должность {{employeePosition}}.
+  </p>
+
+  <div class="signature-block">
+    <div class="date">
+      «{{currentDateDay}}» {{currentDateMonthRu}} {{currentDateYear}} г.
+    </div>
+    <div class="sign">
+      <span class="line"></span>
+      <p style="font-size: 10pt; margin: 4px 0 0;">(подпись)</p>
+      <p>{{employeeFullName}}</p>
+    </div>
+  </div>
+</body>
+</html>

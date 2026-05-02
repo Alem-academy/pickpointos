@@ -105,10 +105,10 @@
     {{applicationDate}}        — дата заявления работника
     {{marriageCertDate}}       — дата свидетельства о браке
     {{marriageCertNumber}}     — номер свидетельства о браке
-    {{marriageCertIssuer}}     — кем выдано свидетельство о браке
+    {{marriageCertIssuerRu}}   — кем выдано свидетельство о браке (русский)
     {{idCardNumber}}           — номер удостоверения личности
     {{idCardIssueDate}}        — дата выдачи удостоверения
-    {{idCardIssuer}}           — кем выдано удостоверение
+    {{idCardIssuerRu}}         — кем выдано удостоверение (русский)
     {{directorNameShort}}      — ФИО директора с инициалами
   -->
 
@@ -137,7 +137,7 @@
       <td class="right">
         <p><strong>ПРИКАЗ</strong></p>
         <p>№ {{orderNumber}}</p>
-        <p>город {{city}}</p>
+        <p>город {{cityRu}}</p>
       </td>
     </tr>
   </table>
@@ -162,10 +162,10 @@
   <p class="body-text no-indent">
     <strong>Основание:</strong><br>
     1. Заявление работника об изменении персональных данных {{newLastName}} {{employeeFullNameShort}} 
-    от «{{dateDay}}» {{dateMonth}} {{dateYear}} года;<br>
+    от «{{dateDay}}» {{dateMonthRu}} {{dateYear}} года;<br>
     2. Копия свидетельства о заключении брака от {{marriageCertDate}} № {{marriageCertNumber}}, 
-    {{marriageCertIssuer}};<br>
-    3. Удостоверение личности № {{idCardNumber}}, от {{idCardIssueDate}} выданный {{idCardIssuer}}.
+    {{marriageCertIssuerRu}};<br>
+    3. Удостоверение личности № {{idCardNumber}}, от {{idCardIssueDate}} выданный {{idCardIssuerRu}}.
   </p>
 
   <table class="signature-table">
@@ -191,7 +191,7 @@
         <td></td>
         <td></td>
         <td></td>
-        <td>«{{dateDay}}» {{dateMonth}} {{dateYear}} г.</td>
+        <td>«{{dateDay}}» {{dateMonthRu}} {{dateYear}} г.</td>
       </tr>
       <tr>
         <td><em>(Ф. И. О.)</em></td>
