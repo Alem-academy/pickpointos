@@ -269,42 +269,105 @@ function buildTemplateData(emp, employer, schema, params = {}) {
     const MONTHS_KZ_DAT = ['қаңтарда','ақпанда','наурызда','сәуірде','мамырда','маусымда','шілдеде','тамызда','қыркүйекте','қазанда','қарашада','желтоқсанда'];
 
     // Helper: simple FIO case declension (basic Russian rules)
-    // For production, use petrovich or store pre-declined forms in DB
+    // For production accuracy, integrate petrovich or store pre-declined forms in DB
     function declineFIO(fullName, case_) {
         if (!fullName) return '';
         const parts = fullName.trim().split(/\s+/);
         if (parts.length < 2) return fullName;
         const [last, first, mid = ''] = parts;
-        // Very basic declension - for proper handling use petrovich library
-        if (case_ === 'rod') { // родительный
-            if (last.endsWith('а')) return `${last.slice(0,-1)}ой ${first} ${mid}`;
-            if (last.endsWith('ев') || last.endsWith('ов')) return `${last.slice(0,-2)}овой ${first} ${mid}`;
-            return `${last}а ${first} ${mid}`;
+        const l = last.toLowerCase();
+
+        // Женские фамилии на -ская / -цкая
+        if (l.endsWith('ская') || l.endsWith('цкая')) {
+            const base = last.slice(0, -2); // убираем 'ая'
+            if (case_ === 'rod' || case_ === 'dat') return `${base}ой ${first} ${mid}`;
+            if (case_ === 'vin') return `${base}ую ${first} ${mid}`;
         }
-        if (case_ === 'dat') { // дательный
-            if (last.endsWith('а')) return `${last.slice(0,-1)}ой ${first} ${mid}`;
-            return `${last}у ${first} ${mid}`;
+        // Женские фамилии на -ова / -ева / -ина
+        if (l.endsWith('ова') || l.endsWith('ева') || l.endsWith('ина')) {
+            const base = last.slice(0, -1);
+            if (case_ === 'rod' || case_ === 'dat') return `${base}ой ${first} ${mid}`;
+            if (case_ === 'vin') return `${base}у ${first} ${mid}`;
         }
-        if (case_ === 'vin') { // винительный
-            if (last.endsWith('а')) return `${last.slice(0,-1)}у ${first} ${mid}`;
-            return `${last}а ${first} ${mid}`;
+        // Женские фамилии на -а
+        if (last.endsWith('а')) {
+            if (case_ === 'rod' || case_ === 'dat') return `${last.slice(0,-1)}ой ${first} ${mid}`;
+            if (case_ === 'vin') return `${last.slice(0,-1)}у ${first} ${mid}`;
         }
+        // Мужские фамилии на -ев / -ов
+        if (last.endsWith('ев') || last.endsWith('ов')) {
+            if (case_ === 'rod' || case_ === 'dat') return `${last.slice(0,-2)}ову ${first} ${mid}`;
+            if (case_ === 'vin') return `${last.slice(0,-2)}ова ${first} ${mid}`;
+        }
+        // Мужские фамилии
+        if (case_ === 'rod' || case_ === 'dat') return `${last}у ${first} ${mid}`;
+        if (case_ === 'vin') return `${last}а ${first} ${mid}`;
         return fullName;
     }
 
     function declineShortFIO(fullName, case_) {
         if (!fullName) return '';
         const [last, rest] = fullName.split(/\s(.+)/);
-        if (case_ === 'rod' || case_ === 'dat') {
-            if (last.endsWith('а')) return `${last.slice(0,-1)}ой ${rest || ''}`;
-            if (last.endsWith('ев') || last.endsWith('ов')) return `${last.slice(0,-2)}овой ${rest || ''}`;
-            return `${last}а ${rest || ''}`;
+        if (!last) return fullName;
+        const l = last.toLowerCase();
+
+        if (l.endsWith('ская') || l.endsWith('цкая')) {
+            const base = last.slice(0, -2);
+            if (case_ === 'rod' || case_ === 'dat') return `${base}ой ${rest || ''}`;
+            if (case_ === 'vin') return `${base}ую ${rest || ''}`;
         }
-        if (case_ === 'vin') {
-            if (last.endsWith('а')) return `${last.slice(0,-1)}у ${rest || ''}`;
-            return `${last}а ${rest || ''}`;
+        if (l.endsWith('ова') || l.endsWith('ева') || l.endsWith('ина')) {
+            const base = last.slice(0, -1);
+            if (case_ === 'rod' || case_ === 'dat') return `${base}ой ${rest || ''}`;
+            if (case_ === 'vin') return `${base}у ${rest || ''}`;
         }
+        if (last.endsWith('а')) {
+            if (case_ === 'rod' || case_ === 'dat') return `${last.slice(0,-1)}ой ${rest || ''}`;
+            if (case_ === 'vin') return `${last.slice(0,-1)}у ${rest || ''}`;
+        }
+        if (last.endsWith('ев') || last.endsWith('ов')) {
+            if (case_ === 'rod' || case_ === 'dat') return `${last.slice(0,-2)}ову ${rest || ''}`;
+            if (case_ === 'vin') return `${last.slice(0,-2)}ова ${rest || ''}`;
+        }
+        if (case_ === 'rod' || case_ === 'dat') return `${last}у ${rest || ''}`;
+        if (case_ === 'vin') return `${last}а ${rest || ''}`;
         return fullName;
+    }
+
+    // Translate Russian address components to Kazakh
+    function translateAddressToKazakh(address) {
+        if (!address) return '';
+        const a = address;
+        // Abbreviations with explicit boundaries (\b doesn't work for Cyrillic in JS)
+        const boundary = '(^|[^а-яёәіңғүұқөһa-zA-Z])';
+        const boundaryEnd = '([^а-яёәіңғүұқөһa-zA-Z]|$)';
+        return a
+            .replace(new RegExp(boundary + 'Республика Казахстан' + boundaryEnd, 'gi'), '$1Қазақстан Республикасы$2')
+            .replace(/МВД РК/g, 'ҚР ІІМ')
+            .replace(/МВД/g, 'ІІМ')
+            .replace(new RegExp(boundary + 'РК' + boundaryEnd, 'g'), '$1ҚР$2')
+            .replace(/обл\.\s*/gi, 'облысы ')
+            .replace(/область/gi, 'облысы')
+            .replace(/р-н/gi, 'ауданы')
+            .replace(/район/gi, 'ауданы')
+            .replace(/г\.\s*/gi, 'қаласы ')
+            .replace(/город/gi, 'қаласы')
+            .replace(/ул\.\s*/gi, 'көшесі ')
+            .replace(/улица/gi, 'көшесі')
+            .replace(/д\.\s*/gi, 'үй ')
+            .replace(/дом/gi, 'үй')
+            .replace(/кв\.\s*/gi, 'пәтер ')
+            .replace(/квартира/gi, 'пәтер')
+            .replace(/уч\.\s*квартал/gi, 'есептік квартал')
+            .replace(/учетный квартал/gi, 'есептік квартал')
+            .replace(/пос\.\s*/gi, 'ауылы ')
+            .replace(/поселок/gi, 'ауылы')
+            .replace(/с\.\s*/gi, 'ауылы ')
+            .replace(/село/gi, 'ауылы')
+            .replace(/пр\.\s*/gi, 'даңғылы ')
+            .replace(/проспект/gi, 'даңғылы')
+            .replace(/пер\.\s*/gi, 'оралымы ')
+            .replace(/переулок/gi, 'оралымы');
     }
 
     function declinePosition(position, case_) {
@@ -337,7 +400,7 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         employeeIIN: emp.iin || '',
         employeeAddress: emp.registered_address || emp.address || '',
         employeeAddressRu: emp.registered_address || emp.address || '',
-        employeeAddressKz: emp.registered_address || emp.address || '', // TODO: translate address to Kazakh
+        employeeAddressKz: translateAddressToKazakh(emp.registered_address || emp.address || ''),
         employeeAddressResidentRu: emp.address || '',
         employeeAddressRegRu: emp.registered_address || emp.address || '',
         employeePhone: emp.phone || '',
@@ -345,6 +408,8 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         employeeIBAN: emp.iban || '',
         employeeIdCard: emp.id_card_number || '',
         employeeIdCardIssuedBy: emp.id_card_issued_by || '',
+        idCardIssuerRu: emp.id_card_issued_by || '',
+        idCardIssuerKz: translateAddressToKazakh(emp.id_card_issued_by || ''),
         employeeIdCardIssueDate: emp.id_card_issue_date ? new Date(emp.id_card_issue_date).toLocaleDateString('ru-RU') : '',
         employeeBank: emp.bank || '',
         employeeBankDetails: emp.iban || '',
@@ -362,7 +427,7 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         employerDirectorRu: employer.director_name || '',
         employerAddress: employer.address || '',
         employerAddressRu: employer.address || '',
-        employerAddressKz: employer.address || '', // TODO: translate
+        employerAddressKz: translateAddressToKazakh(employer.address || ''),
         employerBank: employer.bank || '',
         employerBIK: employer.bik || '',
         employerBIC: employer.bik || '',
@@ -397,6 +462,29 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         dateMonthKz: MONTHS_KZ[now.getMonth()],
         dateYear: String(now.getFullYear()),
 
+        // Start date (hiring) from employee hired_at
+        ...(emp.hired_at ? (() => {
+            const d = new Date(emp.hired_at);
+            return {
+                startDateDay: String(d.getDate()),
+                startDateMonthRu: MONTHS_RU[d.getMonth()],
+                startDateMonthKz: MONTHS_KZ[d.getMonth()],
+                startDateYear: String(d.getFullYear()),
+            };
+        })() : {}),
+
+        // Contract date (same as hired_at by default)
+        ...(emp.hired_at ? (() => {
+            const d = new Date(emp.hired_at);
+            return {
+                contractDate: `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`,
+                contractDateDay: String(d.getDate()),
+                contractDateMonthRu: MONTHS_RU[d.getMonth()],
+                contractDateMonthKz: MONTHS_KZ[d.getMonth()],
+                contractDateYear: String(d.getFullYear()),
+            };
+        })() : {}),
+
         // City
         city: 'Алматы',
         cityRu: 'Алматы',
@@ -406,7 +494,7 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         pvzAddress: emp.pvz_address || '',
         pvzName: emp.pvz_name || '',
         workplaceAddressRu: emp.pvz_address || '',
-        workplaceAddressKz: emp.pvz_address || '', // TODO: translate
+        workplaceAddressKz: translateAddressToKazakh(emp.pvz_address || ''),
     };
 
     // Merge auto + manual params (manual overrides auto)
@@ -429,7 +517,8 @@ router.post('/documents/generate', async (req, res) => {
 
         // If an IBAN is provided, save it to the employee
         if (iban) {
-            await query('UPDATE employees SET iban = $1 WHERE id = $2', [iban, employeeId]);
+            const normalizedIBAN = String(iban).replace(/\s/g, '').toUpperCase();
+            await query('UPDATE employees SET iban = $1 WHERE id = $2', [normalizedIBAN, employeeId]);
         }
 
         // Fetch employee data WITH employer requisites

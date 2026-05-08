@@ -52,6 +52,13 @@ export function PhoneInput({ value, onChange, className, error, ...props }: Mask
 }
 
 export function IBANInput({ value, onChange, className, error, ...props }: MaskedInputProps) {
+    const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        e.preventDefault();
+        const pasted = e.clipboardData.getData('text');
+        // Extract digits only, strip spaces/KZ prefix if pasted
+        const digits = pasted.replace(/\D/g, '').replace(/^KZ/i, '').slice(0, 18);
+        onChange({ target: { name: props.name, value: digits } } as React.ChangeEvent<HTMLInputElement>);
+    };
     return (
         <PatternFormat
             {...props}
@@ -61,6 +68,7 @@ export function IBANInput({ value, onChange, className, error, ...props }: Maske
             onValueChange={(vals) => {
                 onChange({ target: { name: props.name, value: vals.value } } as React.ChangeEvent<HTMLInputElement>);
             }}
+            onPaste={handlePaste}
             className={cn(
                 "w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 font-mono",
                 error && "border-red-500 focus:ring-red-500",

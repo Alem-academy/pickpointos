@@ -127,7 +127,11 @@ for (const file of files) {
         else if (varName.includes('currentDate')) data[varName] = `${now.getDate()} ${MONTHS_RU[now.getMonth()]} ${now.getFullYear()} г.`;
         else if (varName.includes('orderNumber')) data[varName] = '001-К';
         else if (varName.includes('contractNumber')) data[varName] = 'ТД-001/26';
-        else if (varName.includes('contractDate')) data[varName] = '28 апреля 2026 года';
+        else if (varName.includes('contractDateDay') || varName.includes('startDateDay')) data[varName] = '28';
+        else if (varName.includes('contractDateMonthKz') || varName.includes('startDateMonthKz')) data[varName] = MONTHS_KZ[now.getMonth()];
+        else if (varName.includes('contractDateMonthRu') || varName.includes('startDateMonthRu')) data[varName] = MONTHS_RU[now.getMonth()];
+        else if (varName.includes('contractDateYear') || varName.includes('startDateYear')) data[varName] = String(now.getFullYear());
+        else if (varName.includes('contractDate')) data[varName] = '28.04.2026';
         else if (varName.includes('agreementNumber')) data[varName] = '1';
         else if (varName.includes('agreementDate')) data[varName] = '28.04.2026';
         else if (varName.includes('terminationDate')) data[varName] = '15 марта 2026 года';
