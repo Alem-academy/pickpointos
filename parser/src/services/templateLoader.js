@@ -6,7 +6,10 @@ import { Logger } from '../lib/logger.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const TEMPLATES_DIR = path.resolve(__dirname, '../../../document-templates');
+// Resolve templates directory relative to cwd (works from root or parser/)
+const TEMPLATES_DIR = fs.existsSync(path.resolve(process.cwd(), 'document-templates'))
+    ? path.resolve(process.cwd(), 'document-templates')
+    : path.resolve(process.cwd(), '../document-templates');
 const SCHEMAS_FILE = path.join(TEMPLATES_DIR, 'template-schemas.json');
 
 let templateCache = null;

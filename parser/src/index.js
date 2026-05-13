@@ -19,6 +19,7 @@ import templatesRoutes from './routes/templates.js';
 const app = express();
 const port = process.env.PORT || 8080;
 
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -66,11 +67,12 @@ app.use(morganMiddleware);
 
 // Serve static files from the React app
 // Assuming parser/src/index.js -> parser/src -> parser -> root -> dist
-const distPath = path.join(__dirname, '../../dist');
+const distPath = fs.existsSync(path.resolve(process.cwd(), 'dist'))
+    ? path.resolve(process.cwd(), 'dist')
+    : path.resolve(process.cwd(), '../dist');
 Logger.info(`📂 Static files path: ${distPath}`);
 
 // Verify dist exists
-import fs from 'fs';
 if (!fs.existsSync(distPath)) {
     Logger.error(`❌ CRITICAL: 'dist' folder not found at ${distPath}`);
     Logger.error(`   __dirname: ${__dirname}`);
