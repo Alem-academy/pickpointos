@@ -21,6 +21,9 @@ export function NotificationBell() {
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const loadActivities = async () => {
+        // Skip if user is not authenticated (no token in localStorage)
+        const userStr = localStorage.getItem('user');
+        if (!userStr) return;
         try {
             setIsLoading(true);
             const data = await api.getGlobalActivity(20, 'document');
@@ -30,7 +33,11 @@ export function NotificationBell() {
                 new Date(a.created_at) > new Date(Date.now() - 24 * 60 * 60 * 1000)
             );
             setUnreadCount(last24h.length);
-        } catch (err) {
+        } catch (err: any) {
+            // Silently ignore auth errors to prevent console spam
+            if (err?.response?.status === 401 || err?.response?.status === 403) {
+                return;
+            }
             console.error('Failed to load notifications:', err);
         } finally {
             setIsLoading(false);
