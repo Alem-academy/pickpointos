@@ -581,6 +581,8 @@ router.post('/documents/generate', async (req, res) => {
         const yearShort = String(contractYear).slice(-2);
         const contractNum = `ТД-${String(seq).padStart(3, '0')}/${yearShort}`;
 
+        let schema = null;
+
         if (type === 'contract') {
             // Allow overriding start date from request
             const startDateParam = req.body.startDate;
@@ -708,7 +710,7 @@ router.post('/documents/generate', async (req, res) => {
 
             // Generate order number
             const orderCntRes = await query(
-                `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type LIKE '%order%'`, [employeeId]
+                `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type::text LIKE '%order%'`, [employeeId]
             );
             const orderSeq = parseInt(orderCntRes.rows[0].count, 10) + 1;
 
@@ -731,7 +733,7 @@ router.post('/documents/generate', async (req, res) => {
 
             // Generate order number
             const orderCntRes = await query(
-                `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type LIKE '%order%'`, [employeeId]
+                `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type::text LIKE '%order%'`, [employeeId]
             );
             const orderSeq = parseInt(orderCntRes.rows[0].count, 10) + 1;
 
@@ -781,7 +783,7 @@ router.post('/documents/generate', async (req, res) => {
         } else {
             // Universal template generation for document-templates/ files
             const template = getTemplate(type);
-            const schema = getSchema(type);
+            schema = getSchema(type);
 
             if (!template || !schema) {
                 return res.status(400).json({ error: 'Unsupported document type' });
