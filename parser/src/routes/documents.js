@@ -820,11 +820,22 @@ router.post('/documents/generate', async (req, res) => {
         ];
         const requiresEmployerSignature = typesRequiringEmployerSignature.includes(type);
 
+        // Map template key to DB enum value
+        const dbTypeMap = {
+            'contract': 'contract',
+            'order_hiring': 'order',
+            'vacation_order': 'order',
+            'termination_order': 'order',
+            'employment_certificate': 'other',
+            'addendum': 'other',
+        };
+        const dbType = (schema && schema.type) || dbTypeMap[type] || 'other';
+
         const docResult = await query(`
             INSERT INTO documents (employee_id, type, status, scan_url, requires_employer_signature, created_at)
             VALUES ($1, $2, 'draft', $3, $4, NOW())
             RETURNING *
-        `, [employeeId, type, htmlKey, requiresEmployerSignature]);
+        `, [employeeId, dbType, htmlKey, requiresEmployerSignature]);
 
         // Auto-sign employer for one-sided documents (e.g. employment certificate)
         if (type === 'employment_certificate') {
