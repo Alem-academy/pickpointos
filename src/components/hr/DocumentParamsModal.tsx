@@ -5,6 +5,39 @@ import { api } from '@/services/api';
 
 export type DocumentType = string;
 
+const MONTHS_RU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const MONTHS_KZ = ['қаңтар','ақпан','наурыз','сәуір','мамыр','маусым','шілде','тамыз','қыркүйек','қазан','қараша','желтоқсан'];
+
+function prefillDateFields(initial: Record<string, string>, variables: Record<string, any>, employeeData: any) {
+    const now = new Date();
+    const hiredAt = employeeData?.hired_at ? new Date(employeeData.hired_at) : now;
+
+    const dateMap: Record<string, Date> = {
+        currentDate: now,
+        date: now,
+        startDate: hiredAt,
+        contractDate: hiredAt,
+        returnDate: hiredAt,
+        vacationStart: hiredAt,
+        vacationEnd: hiredAt,
+        sickLeave: now,
+        certificate: now,
+    };
+
+    for (const key of Object.keys(variables)) {
+        if (initial[key]) continue;
+        for (const [prefix, date] of Object.entries(dateMap)) {
+            if (key === `${prefix}Day`) initial[key] = String(date.getDate());
+            if (key === `${prefix}MonthRu`) initial[key] = MONTHS_RU[date.getMonth()];
+            if (key === `${prefix}MonthKz`) initial[key] = MONTHS_KZ[date.getMonth()];
+            if (key === `${prefix}Year`) initial[key] = String(date.getFullYear());
+        }
+        if (key === 'contractDate') {
+            initial[key] = `${String(hiredAt.getDate()).padStart(2,'0')}.${String(hiredAt.getMonth()+1).padStart(2,'0')}.${hiredAt.getFullYear()}`;
+        }
+    }
+}
+
 interface TemplateVariable {
     type: string;
     description?: string;
@@ -96,7 +129,7 @@ export function DocumentParamsModal({ isOpen, documentType, employeeData, onClos
                     for (const key of Object.keys(schema.variables)) {
                         if (key === 'employeeFullName' && employeeData.full_name) initial[key] = employeeData.full_name;
                         if (key === 'employeeIIN' && employeeData.iin) initial[key] = employeeData.iin;
-                        if (key === 'employeePosition') initial[key] = employeeData.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ';
+                        if (key === 'employeePositionRod') initial[key] = employeeData.role === 'rf' ? 'Регионального менеджера' : 'Менеджера ПВЗ';
                         if (key === 'employeeAddress' && (employeeData.registered_address || employeeData.address)) {
                             initial[key] = employeeData.registered_address || employeeData.address;
                         }
@@ -107,6 +140,7 @@ export function DocumentParamsModal({ isOpen, documentType, employeeData, onClos
                         if (key === 'employeeIdCardIssuedBy' && employeeData.id_card_issued_by) initial[key] = employeeData.id_card_issued_by;
                         if (key === 'pvzAddress' && employeeData.pvz_address) initial[key] = employeeData.pvz_address;
                     }
+                    prefillDateFields(initial, schema.variables, employeeData);
                 }
                 setFormData(initial);
             })

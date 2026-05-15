@@ -505,13 +505,18 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         workplaceAddressKz: translateAddressToKazakh(emp.pvz_address || ''),
     };
 
-    // Merge auto + manual params (manual overrides auto)
-    const merged = { ...autoData, ...params };
-
-    // Ensure all required fields have at least placeholder
+    // Merge auto + manual params (manual overrides auto only when non-empty)
     const result = {};
     for (const key of Object.keys(schema.variables || {})) {
-        result[key] = merged[key] !== undefined && merged[key] !== '' ? merged[key] : '__________';
+        const paramVal = params[key];
+        const autoVal = autoData[key];
+        if (paramVal !== undefined && paramVal !== '' && paramVal !== '__________') {
+            result[key] = paramVal;
+        } else if (autoVal !== undefined && autoVal !== '') {
+            result[key] = autoVal;
+        } else {
+            result[key] = '__________';
+        }
     }
 
     return result;
