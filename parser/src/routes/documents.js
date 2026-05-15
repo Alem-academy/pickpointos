@@ -276,32 +276,36 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         if (parts.length < 2) return fullName;
         const [last, first, mid = ''] = parts;
         const l = last.toLowerCase();
+        const suffix = mid ? ` ${mid}` : '';
 
         // Женские фамилии на -ская / -цкая
         if (l.endsWith('ская') || l.endsWith('цкая')) {
             const base = last.slice(0, -2); // убираем 'ая'
-            if (case_ === 'rod' || case_ === 'dat') return `${base}ой ${first} ${mid}`;
-            if (case_ === 'vin') return `${base}ую ${first} ${mid}`;
+            if (case_ === 'rod' || case_ === 'dat') return `${base}ой ${first}${suffix}`;
+            if (case_ === 'vin') return `${base}ую ${first}${suffix}`;
         }
         // Женские фамилии на -ова / -ева / -ина
         if (l.endsWith('ова') || l.endsWith('ева') || l.endsWith('ина')) {
             const base = last.slice(0, -1);
-            if (case_ === 'rod' || case_ === 'dat') return `${base}ой ${first} ${mid}`;
-            if (case_ === 'vin') return `${base}у ${first} ${mid}`;
+            if (case_ === 'rod' || case_ === 'dat') return `${base}ой ${first}${suffix}`;
+            if (case_ === 'vin') return `${base}у ${first}${suffix}`;
         }
         // Женские фамилии на -а
         if (last.endsWith('а')) {
-            if (case_ === 'rod' || case_ === 'dat') return `${last.slice(0,-1)}ой ${first} ${mid}`;
-            if (case_ === 'vin') return `${last.slice(0,-1)}у ${first} ${mid}`;
+            if (case_ === 'rod' || case_ === 'dat') return `${last.slice(0,-1)}ой ${first}${suffix}`;
+            if (case_ === 'vin') return `${last.slice(0,-1)}у ${first}${suffix}`;
         }
         // Мужские фамилии на -ев / -ов
         if (last.endsWith('ев') || last.endsWith('ов')) {
-            if (case_ === 'rod' || case_ === 'dat') return `${last.slice(0,-2)}ову ${first} ${mid}`;
-            if (case_ === 'vin') return `${last.slice(0,-2)}ова ${first} ${mid}`;
+            const base = last.slice(0, -2);
+            if (case_ === 'rod') return `${base}ова ${first}${suffix}`;
+            if (case_ === 'dat') return `${base}ову ${first}${suffix}`;
+            if (case_ === 'vin') return `${base}ова ${first}${suffix}`;
         }
-        // Мужские фамилии
-        if (case_ === 'rod' || case_ === 'dat') return `${last}у ${first} ${mid}`;
-        if (case_ === 'vin') return `${last}а ${first} ${mid}`;
+        // Мужские фамилии (прочие)
+        if (case_ === 'rod') return `${last}а ${first}${suffix}`;
+        if (case_ === 'dat') return `${last}у ${first}${suffix}`;
+        if (case_ === 'vin') return `${last}а ${first}${suffix}`;
         return fullName;
     }
 
@@ -310,27 +314,31 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         const [last, rest] = fullName.split(/\s(.+)/);
         if (!last) return fullName;
         const l = last.toLowerCase();
+        const suffix = rest ? ` ${rest}` : '';
 
         if (l.endsWith('ская') || l.endsWith('цкая')) {
             const base = last.slice(0, -2);
-            if (case_ === 'rod' || case_ === 'dat') return `${base}ой ${rest || ''}`;
-            if (case_ === 'vin') return `${base}ую ${rest || ''}`;
+            if (case_ === 'rod' || case_ === 'dat') return `${base}ой${suffix}`;
+            if (case_ === 'vin') return `${base}ую${suffix}`;
         }
         if (l.endsWith('ова') || l.endsWith('ева') || l.endsWith('ина')) {
             const base = last.slice(0, -1);
-            if (case_ === 'rod' || case_ === 'dat') return `${base}ой ${rest || ''}`;
-            if (case_ === 'vin') return `${base}у ${rest || ''}`;
+            if (case_ === 'rod' || case_ === 'dat') return `${base}ой${suffix}`;
+            if (case_ === 'vin') return `${base}у${suffix}`;
         }
         if (last.endsWith('а')) {
-            if (case_ === 'rod' || case_ === 'dat') return `${last.slice(0,-1)}ой ${rest || ''}`;
-            if (case_ === 'vin') return `${last.slice(0,-1)}у ${rest || ''}`;
+            if (case_ === 'rod' || case_ === 'dat') return `${last.slice(0,-1)}ой${suffix}`;
+            if (case_ === 'vin') return `${last.slice(0,-1)}у${suffix}`;
         }
         if (last.endsWith('ев') || last.endsWith('ов')) {
-            if (case_ === 'rod' || case_ === 'dat') return `${last.slice(0,-2)}ову ${rest || ''}`;
-            if (case_ === 'vin') return `${last.slice(0,-2)}ова ${rest || ''}`;
+            const base = last.slice(0, -2);
+            if (case_ === 'rod') return `${base}ова${suffix}`;
+            if (case_ === 'dat') return `${base}ову${suffix}`;
+            if (case_ === 'vin') return `${base}ова${suffix}`;
         }
-        if (case_ === 'rod' || case_ === 'dat') return `${last}у ${rest || ''}`;
-        if (case_ === 'vin') return `${last}а ${rest || ''}`;
+        if (case_ === 'rod') return `${last}а${suffix}`;
+        if (case_ === 'dat') return `${last}у${suffix}`;
+        if (case_ === 'vin') return `${last}а${suffix}`;
         return fullName;
     }
 

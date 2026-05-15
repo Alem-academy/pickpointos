@@ -50,7 +50,7 @@
     Переменные:
     {{employerName}}        — наименование работодателя
     {{directorNameShortDat}}   — ФИО директора в дательном падеже
-    {{employeePosition}}    — должность сотрудника
+    {{employeePositionRod}}    — должность сотрудника
     {{employeeFullName}}    — ФИО сотрудника
     {{employeeIIN}}         — ИИН
     {{employeeAddressRu}}   — адрес (русский)
@@ -71,10 +71,10 @@
   <div class="header-right">
     <p>Директору {{employerName}}</p>
     <p>{{directorNameShortDat}}</p>
-    <p>от {{employeePosition}}</p>
-    <p><span class="line"></span></p>
-    <p>ИИН <span class="line" style="width: 120px;"></span>, проживающей по адресу</p>
-    <p><span class="line"></span>, сот. <span class="line" style="width: 120px;"></span></p>
+    <p>от {{employeePositionRod}}</p>
+    <p>{{employeeFullName}}</p>
+    <p>ИИН {{employeeIIN}}, проживающей по адресу {{employeeAddressRu}}</p>
+    <p>сот. {{employeePhone}}</p>
   </div>
 
   <div class="title">Заявление</div>
