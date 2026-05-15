@@ -6,11 +6,21 @@ import { Logger } from '../lib/logger.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Resolve templates directory relative to cwd (works from root or parser/)
-const TEMPLATES_DIR = fs.existsSync(path.resolve(process.cwd(), 'document-templates'))
-    ? path.resolve(process.cwd(), 'document-templates')
-    : path.resolve(process.cwd(), '../document-templates');
+// Find document-templates by walking up from this file (works locally and in Docker)
+function findDir(startDir, targetName) {
+    let dir = startDir;
+    while (dir !== path.dirname(dir)) {
+        const candidate = path.join(dir, targetName);
+        if (fs.existsSync(candidate)) return candidate;
+        dir = path.dirname(dir);
+    }
+    return null;
+}
+
+const TEMPLATES_DIR = findDir(__dirname, 'document-templates') || path.resolve(__dirname, '../../../document-templates');
 const SCHEMAS_FILE = path.join(TEMPLATES_DIR, 'template-schemas.json');
+
+Logger.info(`📂 Templates directory resolved to: ${TEMPLATES_DIR}`);
 
 let templateCache = null;
 let schemaCache = null;

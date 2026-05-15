@@ -67,9 +67,17 @@ app.use(morganMiddleware);
 
 // Serve static files from the React app
 // Assuming parser/src/index.js -> parser/src -> parser -> root -> dist
-const distPath = fs.existsSync(path.resolve(process.cwd(), 'dist'))
-    ? path.resolve(process.cwd(), 'dist')
-    : path.resolve(process.cwd(), '../dist');
+function findDir(startDir, targetName) {
+    let dir = startDir;
+    while (dir !== path.dirname(dir)) {
+        const candidate = path.join(dir, targetName);
+        if (fs.existsSync(candidate)) return candidate;
+        dir = path.dirname(dir);
+    }
+    return null;
+}
+
+const distPath = findDir(__dirname, 'dist') || path.join(__dirname, '../../dist');
 Logger.info(`📂 Static files path: ${distPath}`);
 
 // Verify dist exists
