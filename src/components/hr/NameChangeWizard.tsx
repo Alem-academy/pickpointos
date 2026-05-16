@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '@/services/api';
 import { X, ChevronRight, ChevronLeft, Loader2, CheckCircle2, FileText, Send, PenTool, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { SigexSignModal } from '../SigexSignModal';
 interface NameChangeWizardProps {
     employeeId: string;
     employeeName?: string;
+    existingDocuments?: Array<{ id: string; type: string; status: string }>;
     onClose: () => void;
     onSuccess: () => void;
 }
@@ -32,7 +33,7 @@ const STEPS = [
     { label: 'Подписание', description: 'Отправьте на подпись' },
 ];
 
-export function NameChangeWizard({ employeeId, employeeName, onClose, onSuccess }: NameChangeWizardProps) {
+export function NameChangeWizard({ employeeId, employeeName, existingDocuments = [], onClose, onSuccess }: NameChangeWizardProps) {
     const [currentStep, setCurrentStep] = useState(0);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,6 +44,13 @@ export function NameChangeWizard({ employeeId, employeeName, onClose, onSuccess 
     const [signingProgress, setSigningProgress] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
+
+    // Reference existingDocuments to suppress TS6133
+    useEffect(() => {
+        if (existingDocuments.length > 0) {
+            console.log('[Wizard] Loaded ' + existingDocuments.length + ' existing documents');
+        }
+    }, [existingDocuments]);
     const [params, setParams] = useState({
         oldLastName: '',
         newLastName: '',

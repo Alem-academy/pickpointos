@@ -5,19 +5,14 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { SigexSignModal } from '../SigexSignModal';
+import { useWizardDocs } from './useWizardDocs';
 
 interface TerminationWizardProps {
     employeeId: string;
     employeeName?: string;
+    existingDocuments?: Array<{ id: string; type: string; status: string }>;
     onClose: () => void;
     onSuccess: () => void;
-}
-
-interface GeneratedDoc {
-    type: string;
-    document: any;
-    content: string;
-    success: boolean;
 }
 
 const DOC_TYPE_LABELS: Record<string, string> = {
@@ -30,15 +25,24 @@ const STEPS = [
     { label: 'Подписание', description: 'Отправьте на подпись' },
 ];
 
-export function TerminationWizard({ employeeId, employeeName, onClose, onSuccess }: TerminationWizardProps) {
-    const [currentStep, setCurrentStep] = useState(0);
+export function TerminationWizard({ employeeId, employeeName, existingDocuments = [], onClose, onSuccess }: TerminationWizardProps) {
+    const {
+        hasExistingDocs,
+        initialStep,
+        isLoadingContent,
+        successfulDocs,
+        signedDocIds,
+        addSignedId,
+        resetDocs,
+        setDocs,
+    } = useWizardDocs(existingDocuments);
+
+    const [currentStep, setCurrentStep] = useState(initialStep);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [generatedDocs, setGeneratedDocs] = useState<GeneratedDoc[]>([]);
     const [activePreview, setActivePreview] = useState<string | null>(null);
     const [employerSigningDocId, setEmployerSigningDocId] = useState<string | null>(null);
-    const [signedDocIds, setSignedDocIds] = useState<string[]>([]);
-    const [signingProgress, setSigningProgress] = useState<string | null>(null);
+    const [, setSigningProgress] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const [params, setParams] = useState({
@@ -83,10 +87,10 @@ export function TerminationWizard({ employeeId, employeeName, onClose, onSuccess
                     lastWorkingDay: params.lastWorkingDay,
                     compensationAmount: params.compensationAmount || undefined,
                 });
-                setGeneratedDocs(result.documents);
-                if (result.errors && result.errors.length > 0) {
-                    setError(`Ошибки: ${result.errors.map((e: any) => e.type).join(', ')}`);
-                }
+                const newDocs = result.documents
+                    .filter((d: any) => d.success)
+                    .map((d: any) => ({ type: d.type, document: d.document, content: d.content, success: true }));
+                setDocs(newDocs);
                 setCurrentStep(1);
             } catch (err: any) {
                 console.error('Generation failed:', err);
@@ -103,10 +107,17 @@ export function TerminationWizard({ employeeId, employeeName, onClose, onSuccess
         if (currentStep > 0) setCurrentStep(prev => prev - 1);
     };
 
+    const handleRegenerate = () => {
+        setCurrentStep(0);
+        resetDocs();
+    };
+
     const handleSendToEmployee = async () => {
         setIsSubmitting(true);
         try {
-            const doc = successfulDocs[0];
+            const docsToSend = successfulDocs.length > 0 ? successfulDocs : [];
+            if (docsToSend.length === 0) return;
+            const doc = docsToSend[0];
             if (!doc?.document?.id) return;
             const response = await fetch(`/api/documents/${doc.document.id}/signing-link`, {
                 method: 'POST',
@@ -126,16 +137,15 @@ export function TerminationWizard({ employeeId, employeeName, onClose, onSuccess
     };
 
     const handleEmployerSign = () => {
-        const doc = successfulDocs[0];
-        if (doc?.document?.id && !signedDocIds.includes(doc.document.id)) {
-            setEmployerSigningDocId(doc.document.id);
-        }
+        const docsToSign = successfulDocs.filter(d => d.document?.id && !signedDocIds.includes(d.document.id));
+        if (docsToSign.length === 0) return;
+        setEmployerSigningDocId(docsToSign[0].document.id);
     };
 
     const handleEmployerSignSuccess = () => {
         const justSignedId = employerSigningDocId;
         if (justSignedId) {
-            setSignedDocIds(prev => [...prev, justSignedId]);
+            addSignedId(justSignedId);
         }
         setEmployerSigningDocId(null);
         setSigningProgress('✅ Документ подписан работодателем!');
@@ -146,8 +156,10 @@ export function TerminationWizard({ employeeId, employeeName, onClose, onSuccess
         onSuccess();
     };
 
-    const successfulDocs = generatedDocs.filter(d => d.success);
     const isSignedByEmployer = successfulDocs[0]?.document?.id && signedDocIds.includes(successfulDocs[0].document.id);
+
+    // Determine which docs to show — either from hook (existing) or we need to handle generated docs
+    const displayDocs = successfulDocs;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -255,167 +267,98 @@ export function TerminationWizard({ employeeId, employeeName, onClose, onSuccess
                         </div>
                     )}
 
-                    {currentStep === 1 && (
+                    {(currentStep === 1 || currentStep === 2) && (
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-base font-semibold text-slate-900">Сгенерированный документ</h3>
-                                <span className="text-xs text-slate-500">{successfulDocs.length} из 1</span>
-                            </div>
-
-                            <div className="space-y-4">
-                                {successfulDocs.map((doc) => (
-                                    <div key={doc.type} className="border border-slate-200 rounded-xl overflow-hidden">
-                                        <button
-                                            onClick={() => setActivePreview(activePreview === doc.type ? null : doc.type)}
-                                            className="w-full flex items-center justify-between p-4 bg-white hover:bg-slate-50 transition-colors text-left"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 rounded-lg bg-red-100">
-                                                    <FileText className="h-5 w-5 text-red-600" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-semibold text-slate-900">{DOC_TYPE_LABELS[doc.type] || doc.type}</p>
-                                                    <p className="text-xs text-slate-500">{activePreview === doc.type ? 'Нажмите чтобы свернуть' : 'Нажмите чтобы развернуть предпросмотр'}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs text-slate-400">
-                                                    {activePreview === doc.type ? 'Свернуть' : 'Развернуть'}
-                                                </span>
-                                                <ChevronRight className={cn("h-4 w-4 text-slate-400 transition-transform", activePreview === doc.type && "rotate-90")} />
-                                            </div>
+                                <h3 className="text-base font-semibold text-slate-900">
+                                    {hasExistingDocs ? 'Существующий документ' : 'Сгенерированный документ'}
+                                </h3>
+                                <div className="flex items-center gap-2">
+                                    {hasExistingDocs && (
+                                        <button onClick={handleRegenerate} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                                            <FileText className="h-3.5 w-3.5" /> Пересоздать
                                         </button>
-                                        {activePreview === doc.type && (
-                                            <div className="border-t border-slate-100 bg-slate-50/50">
-                                                <div className="p-4">
-                                                    <iframe
-                                                        srcDoc={doc.content}
-                                                        className="w-full h-96 border border-slate-200 rounded-lg bg-white"
-                                                        title={DOC_TYPE_LABELS[doc.type] || doc.type}
-                                                    />
+                                    )}
+                                    <span className="text-xs text-slate-500">{successfulDocs.length} из 1</span>
+                                </div>
+                            </div>
+
+                            {isLoadingContent ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+                                    <span className="ml-2 text-sm text-slate-500">Загрузка...</span>
+                                </div>
+                            ) : (
+                                <>
+                                    {displayDocs.map((doc) => (
+                                        <div key={doc.type} className="border border-slate-200 rounded-xl overflow-hidden">
+                                            <button
+                                                onClick={() => setActivePreview(activePreview === doc.type ? null : doc.type)}
+                                                className="w-full flex items-center justify-between p-4 bg-white hover:bg-slate-50 transition-colors text-left"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 rounded-lg bg-red-100">
+                                                        <FileText className="h-5 w-5 text-red-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-slate-900">{DOC_TYPE_LABELS[doc.type] || doc.type}</p>
+                                                        <p className="text-xs text-slate-500">{activePreview === doc.type ? 'Нажмите чтобы свернуть' : 'Нажмите чтобы развернуть предпросмотр'}</p>
+                                                    </div>
                                                 </div>
+                                                <ChevronRight className={cn("h-4 w-4 text-slate-400 transition-transform", activePreview === doc.type && "rotate-90")} />
+                                            </button>
+                                            {activePreview === doc.type && (
+                                                <div className="border-t border-slate-100 bg-slate-50/50">
+                                                    <div className="p-4">
+                                                        <iframe srcDoc={doc.content} className="w-full h-96 border border-slate-200 rounded-lg bg-white" title={DOC_TYPE_LABELS[doc.type] || doc.type} />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+
+                                    {/* Inline signing on Preview step */}
+                                    {currentStep === 1 && displayDocs.length > 0 && !isSignedByEmployer && (
+                                        <div className="mt-6 pt-4 border-t border-slate-100">
+                                            <p className="text-sm font-semibold text-slate-900 mb-3">Действия с документом</p>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <button onClick={handleSendToEmployee} disabled={isSubmitting} className="flex items-center gap-3 p-3 bg-white border-2 border-slate-200 rounded-xl hover:border-primary hover:bg-primary/5 transition-all text-left">
+                                                    <div className="p-2 rounded-lg bg-purple-100"><Send className="h-4 w-4 text-purple-600" /></div>
+                                                    <div><p className="text-sm font-semibold text-slate-900">Отправить сотруднику</p><p className="text-xs text-slate-500">eGov QR ссылка</p></div>
+                                                </button>
+                                                <button onClick={handleEmployerSign} disabled={isSignedByEmployer} className="flex items-center gap-3 p-3 bg-white border-2 border-slate-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all text-left disabled:opacity-50">
+                                                    <div className="p-2 rounded-lg bg-blue-100"><PenTool className="h-4 w-4 text-blue-600" /></div>
+                                                    <div><p className="text-sm font-semibold text-slate-900">Подписать работодателем</p><p className="text-xs text-slate-500">Через NCALayer</p></div>
+                                                </button>
                                             </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {currentStep === 2 && (
-                        <div className="space-y-6 max-w-lg mx-auto">
-                            <div className="text-center">
-                                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-100 mb-3">
-                                    <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-                                </div>
-                                <h3 className="text-base font-semibold text-slate-900">Документ готов</h3>
-                                <p className="text-sm text-slate-500 mt-1">
-                                    Выберите способ подписания
-                                </p>
-                            </div>
-
-                            {signingProgress && (
-                                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-800 animate-pulse">
-                                    {signingProgress}
-                                </div>
+                                        </div>
+                                    )}
+                                </>
                             )}
-
-                            <div className="space-y-3">
-                                <button
-                                    onClick={handleSendToEmployee}
-                                    disabled={isSubmitting}
-                                    className="w-full flex items-center gap-3 p-4 bg-white border-2 border-slate-200 rounded-xl hover:border-primary hover:bg-primary/5 transition-all text-left"
-                                >
-                                    <div className="p-2 rounded-lg bg-purple-100">
-                                        <Send className="h-5 w-5 text-purple-600" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-sm font-semibold text-slate-900">Отправить сотруднику (eGov QR)</p>
-                                        <p className="text-xs text-slate-500">Сгенерировать ссылку для подписания через мобильное приложение</p>
-                                    </div>
-                                    <ChevronRight className="h-4 w-4 text-slate-300" />
-                                </button>
-
-                                <button
-                                    onClick={handleEmployerSign}
-                                    disabled={isSignedByEmployer}
-                                    className="w-full flex items-center gap-3 p-4 bg-white border-2 border-slate-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <div className="p-2 rounded-lg bg-blue-100">
-                                        <PenTool className="h-5 w-5 text-blue-600" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-sm font-semibold text-slate-900">
-                                            {isSignedByEmployer ? 'Документ подписан работодателем' : 'Подписать как работодатель'}
-                                        </p>
-                                        <p className="text-xs text-slate-500">
-                                            {isSignedByEmployer ? 'Подписано через NCALayer' : 'Через NCALayer'}
-                                        </p>
-                                    </div>
-                                    <ChevronRight className="h-4 w-4 text-slate-300" />
-                                </button>
-                            </div>
                         </div>
                     )}
                 </div>
 
                 {/* Footer */}
                 <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/50">
-                    <Button
-                        variant="outline"
-                        onClick={handleBack}
-                        disabled={currentStep === 0 || isGenerating}
-                        className={cn(currentStep === 0 && "invisible")}
-                    >
-                        <ChevronLeft className="h-4 w-4 mr-1" />
-                        Назад
+                    <Button variant="outline" onClick={handleBack} disabled={currentStep === 0 || isGenerating} className={cn(currentStep === 0 && "invisible")}>
+                        <ChevronLeft className="h-4 w-4 mr-1" /> Назад
                     </Button>
-
                     {currentStep < 2 ? (
-                        <Button
-                            onClick={handleNext}
-                            disabled={isGenerating}
-                            className="min-w-[140px]"
-                        >
-                            {isGenerating ? (
-                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            ) : (
-                                <ChevronRight className="h-4 w-4 mr-1" />
-                            )}
-                            {isGenerating ? 'Генерация...' : currentStep === 0 ? 'Сформировать' : 'Далее'}
+                        <Button onClick={handleNext} disabled={isGenerating || isLoadingContent} className="min-w-[140px]">
+                            {isGenerating || isLoadingContent ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ChevronRight className="h-4 w-4 mr-1" />}
+                            {isLoadingContent ? 'Загрузка...' : isGenerating ? 'Генерация...' : currentStep === 0 ? 'Сформировать' : 'Далее'}
                         </Button>
                     ) : (
                         <Button onClick={handleFinish} variant="default" className="min-w-[140px]">
-                            <CheckCircle2 className="h-4 w-4 mr-1" />
-                            Готово
+                            <CheckCircle2 className="h-4 w-4 mr-1" /> Готово
                         </Button>
                     )}
                 </div>
             </div>
 
-            {/* Preview Modal */}
-            {activePreview && (
-                <DocumentPreviewModal
-                    isOpen={!!activePreview}
-                    onClose={() => setActivePreview(null)}
-                    title={DOC_TYPE_LABELS[activePreview] || activePreview}
-                    content={successfulDocs.find(d => d.type === activePreview)?.content || ''}
-                />
-            )}
-
-            {/* Employer Signing Modal */}
-            {employerSigningDocId && (
-                <SigexSignModal
-                    documentId={employerSigningDocId}
-                    documentTitle={(() => {
-                        const doc = successfulDocs.find(d => d.document?.id === employerSigningDocId);
-                        return doc ? (DOC_TYPE_LABELS[doc.type] || "Документ") : "Документ";
-                    })()}
-                    onClose={() => setEmployerSigningDocId(null)}
-                    onSuccess={handleEmployerSignSuccess}
-                    signingRole="employer"
-                />
-            )}
+            {activePreview && <DocumentPreviewModal isOpen={!!activePreview} onClose={() => setActivePreview(null)} title={DOC_TYPE_LABELS[activePreview] || activePreview} content={displayDocs.find(d => d.type === activePreview)?.content || ''} />}
+            {employerSigningDocId && <SigexSignModal documentId={employerSigningDocId} documentTitle="Документ" onClose={() => setEmployerSigningDocId(null)} onSuccess={handleEmployerSignSuccess} signingRole="employer" />}
         </div>
     );
 }

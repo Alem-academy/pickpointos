@@ -290,6 +290,7 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
                 <TerminationWizard
                     employeeId={employeeId}
                     employeeName={employeeName}
+                    existingDocuments={wizardDocs}
                     onClose={handleWizardClose}
                     onSuccess={handleWizardClose}
                 />
@@ -298,6 +299,7 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
                 <VacationWizard
                     employeeId={employeeId}
                     employeeName={employeeName}
+                    existingDocuments={wizardDocs}
                     onClose={handleWizardClose}
                     onSuccess={handleWizardClose}
                 />
@@ -306,6 +308,7 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
                 <MaternityReturnWizard
                     employeeId={employeeId}
                     employeeName={employeeName}
+                    existingDocuments={wizardDocs}
                     onClose={handleWizardClose}
                     onSuccess={handleWizardClose}
                 />
@@ -314,6 +317,7 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
                 <MaternityLeaveWizard
                     employeeId={employeeId}
                     employeeName={employeeName}
+                    existingDocuments={wizardDocs}
                     onClose={handleWizardClose}
                     onSuccess={handleWizardClose}
                 />
@@ -322,6 +326,7 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
                 <NameChangeWizard
                     employeeId={employeeId}
                     employeeName={employeeName}
+                    existingDocuments={wizardDocs}
                     onClose={handleWizardClose}
                     onSuccess={handleWizardClose}
                 />
