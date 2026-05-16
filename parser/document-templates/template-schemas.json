@@ -1256,7 +1256,7 @@
         "employerName",
         "directorName",
         "directorNameShort",
-        "directorBasis",
+        "directorBasisRu",
         "employeeFullName",
         "employeeFullNameOld",
         "employeeIIN",
@@ -1279,7 +1279,7 @@
         "employeeBankDetails",
         "dateYear",
         "employeeFullNameShort",
-        "city"
+        "cityRu"
       ],
       "variables": {
         "agreementNumber": {
@@ -1316,11 +1316,6 @@
           "type": "string",
           "example": "Карабаева Г.Е.",
           "description": "ФИО директора с инициалами"
-        },
-        "directorBasis": {
-          "type": "string",
-          "example": "Устава",
-          "description": "Основание полномочий"
         },
         "employeeFullName": {
           "type": "string",
@@ -1432,10 +1427,15 @@
           "example": "Рогова А.А.",
           "description": "ФИО с инициалами"
         },
-        "city": {
+        "directorBasisRu": {
+          "type": "string",
+          "example": "Устава",
+          "description": "Основание полномочий директора (русский)"
+        },
+        "cityRu": {
           "type": "string",
           "example": "Алматы",
-          "description": "Город"
+          "description": "Город (русский)"
         }
       }
     },

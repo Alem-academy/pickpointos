@@ -966,6 +966,32 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
             enhancedParams.sickLeaveSeries = 'БД';
         }
 
+        // Compute old full name for name change templates
+        if (schemaVars.includes('employeeFullNameOld') && !enhancedParams.employeeFullNameOld) {
+            if (enhancedParams.oldLastName && emp.full_name) {
+                const parts = emp.full_name.trim().split(/\s+/);
+                if (parts.length >= 1) {
+                    parts[0] = enhancedParams.oldLastName;
+                    enhancedParams.employeeFullNameOld = parts.join(' ');
+                }
+            }
+        }
+
+        // Agreement number for addendum/agreement documents
+        if (schemaVars.includes('agreementNumber') && !enhancedParams.agreementNumber) {
+            const agreeCntRes = await query(
+                `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type::text LIKE '%soglashenie%'`, [employeeId]
+            );
+            const agreeSeq = parseInt(agreeCntRes.rows[0].count, 10) + 1;
+            const yearShort = String(new Date().getFullYear()).slice(-2);
+            enhancedParams.agreementNumber = `ДС-${String(agreeSeq).padStart(3, '0')}/${yearShort}`;
+        }
+
+        // Map marriageCertIssuer to marriageCertIssuerRu
+        if (schemaVars.includes('marriageCertIssuerRu') && !enhancedParams.marriageCertIssuerRu && enhancedParams.marriageCertIssuer) {
+            enhancedParams.marriageCertIssuerRu = enhancedParams.marriageCertIssuer;
+        }
+
         const data = buildTemplateData(emp, employer, schema, enhancedParams);
         htmlContent = fillTemplate(template, data);
     }

@@ -7,6 +7,7 @@ import { TerminationWizard } from './TerminationWizard';
 import { VacationWizard } from './VacationWizard';
 import { MaternityReturnWizard } from './MaternityReturnWizard';
 import { MaternityLeaveWizard } from './MaternityLeaveWizard';
+import { NameChangeWizard } from './NameChangeWizard';
 
 interface ProcessLauncherProps {
     employeeId: string;
@@ -150,7 +151,7 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
 
     // For Phase 1, only show Hiring wizard. Other processes open legacy modal flow.
     const handleProcessClick = (processKey: string) => {
-        if (processKey === 'hiring' || processKey === 'termination' || processKey === 'vacation' || processKey === 'maternity_return' || processKey === 'maternity_leave') {
+        if (processKey === 'hiring' || processKey === 'termination' || processKey === 'vacation' || processKey === 'maternity_return' || processKey === 'maternity_leave' || processKey === 'name_change') {
             setActiveWizard(processKey);
         } else {
             // For non-wizard processes, scroll to the legacy document grid
@@ -244,6 +245,14 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
             )}
             {activeWizard === 'maternity_leave' && (
                 <MaternityLeaveWizard
+                    employeeId={employeeId}
+                    employeeName={employeeName}
+                    onClose={handleWizardClose}
+                    onSuccess={handleWizardClose}
+                />
+            )}
+            {activeWizard === 'name_change' && (
+                <NameChangeWizard
                     employeeId={employeeId}
                     employeeName={employeeName}
                     onClose={handleWizardClose}

@@ -177,9 +177,9 @@ const PROCESS_DEFINITIONS = {
     },
     name_change: {
         label: 'Изменение ФИО',
-        description: 'Приказ и доп. соглашение об изменении фамилии',
-        documentTypes: ['06_prikaz-o-vnesenii-izmeneniy-v-fio', '12_dop-soglashenie-ob-izmenenii-familii'],
-        editableParams: ['newSurname', 'newName', 'newPatronymic'],
+        description: 'Заявление, приказ и доп. соглашение об изменении фамилии',
+        documentTypes: ['03_zayavlenie-ob-izmenenii-personalnyh-dannyh', '06_prikaz-o-vnesenii-izmeneniy-v-fio', '12_dop-soglashenie-ob-izmenenii-familii'],
+        editableParams: ['oldLastName', 'newLastName', 'changeReason', 'marriageCertNumber', 'marriageCertDate'],
         requiresEmployerSignature: true,
     },
     data_change: {
