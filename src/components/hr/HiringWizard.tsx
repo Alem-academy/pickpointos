@@ -3,7 +3,6 @@ import { api } from '@/services/api';
 import { X, ChevronRight, ChevronLeft, Loader2, CheckCircle2, FileText, Send, PenTool, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { SigexSignModal } from '../SigexSignModal';
 
 interface HiringWizardProps {
@@ -378,12 +377,41 @@ export function HiringWizard({ employeeId, employeeName, existingDocuments = [],
                                             </button>
                                             {activePreview === doc.type && (
                                                 <div className="border-t border-slate-100 bg-slate-50/50">
-                                                    <div className="p-4">
+                                                    <div className="p-4 space-y-3">
                                                         <iframe
                                                             srcDoc={doc.content}
                                                             className="w-full h-96 border border-slate-200 rounded-lg bg-white"
                                                             title={DOC_TYPE_LABELS[doc.type] || doc.type}
                                                         />
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <button
+                                                                onClick={() => {
+                                                                    const blob = new Blob([doc.content], { type: 'text/html' });
+                                                                    const url = URL.createObjectURL(blob);
+                                                                    const a = document.createElement('a');
+                                                                    a.href = url;
+                                                                    a.download = `${doc.type}_${new Date().toISOString().split('T')[0]}.html`;
+                                                                    a.click();
+                                                                    URL.revokeObjectURL(url);
+                                                                }}
+                                                                className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                                                            >
+                                                                Скачать HTML
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    const printWindow = window.open('', '_blank');
+                                                                    if (printWindow) {
+                                                                        printWindow.document.write(doc.content);
+                                                                        printWindow.document.close();
+                                                                        printWindow.print();
+                                                                    }
+                                                                }}
+                                                                className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                                                            >
+                                                                Печать
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             )}
@@ -560,17 +588,7 @@ export function HiringWizard({ employeeId, employeeName, existingDocuments = [],
                 </div>
             </div>
 
-            {/* Preview Modal */}
-            {activePreview && (
-                <DocumentPreviewModal
-                    isOpen={!!activePreview}
-                    onClose={() => setActivePreview(null)}
-                    title={DOC_TYPE_LABELS[activePreview] || activePreview}
-                    content={successfulDocs.find(d => d.type === activePreview)?.content || ''}
-                />
-            )}
-
-            {/* Employer Signing Modal */}
+            {/* Employer Signing Modal -- removed DocumentPreviewModal, using inline preview only */}
             {employerSigningDocId && (
                 <SigexSignModal
                     documentId={employerSigningDocId}

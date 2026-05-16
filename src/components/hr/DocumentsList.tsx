@@ -330,10 +330,13 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                                                             <Icon className={cn("h-5 w-5", c.text)} />
                                                         </div>
                                                         ); })()}
-                                                        <div>
-                                                            <p className="text-sm font-semibold text-slate-900">{docConfig.label}</p>
-                                                            <p className="text-xs text-slate-500">{new Date(doc.created_at).toLocaleDateString('ru-RU')}</p>
-                                                        </div>
+                                                        <div
+                                                        className="cursor-pointer"
+                                                        onClick={() => handlePreview(doc)}
+                                                    >
+                                                        <p className="text-sm font-semibold text-slate-900 hover:text-primary transition-colors">{docConfig.label}</p>
+                                                        <p className="text-xs text-slate-500">{new Date(doc.created_at).toLocaleDateString('ru-RU')}</p>
+                                                    </div>
                                                     </div>
                                                     <div className="flex items-center gap-1">
                                                         {getStatusBadge(doc)}
