@@ -15,9 +15,9 @@ interface DocumentsListProps {
 }
 
 const DOCUMENT_TYPES: any = {
-    contract: { label: 'Трудовой договор', icon: FileText, color: 'blue', category: 'generated' },
-    order_hiring: { label: 'Приказ о приеме', icon: FileText, color: 'emerald', category: 'generated' },
-    application: { label: 'Заявление на прием', icon: FileText, color: 'amber', category: 'generated' },
+    '15_trudovoy-dogovor': { label: 'Трудовой договор', icon: FileText, color: 'blue', category: 'generated' },
+    '14_prikaz-o-prieme-na-rabotu': { label: 'Приказ о приеме', icon: FileText, color: 'emerald', category: 'generated' },
+    '13_zayavlenie-o-prieme-na-rabotu': { label: 'Заявление на прием', icon: FileText, color: 'amber', category: 'generated' },
     vacation_application: { label: 'Заявление на отпуск', icon: Plane, color: 'purple', category: 'generated' },
     vacation_order: { label: 'Приказ на отпуск', icon: Plane, color: 'purple', category: 'generated' },
     termination_order: { label: 'Приказ об увольнении', icon: UserX, color: 'red', category: 'generated' },
@@ -59,8 +59,6 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     const [signatureSheetDocId, setSignatureSheetDocId] = useState<string | null>(null);
     const [paramsModalOpen, setParamsModalOpen] = useState(false);
     const [pendingDocType, setPendingDocType] = useState<DocumentType | null>(null);
-    const [isIbanModalOpen, setIsIbanModalOpen] = useState(false);
-    const [ibanInput, setIbanInput] = useState('');
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [selectedDocType, setSelectedDocType] = useState('');
     const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -133,14 +131,15 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
         }
     };
 
-    const handleGenerate = async (type: string, bypassModal = false, params?: any) => {
-        if (type === 'contract' && !bypassModal) { setIsIbanModalOpen(true); return; }
-        
+    const handleGenerate = async (type: string, _bypassModal = false, params?: any) => {
         // Show params modal for documents that need additional data
         if (!params) {
             const needsParams = [
                 'vacation_order', 'vacation_application', 'termination_order',
                 'employment_certificate', 'addendum',
+                '13_zayavlenie-o-prieme-na-rabotu',
+                '14_prikaz-o-prieme-na-rabotu',
+                '15_trudovoy-dogovor',
                 '01_zayavlenie-o-vyhode-s-dekreta',
                 '02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom',
                 '03_zayavlenie-ob-izmenenii-personalnyh-dannyh',
@@ -163,11 +162,10 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
         
         setIsGenerating(type);
         try {
-            const { content } = await api.generateDocument(employeeId, type, type === 'contract' ? ibanInput : undefined, params);
+            const { content } = await api.generateDocument(employeeId, type, undefined, params);
             const docConfig = DOCUMENT_TYPES[type] || { label: 'Документ' };
             setPreviewDoc({ content, type, title: docConfig.label });
             await loadDocuments();
-            if (isIbanModalOpen) { setIsIbanModalOpen(false); setIbanInput(''); }
         } catch (err) { console.error('Failed to generate:', err); alert('Ошибка генерации'); }
         finally { setIsGenerating(null); }
     };
@@ -415,16 +413,16 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                 {/* Main Documents */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                     <button
-                        onClick={() => handleGenerate('contract')}
+                        onClick={() => handleGenerate('15_trudovoy-dogovor')}
                         disabled={!!isGenerating}
                         className={cn(
                             "flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all hover:shadow-md",
-                            isGenerating === 'contract'
+                            isGenerating === '15_trudovoy-dogovor'
                                 ? "border-primary bg-primary/10"
                                 : "border-slate-200 bg-white hover:border-primary/50 hover:bg-primary/5"
                         )}
                     >
-                        {isGenerating === 'contract' ? (
+                        {isGenerating === '15_trudovoy-dogovor' ? (
                             <Loader2 className="h-6 w-6 animate-spin text-primary" />
                         ) : (
                             <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
@@ -459,16 +457,16 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                     </button>
 
                     <button
-                        onClick={() => handleGenerate('order_hiring')}
+                        onClick={() => handleGenerate('14_prikaz-o-prieme-na-rabotu')}
                         disabled={!!isGenerating}
                         className={cn(
                             "flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all hover:shadow-md",
-                            isGenerating === 'order_hiring'
+                            isGenerating === '14_prikaz-o-prieme-na-rabotu'
                                 ? "border-primary bg-primary/10"
                                 : "border-slate-200 bg-white hover:border-primary/50 hover:bg-primary/5"
                         )}
                     >
-                        {isGenerating === 'order_hiring' ? (
+                        {isGenerating === '14_prikaz-o-prieme-na-rabotu' ? (
                             <Loader2 className="h-6 w-6 animate-spin text-primary" />
                         ) : (
                             <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center">
@@ -481,16 +479,16 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                     </button>
 
                     <button
-                        onClick={() => handleGenerate('application')}
+                        onClick={() => handleGenerate('13_zayavlenie-o-prieme-na-rabotu')}
                         disabled={!!isGenerating}
                         className={cn(
                             "flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all hover:shadow-md",
-                            isGenerating === 'application'
+                            isGenerating === '13_zayavlenie-o-prieme-na-rabotu'
                                 ? "border-primary bg-primary/10"
                                 : "border-slate-200 bg-white hover:border-primary/50 hover:bg-primary/5"
                         )}
                     >
-                        {isGenerating === 'application' ? (
+                        {isGenerating === '13_zayavlenie-o-prieme-na-rabotu' ? (
                             <Loader2 className="h-6 w-6 animate-spin text-primary" />
                         ) : (
                             <div className="h-8 w-8 rounded-lg bg-amber-100 flex items-center justify-center">
@@ -671,19 +669,6 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
             </div>
 
             {/* Modals */}
-            {isIbanModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-                        <h3 className="text-lg font-bold text-slate-900 mb-4">IBAN для договора</h3>
-                        <input type="text" value={ibanInput} onChange={e => setIbanInput(e.target.value.replace(/\s/g, '').toUpperCase())} placeholder="KZ..." className="w-full rounded-lg border px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20" />
-                        <div className="flex gap-2 mt-4">
-                            <button onClick={() => { setIsIbanModalOpen(false); setIbanInput(''); }} className="flex-1 px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900">Отмена</button>
-                            <button onClick={() => handleGenerate('contract', true)} disabled={!ibanInput.trim()} className="flex-1 px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 disabled:opacity-50">Продолжить</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {showUploadModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                     <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
