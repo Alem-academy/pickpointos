@@ -364,7 +364,7 @@ export default function EmployeeProfile() {
                         <button onClick={() => setActiveTab('discipline')} className={cn("flex-1 px-4 py-3 text-sm font-medium transition-colors", activeTab === 'discipline' ? "bg-white text-slate-900 border-b-2 border-slate-900" : "bg-slate-50 text-slate-600 hover:text-slate-900")}>⚠️ Дисциплина</button>
                     </div>
                     <div className="p-6">
-                        {activeTab === 'documents' && <DocumentsList employeeId={id!} employeeStatus={employee.status} onStatusChange={loadEmployee} />}
+                        {activeTab === 'documents' && <DocumentsList employeeId={id!} employeeStatus={employee.status} documents={documents} onStatusChange={loadEmployee} />}
                         {activeTab === 'history' && <HistoryTab employeeId={id!} />}
                         {activeTab === 'discipline' && <DisciplineTab employeeId={id!} hiredAt={employee.hired_at || new Date().toISOString()} />}
                     </div>

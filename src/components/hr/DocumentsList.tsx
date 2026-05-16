@@ -11,6 +11,7 @@ import { Tooltip } from '@/components/ui/Tooltip';
 interface DocumentsListProps {
     employeeId: string;
     employeeStatus: string;
+    documents?: Document[];
     onStatusChange?: () => void;
 }
 
@@ -77,10 +78,9 @@ function getColorClasses(color: string) {
     return COLOR_MAP[color] || COLOR_MAP.gray;
 }
 
-export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps) {
-    const [documents, setDocuments] = useState<Document[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isGenerating, setIsGenerating] = useState<string | null>(null);
+export function DocumentsList({ employeeId, documents: externalDocuments, onStatusChange }: DocumentsListProps) {
+    const [internalDocuments, setInternalDocuments] = useState<Document[]>([]);
+    const [isLoading, setIsLoading] = useState(!externalDocuments);
     const [isUploading, setIsUploading] = useState(false);
     const [previewDoc, setPreviewDoc] = useState<{ content: string; type: string; title: string } | null>(null);
     const [signingDocId, setSigningDocId] = useState<string | null>(null);
@@ -92,7 +92,8 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     const [selectedDocType, setSelectedDocType] = useState('');
     const [pendingFile, setPendingFile] = useState<File | null>(null);
     const [employeeData, setEmployeeData] = useState<any>(null);
-    const [showLegacyGrid, setShowLegacyGrid] = useState(false);
+
+    const documents = externalDocuments || internalDocuments;
 
     const loadDocuments = useCallback(async () => {
         try {
@@ -100,13 +101,21 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                 api.getDocuments(employeeId),
                 api.getEmployee(employeeId).catch(() => null)
             ]);
-            setDocuments(docs);
+            setInternalDocuments(docs);
             setEmployeeData(emp);
         } catch (err) { console.error('Failed to load documents:', err); }
         finally { setIsLoading(false); }
     }, [employeeId]);
 
-    useEffect(() => { loadDocuments(); }, [loadDocuments]);
+    useEffect(() => {
+        if (externalDocuments) {
+            // External documents provided — still load employeeData for params modal
+            api.getEmployee(employeeId).catch(() => null).then(emp => setEmployeeData(emp));
+            setIsLoading(false);
+        } else {
+            loadDocuments();
+        }
+    }, [externalDocuments, loadDocuments, employeeId]);
 
     const handlePreview = async (doc: Document) => {
         const docConfig = DOCUMENT_TYPES[doc.type] || { label: doc.type };
@@ -190,14 +199,13 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
             }
         }
         
-        setIsGenerating(type);
         try {
             const { content } = await api.generateDocument(employeeId, type, undefined, params);
             const docConfig = DOCUMENT_TYPES[type] || { label: 'Документ' };
             setPreviewDoc({ content, type, title: docConfig.label });
             await loadDocuments();
+            onStatusChange?.();
         } catch (err) { console.error('Failed to generate:', err); alert('Ошибка генерации'); }
-        finally { setIsGenerating(null); }
     };
 
     const handleParamsConfirm = async (params: any) => {
@@ -214,6 +222,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
         try {
             await api.uploadDocument(employeeId, selectedDocType, pendingFile);
             await loadDocuments();
+            onStatusChange?.();
             setShowUploadModal(false);
             setPendingFile(null);
             setSelectedDocType('');
@@ -442,293 +451,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                 </div>
             </div>
 
-            {/* Legacy Generate Buttons - Collapsed by default */}
-            <div className="border border-slate-200 rounded-xl overflow-hidden">
-                <button
-                    onClick={() => setShowLegacyGrid(!showLegacyGrid)}
-                    className="w-full flex items-center justify-between px-5 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-sm font-medium text-slate-700"
-                >
-                    <span className="flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        Показать все документы (классический режим)
-                    </span>
-                    <svg
-                        className={cn("h-4 w-4 text-slate-400 transition-transform", showLegacyGrid && "rotate-180")}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                </button>
-                {showLegacyGrid && (
-                <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 border-t border-slate-200">
-                <div className="flex items-center gap-2 mb-4">
-                    <FileText className="h-5 w-5 text-primary" />
-                    <h3 className="text-base font-bold text-slate-900">Сформировать документ</h3>
-                </div>
-                
-                {/* Main Documents */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                    <button
-                        onClick={() => handleGenerate('15_trudovoy-dogovor')}
-                        disabled={!!isGenerating}
-                        className={cn(
-                            "flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all hover:shadow-md",
-                            isGenerating === '15_trudovoy-dogovor'
-                                ? "border-primary bg-primary/10"
-                                : "border-slate-200 bg-white hover:border-primary/50 hover:bg-primary/5"
-                        )}
-                    >
-                        {isGenerating === '15_trudovoy-dogovor' ? (
-                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                        ) : (
-                            <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                                <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                            </div>
-                        )}
-                        <span className="text-sm font-medium text-slate-900">Трудовой договор</span>
-                    </button>
-
-                    <button
-                        onClick={() => handleGenerate('addendum')}
-                        disabled={!!isGenerating}
-                        className={cn(
-                            "flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all hover:shadow-md",
-                            isGenerating === 'addendum'
-                                ? "border-primary bg-primary/10"
-                                : "border-slate-200 bg-white hover:border-primary/50 hover:bg-primary/5"
-                        )}
-                    >
-                        {isGenerating === 'addendum' ? (
-                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                        ) : (
-                            <div className="h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center">
-                                <svg className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                            </div>
-                        )}
-                        <span className="text-sm font-medium text-slate-900">Доп. соглашение</span>
-                    </button>
-
-                    <button
-                        onClick={() => handleGenerate('14_prikaz-o-prieme-na-rabotu')}
-                        disabled={!!isGenerating}
-                        className={cn(
-                            "flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all hover:shadow-md",
-                            isGenerating === '14_prikaz-o-prieme-na-rabotu'
-                                ? "border-primary bg-primary/10"
-                                : "border-slate-200 bg-white hover:border-primary/50 hover:bg-primary/5"
-                        )}
-                    >
-                        {isGenerating === '14_prikaz-o-prieme-na-rabotu' ? (
-                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                        ) : (
-                            <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center">
-                                <svg className="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                        )}
-                        <span className="text-sm font-medium text-slate-900">Приказ о приеме</span>
-                    </button>
-
-                    <button
-                        onClick={() => handleGenerate('13_zayavlenie-o-prieme-na-rabotu')}
-                        disabled={!!isGenerating}
-                        className={cn(
-                            "flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all hover:shadow-md",
-                            isGenerating === '13_zayavlenie-o-prieme-na-rabotu'
-                                ? "border-primary bg-primary/10"
-                                : "border-slate-200 bg-white hover:border-primary/50 hover:bg-primary/5"
-                        )}
-                    >
-                        {isGenerating === '13_zayavlenie-o-prieme-na-rabotu' ? (
-                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                        ) : (
-                            <div className="h-8 w-8 rounded-lg bg-amber-100 flex items-center justify-center">
-                                <svg className="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                            </div>
-                        )}
-                        <span className="text-sm font-medium text-slate-900">Заявление</span>
-                    </button>
-                </div>
-                
-                {/* Additional Documents */}
-                <div className="border-t border-primary/20 pt-4">
-                    <p className="text-xs font-semibold text-slate-600 mb-3">📄 Дополнительные документы</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        <button
-                            onClick={() => handleGenerate('vacation_application')}
-                            disabled={!!isGenerating}
-                            className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-slate-200 hover:border-primary/50 hover:bg-primary/5 transition-all"
-                        >
-                            {isGenerating === 'vacation_application' ? (
-                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                            ) : (
-                                <div className="h-7 w-7 rounded bg-purple-100 flex items-center justify-center">
-                                    <svg className="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                            )}
-                            <span className="text-xs font-medium text-slate-700">Заявление на отпуск</span>
-                        </button>
-
-                        <button
-                            onClick={() => handleGenerate('vacation_order')}
-                            disabled={!!isGenerating}
-                            className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-slate-200 hover:border-primary/50 hover:bg-primary/5 transition-all"
-                        >
-                            {isGenerating === 'vacation_order' ? (
-                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                            ) : (
-                                <div className="h-7 w-7 rounded bg-purple-100 flex items-center justify-center">
-                                    <svg className="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                </div>
-                            )}
-                            <span className="text-xs font-medium text-slate-700">Приказ на отпуск</span>
-                        </button>
-
-                        <button
-                            onClick={() => handleGenerate('termination_order')}
-                            disabled={!!isGenerating}
-                            className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-slate-200 hover:border-primary/50 hover:bg-primary/5 transition-all"
-                        >
-                            {isGenerating === 'termination_order' ? (
-                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                            ) : (
-                                <div className="h-7 w-7 rounded bg-red-100 flex items-center justify-center">
-                                    <svg className="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                </div>
-                            )}
-                            <span className="text-xs font-medium text-slate-700">Приказ об увольнении</span>
-                        </button>
-
-                        <button
-                            onClick={() => handleGenerate('employment_certificate')}
-                            disabled={!!isGenerating}
-                            className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-slate-200 hover:border-primary/50 hover:bg-primary/5 transition-all"
-                        >
-                            {isGenerating === 'employment_certificate' ? (
-                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                            ) : (
-                                <div className="h-7 w-7 rounded bg-slate-100 flex items-center justify-center">
-                                    <svg className="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                                    </svg>
-                                </div>
-                            )}
-                            <span className="text-xs font-medium text-slate-700">Справка с места работы</span>
-                        </button>
-                    </div>
-                </div>
-
-                {/* Maternity / Childcare Documents */}
-                <div className="border-t border-primary/20 pt-4">
-                    <p className="text-xs font-semibold text-pink-600 mb-3">🍼 Декрет / Отпуск по уходу</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {[
-                            { key: '01_zayavlenie-o-vyhode-s-dekreta', label: 'Выход с декрета' },
-                            { key: '02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom', label: 'Отпуск по уходу' },
-                            { key: '04_prikaz-ob-otpuske-po-beremennosti-i-rodam', label: 'Отпуск по беременности' },
-                            { key: '05_prikaz-o-prodlenii-otpuska-po-beremennosti', label: 'Продление отпуска' },
-                            { key: '07_prikaz-o-vyhode-iz-otpuska-po-uhodu', label: 'Выход из отпуска' },
-                            { key: '08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu', label: 'Отпуск без ЗП' },
-                            { key: '09_zayavlenie-na-otpusk-po-beremennosti', label: 'Заявл. по беременности' },
-                            { key: '10_zayavlenie-na-prodlenie-otpuska-po-beremennosti', label: 'Заявл. на продление' },
-                        ].map(({ key, label }) => (
-                            <button
-                                key={key}
-                                onClick={() => handleGenerate(key)}
-                                disabled={!!isGenerating}
-                                className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-slate-200 hover:border-pink-300 hover:bg-pink-50 transition-all"
-                            >
-                                {isGenerating === key ? (
-                                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                                ) : (
-                                    <div className="h-7 w-7 rounded bg-pink-100 flex items-center justify-center">
-                                        <svg className="h-4 w-4 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                    </div>
-                                )}
-                                <span className="text-xs font-medium text-slate-700">{label}</span>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* HR Changes */}
-                <div className="border-t border-primary/20 pt-4">
-                    <p className="text-xs font-semibold text-orange-600 mb-3">📝 Кадровые изменения</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {[
-                            { key: '03_zayavlenie-ob-izmenenii-personalnyh-dannyh', label: 'Изменение данных' },
-                            { key: '06_prikaz-o-vnesenii-izmeneniy-v-fio', label: 'Изменение ФИО' },
-                            { key: '12_dop-soglashenie-ob-izmenenii-familii', label: 'Доп. согл. фамилия' },
-                        ].map(({ key, label }) => (
-                            <button
-                                key={key}
-                                onClick={() => handleGenerate(key)}
-                                disabled={!!isGenerating}
-                                className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-slate-200 hover:border-orange-300 hover:bg-orange-50 transition-all"
-                            >
-                                {isGenerating === key ? (
-                                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                                ) : (
-                                    <div className="h-7 w-7 rounded bg-orange-100 flex items-center justify-center">
-                                        <svg className="h-4 w-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                    </div>
-                                )}
-                                <span className="text-xs font-medium text-slate-700">{label}</span>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Termination */}
-                <div className="border-t border-primary/20 pt-4">
-                    <p className="text-xs font-semibold text-red-600 mb-3">🔚 Расторжение</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        <button
-                            onClick={() => handleGenerate('11_soglashenie-o-rastorzhenii-trudovogo-dogovora')}
-                            disabled={!!isGenerating}
-                            className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg border border-slate-200 hover:border-red-300 hover:bg-red-50 transition-all"
-                        >
-                            {isGenerating === '11_soglashenie-o-rastorzhenii-trudovogo-dogovora' ? (
-                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                            ) : (
-                                <div className="h-7 w-7 rounded bg-red-100 flex items-center justify-center">
-                                    <svg className="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                </div>
-                            )}
-                            <span className="text-xs font-medium text-slate-700">Соглашение о расторжении</span>
-                        </button>
-                    </div>
-                </div>
-                
-                <p className="text-xs text-slate-500 mt-3">
-                    💡 Документы формируются автоматически на основе данных сотрудника
-                </p>
-                </div>
-                )}
-            </div>
-
-            {/* Modals */}
+            {/* Modals -- legacy grid removed, use ProcessLauncher for document generation */}
             {showUploadModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                     <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
@@ -773,7 +496,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                         return doc ? (DOCUMENT_TYPES[doc.type]?.label || "Документ") : "Документ";
                     })()}
                     onClose={() => setSigningDocId(null)}
-                    onSuccess={() => { setSigningDocId(null); loadDocuments(); }}
+                    onSuccess={() => { setSigningDocId(null); loadDocuments(); onStatusChange?.(); }}
                     preRegisteredDocumentId={(() => {
                         const doc = documents.find(d => d.id === signingDocId);
                         return doc?.sigex_document_id;
@@ -790,7 +513,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                         return doc ? (DOCUMENT_TYPES[doc.type]?.label || "Документ") : "Документ";
                     })()}
                     onClose={() => setEmployerSigningDocId(null)}
-                    onSuccess={() => { setEmployerSigningDocId(null); loadDocuments(); }}
+                    onSuccess={() => { setEmployerSigningDocId(null); loadDocuments(); onStatusChange?.(); }}
                     signingRole="employer"
                 />
             )}
