@@ -151,8 +151,9 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
 
     // For Phase 1, only show Hiring wizard. Other processes open legacy modal flow.
     const handleProcessClick = (processKey: string) => {
-        if (processKey === 'hiring' || processKey === 'termination' || processKey === 'vacation' || processKey === 'maternity_return' || processKey === 'maternity_leave' || processKey === 'name_change') {
-            setActiveWizard(processKey);
+        if (processKey === 'hiring' || processKey === 'termination' || processKey === 'vacation' || processKey === 'maternity_return' || processKey === 'maternity_leave' || processKey === 'name_change' || processKey === 'data_change') {
+            // data_change uses the same template as name_change (03), so reuse the wizard
+            setActiveWizard(processKey === 'data_change' ? 'name_change' : processKey);
         } else {
             // For non-wizard processes, scroll to the legacy document grid
             const el = document.getElementById('legacy-documents-section');
