@@ -229,7 +229,8 @@ router.get('/employees/:id', async (req, res) => {
 
         const result = await query(`
             SELECT e.*, p.name as main_pvz_name, p.address as main_pvz_address,
-                   emp.name_full as employer_name, emp.name_short as employer_short_name
+                   emp.name_full as employer_name, emp.name_short as employer_short_name,
+                   emp.director_name as employer_director, emp.director_name_dative as employer_director_dative
             FROM employees e
             LEFT JOIN pvz_points p ON e.main_pvz_id = p.id
             LEFT JOIN employers emp ON e.employer_id = emp.id

@@ -133,12 +133,30 @@ export function DocumentParamsModal({ isOpen, documentType, employeeData, onClos
                         if (key === 'employeeAddress' && (employeeData.registered_address || employeeData.address)) {
                             initial[key] = employeeData.registered_address || employeeData.address;
                         }
+                        if (key === 'employeeAddressResidentRu' && employeeData.address) initial[key] = employeeData.address;
+                        if (key === 'employeeAddressRegRu' && employeeData.registered_address) initial[key] = employeeData.registered_address;
                         if (key === 'employeePhone' && employeeData.phone) initial[key] = employeeData.phone;
                         if (key === 'employeeEmail' && employeeData.email) initial[key] = employeeData.email;
                         if (key === 'employeeIBAN' && employeeData.iban) initial[key] = employeeData.iban;
                         if (key === 'employeeIdCard' && employeeData.id_card_number) initial[key] = employeeData.id_card_number;
                         if (key === 'employeeIdCardIssuedBy' && employeeData.id_card_issued_by) initial[key] = employeeData.id_card_issued_by;
                         if (key === 'pvzAddress' && employeeData.pvz_address) initial[key] = employeeData.pvz_address;
+                        // Employer fields
+                        if (key === 'employerName' && employeeData.employer_name) initial[key] = employeeData.employer_name;
+                        if (key === 'employerShortName' && employeeData.employer_short_name) initial[key] = employeeData.employer_short_name;
+                        if (key === 'directorName' && employeeData.employer_director) initial[key] = employeeData.employer_director;
+                        if (key === 'directorNameShortDat' && employeeData.employer_director_dative) initial[key] = employeeData.employer_director_dative;
+                        if (key === 'directorNameShortRod' && employeeData.employer_director) {
+                            // Simple fallback for director name in genitive case
+                            const d = employeeData.employer_director;
+                            if (d.endsWith('ой')) initial[key] = d;
+                            else if (d.endsWith('ой Г.Е.')) initial[key] = d;
+                            else initial[key] = d;
+                        }
+                        if (key === 'directorBasis' || key === 'directorBasisRu') initial[key] = 'Устава';
+                        if (key === 'directorBasisKz') initial[key] = 'Жарғысы';
+                        if (key === 'city' || key === 'cityRu') initial[key] = 'Алматы';
+                        if (key === 'cityKz') initial[key] = 'Алматы';
                     }
                     prefillDateFields(initial, schema.variables, employeeData);
                 }
