@@ -845,6 +845,40 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
             enhancedParams.idCardIssueDate = new Date(emp.id_card_issue_date).toLocaleDateString('ru-RU');
         }
 
+        // Format termination-related dates for template 11 and similar
+        const MONTHS_RU_FULL = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+        function formatRuDateLong(isoDate) {
+            if (!isoDate) return '';
+            const d = new Date(isoDate);
+            if (isNaN(d.getTime())) return isoDate;
+            return `${d.getDate()} ${MONTHS_RU_FULL[d.getMonth()]} ${d.getFullYear()} года`;
+        }
+        function formatRuDateShort(isoDate) {
+            if (!isoDate) return '';
+            const d = new Date(isoDate);
+            if (isNaN(d.getTime())) return isoDate;
+            return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+        }
+
+        if (schemaVars.includes('terminationDate') && enhancedParams.terminationDate) {
+            const formatted = formatRuDateLong(enhancedParams.terminationDate);
+            if (formatted) enhancedParams.terminationDate = formatted;
+        }
+        if (schemaVars.includes('agreementDate')) {
+            if (enhancedParams.agreementDate) {
+                const formatted = formatRuDateShort(enhancedParams.agreementDate);
+                if (formatted) enhancedParams.agreementDate = formatted;
+            } else if (enhancedParams.terminationDate) {
+                // Default agreementDate to terminationDate (short format)
+                const termIso = userParams.terminationDate;
+                if (termIso) enhancedParams.agreementDate = formatRuDateShort(termIso);
+            }
+        }
+        if (schemaVars.includes('lastWorkingDay') && enhancedParams.lastWorkingDay) {
+            const formatted = formatRuDateLong(enhancedParams.lastWorkingDay);
+            if (formatted) enhancedParams.lastWorkingDay = formatted;
+        }
+
         const data = buildTemplateData(emp, employer, schema, enhancedParams);
         htmlContent = fillTemplate(template, data);
     }

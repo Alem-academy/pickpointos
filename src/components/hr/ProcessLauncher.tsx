@@ -3,12 +3,13 @@ import { api } from '@/services/api';
 import { FileText, UserPlus, Plane, Baby, UserX, RefreshCw, CheckCircle2, Clock, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { HiringWizard } from './HiringWizard';
+import { TerminationWizard } from './TerminationWizard';
 
 interface ProcessLauncherProps {
     employeeId: string;
     employeeName?: string;
     employeeStatus?: string;
-    documents: Array<{ type: string; status: string; created_at: string }>;
+    documents: Array<{ type: string; status: string; created_at: string; id?: string }>;
     onDocumentsChange?: () => void;
 }
 
@@ -146,10 +147,10 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
 
     // For Phase 1, only show Hiring wizard. Other processes open legacy modal flow.
     const handleProcessClick = (processKey: string) => {
-        if (processKey === 'hiring') {
-            setActiveWizard('hiring');
+        if (processKey === 'hiring' || processKey === 'termination') {
+            setActiveWizard(processKey);
         } else {
-            // For non-hiring processes, scroll to the legacy document grid
+            // For non-wizard processes, scroll to the legacy document grid
             const el = document.getElementById('legacy-documents-section');
             if (el) el.scrollIntoView({ behavior: 'smooth' });
         }
@@ -208,6 +209,14 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
 
             {activeWizard === 'hiring' && (
                 <HiringWizard
+                    employeeId={employeeId}
+                    employeeName={employeeName}
+                    onClose={handleWizardClose}
+                    onSuccess={handleWizardClose}
+                />
+            )}
+            {activeWizard === 'termination' && (
+                <TerminationWizard
                     employeeId={employeeId}
                     employeeName={employeeName}
                     onClose={handleWizardClose}

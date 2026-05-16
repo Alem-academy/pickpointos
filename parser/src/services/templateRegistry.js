@@ -155,10 +155,10 @@ const PROCESS_DEFINITIONS = {
         requiresEmployerSignature: true,
     },
     termination: {
-        label: 'Увольнение',
-        description: 'Приказ об увольнении и соглашение о расторжении',
-        documentTypes: ['termination_order', '11_soglashenie-o-rastorzhenii-trudovogo-dogovora'],
-        editableParams: ['terminationDate', 'terminationReason', 'contractNumber', 'contractDate'],
+        label: 'Расторжение ТД',
+        description: 'Соглашение о расторжении трудового договора по согласованию сторон',
+        documentTypes: ['11_soglashenie-o-rastorzhenii-trudovogo-dogovora'],
+        editableParams: ['terminationDate', 'lastWorkingDay', 'compensationAmount'],
         requiresEmployerSignature: true,
     },
     maternity_leave: {

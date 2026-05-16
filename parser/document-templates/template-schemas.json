@@ -1130,7 +1130,7 @@
         "employerName",
         "directorName",
         "directorNameShort",
-        "directorBasis",
+        "directorBasisRu",
         "employeeFullName",
         "employeeFullNameShort",
         "employeeIIN",
@@ -1143,7 +1143,7 @@
         "contractDate",
         "terminationDate",
         "agreementDate",
-        "city",
+        "cityRu",
         "lastWorkingDay"
       ],
       "variables": {
@@ -1161,11 +1161,6 @@
           "type": "string",
           "example": "Карабаева Г.Е.",
           "description": "ФИО директора с инициалами"
-        },
-        "directorBasis": {
-          "type": "string",
-          "example": "Устава",
-          "description": "Основание полномочий директора"
         },
         "employeeFullName": {
           "type": "string",
@@ -1227,11 +1222,6 @@
           "example": "15.03.2026",
           "description": "Дата соглашения"
         },
-        "city": {
-          "type": "string",
-          "example": "Алматы",
-          "description": "Город"
-        },
         "lastWorkingDay": {
           "type": "string",
           "example": "15 марта 2026",
@@ -1241,6 +1231,16 @@
           "type": "string",
           "example": "150 000 ₸",
           "description": "Сумма компенсации (опционально)"
+        },
+        "directorBasisRu": {
+          "type": "string",
+          "example": "Устава",
+          "description": "Основание полномочий директора (русский)"
+        },
+        "cityRu": {
+          "type": "string",
+          "example": "Алматы",
+          "description": "Город (русский)"
         }
       }
     },
