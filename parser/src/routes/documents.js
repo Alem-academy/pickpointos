@@ -961,6 +961,8 @@ router.post('/documents/:id/sign-employer', authenticateToken, async (req, res) 
         const { id } = req.params;
         const { signature, certInfo } = req.body;
 
+        Logger.info(`[Docs] sign-employer called for doc ${id}, signature length: ${signature ? signature.length : 0}, certInfo: ${certInfo ? JSON.stringify(certInfo) : 'none'}`);
+
         if (!signature) {
             return res.status(400).json({ error: 'Подпись (signature) обязательна' });
         }

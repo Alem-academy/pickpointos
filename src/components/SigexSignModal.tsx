@@ -246,14 +246,18 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
                 throw new Error('Не удалось получить PDF для подписи через NCALayer.');
             }
 
+            console.log('[NCALayer] PDF length:', pdfBase64?.length);
             const ncalayer = new NCALayerClient();
             try {
                 await ncalayer.connect();
-            } catch (error) {
+                console.log('[NCALayer] Connected successfully');
+            } catch (error: any) {
+                console.error('[NCALayer] Connection failed:', error);
                 throw new Error('Не удалось подключиться к программе NCALayer. Убедитесь, что она запущена на вашем компьютере.');
             }
 
             setStep('signing');
+            console.log('[NCALayer] Starting basicsSignCMS...');
             // Sign the Base64 PDF data directly creating a CMS
             const signature = await ncalayer.basicsSignCMS(
                 NCALayerClient.basicsStorageAll,
@@ -261,6 +265,7 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
                 NCALayerClient.basicsCMSParamsWithData, // Must match "signMethod: CMS_WITH_DATA" logic
                 NCALayerClient.basicsSignerSign // For documents it's usually Sign
             );
+            console.log('[NCALayer] Signature received, length:', signature?.length);
 
             await finalizeSignature(signature);
 
