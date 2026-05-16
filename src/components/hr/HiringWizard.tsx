@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '@/services/api';
-import { X, ChevronRight, ChevronLeft, Loader2, CheckCircle2, FileText, Send, PenTool, AlertCircle } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, Loader2, CheckCircle2, FileText, Send, PenTool, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
@@ -9,6 +9,7 @@ import { SigexSignModal } from '../SigexSignModal';
 interface HiringWizardProps {
     employeeId: string;
     employeeName?: string;
+    existingDocuments?: Array<{ id: string; type: string; status: string }>;
     onClose: () => void;
     onSuccess: () => void;
 }
@@ -32,23 +33,74 @@ const STEPS = [
     { label: 'Подписание', description: 'Отправьте на подпись' },
 ];
 
-export function HiringWizard({ employeeId, employeeName, onClose, onSuccess }: HiringWizardProps) {
-    const [currentStep, setCurrentStep] = useState(0);
+export function HiringWizard({ employeeId, employeeName, existingDocuments = [], onClose, onSuccess }: HiringWizardProps) {
+    // Determine initial step based on existing documents
+    const hasExistingDocs = existingDocuments.length > 0;
+    const allDocsSigned = hasExistingDocs && existingDocuments.every(d => d.status === 'signed' || d.status === 'fully_signed');
+    const initialStep = allDocsSigned ? 2 : hasExistingDocs ? 1 : 0;
+
+    const [currentStep, setCurrentStep] = useState(initialStep);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoadingContent, setIsLoadingContent] = useState(hasExistingDocs);
     const [generatedDocs, setGeneratedDocs] = useState<GeneratedDoc[]>([]);
     const [activePreview, setActivePreview] = useState<string | null>(null);
     const [employerSigningDocId, setEmployerSigningDocId] = useState<string | null>(null);
-    const [signedDocIds, setSignedDocIds] = useState<string[]>([]);
+    const [signedDocIds, setSignedDocIds] = useState<string[]>(
+        existingDocuments.filter(d => d.status === 'employer_signed' || d.status === 'fully_signed').map(d => d.id)
+    );
     const [signingProgress, setSigningProgress] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    // Editable params only
     const [params, setParams] = useState({
         probationMonths: '',
         contractEndDate: '',
         vacationDays: '24',
     });
+
+    // Load existing document content on mount
+    useEffect(() => {
+        if (hasExistingDocs) {
+            loadExistingDocuments();
+        }
+    }, []);
+
+    const loadExistingDocuments = async () => {
+        setIsLoadingContent(true);
+        try {
+            const docs: GeneratedDoc[] = [];
+            for (const doc of existingDocuments) {
+                try {
+                    const response = await api.getDocumentContent(doc.id);
+                    let content = response.content || '';
+                    // If no content but has scan_url, fetch it
+                    if (!content && response.scan_url) {
+                        const fetchRes = await fetch(response.scan_url);
+                        content = await fetchRes.text();
+                    }
+                    docs.push({
+                        type: doc.type,
+                        document: doc,
+                        content,
+                        success: true,
+                    });
+                } catch (err) {
+                    console.error('Failed to load doc content:', err);
+                    docs.push({
+                        type: doc.type,
+                        document: doc,
+                        content: '<p>Ошибка загрузки документа</p>',
+                        success: false,
+                    });
+                }
+            }
+            setGeneratedDocs(docs);
+        } catch (err) {
+            console.error('Failed to load existing docs:', err);
+        } finally {
+            setIsLoadingContent(false);
+        }
+    };
 
     const handleParamChange = (key: string, value: string) => {
         setParams(prev => ({ ...prev, [key]: value }));
@@ -57,7 +109,6 @@ export function HiringWizard({ employeeId, employeeName, onClose, onSuccess }: H
 
     const validateStep = () => {
         if (currentStep === 0) {
-            // All fields are optional for hiring — auto-filled defaults exist
             return true;
         }
         return true;
@@ -67,13 +118,11 @@ export function HiringWizard({ employeeId, employeeName, onClose, onSuccess }: H
         if (!validateStep()) return;
 
         if (currentStep === 0) {
-            // Confirm generation (in case docs already exist)
             const confirmed = window.confirm(
                 'Будет сформирован пакет документов для найма:\n• Заявление на приём\n• Приказ о приеме\n• Трудовой договор\n\nРанее сгенерированные документы останутся в системе. Продолжить?'
             );
             if (!confirmed) return;
 
-            // Generate documents
             setIsGenerating(true);
             setError(null);
             try {
@@ -84,7 +133,7 @@ export function HiringWizard({ employeeId, employeeName, onClose, onSuccess }: H
                 });
                 setGeneratedDocs(result.documents);
                 if (result.errors && result.errors.length > 0) {
-                    setError(`Ошибки: ${result.errors.map(e => e.type).join(', ')}`);
+                    setError(`Ошибки: ${result.errors.map((e: any) => e.type).join(', ')}`);
                 }
                 setCurrentStep(1);
             } catch (err: any) {
@@ -102,11 +151,17 @@ export function HiringWizard({ employeeId, employeeName, onClose, onSuccess }: H
         if (currentStep > 0) setCurrentStep(prev => prev - 1);
     };
 
+    const handleRegenerate = () => {
+        setCurrentStep(0);
+        setGeneratedDocs([]);
+        setSignedDocIds([]);
+    };
+
     const handleBulkSendToEmployee = async () => {
         setIsSubmitting(true);
         try {
             const links: string[] = [];
-            for (const doc of generatedDocs) {
+            for (const doc of successfulDocs) {
                 if (!doc.document?.id) continue;
                 const response = await fetch(`/api/documents/${doc.document.id}/signing-link`, {
                     method: 'POST',
@@ -141,7 +196,6 @@ export function HiringWizard({ employeeId, employeeName, onClose, onSuccess }: H
         }
         setEmployerSigningDocId(null);
 
-        // Check if there are more docs to sign
         const remainingDocs = successfulDocs.filter(d => d.document?.id && ![...signedDocIds, justSignedId].includes(d.document.id));
         if (remainingDocs.length > 0) {
             setSigningProgress(`✅ Подписано ${signedDocIds.length + 1} из ${successfulDocs.length}. Открывается следующий документ...`);
@@ -276,47 +330,119 @@ export function HiringWizard({ employeeId, employeeName, onClose, onSuccess }: H
                     {currentStep === 1 && (
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-base font-semibold text-slate-900">Сгенерированные документы</h3>
-                                <span className="text-xs text-slate-500">{successfulDocs.length} из 3</span>
+                                <h3 className="text-base font-semibold text-slate-900">
+                                    {hasExistingDocs ? 'Существующие документы' : 'Сгенерированные документы'}
+                                </h3>
+                                <div className="flex items-center gap-2">
+                                    {hasExistingDocs && (
+                                        <button
+                                            onClick={handleRegenerate}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                                        >
+                                            <RefreshCw className="h-3.5 w-3.5" />
+                                            Пересоздать
+                                        </button>
+                                    )}
+                                    <span className="text-xs text-slate-500">{successfulDocs.length} из 3</span>
+                                </div>
                             </div>
 
-                            <div className="space-y-4">
-                                {successfulDocs.map((doc) => (
-                                    <div key={doc.type} className="border border-slate-200 rounded-xl overflow-hidden">
-                                        <button
-                                            onClick={() => setActivePreview(activePreview === doc.type ? null : doc.type)}
-                                            className="w-full flex items-center justify-between p-4 bg-white hover:bg-slate-50 transition-colors text-left"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 rounded-lg bg-blue-100">
-                                                    <FileText className="h-5 w-5 text-blue-600" />
+                            {isLoadingContent ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+                                    <span className="ml-2 text-sm text-slate-500">Загрузка документов...</span>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {successfulDocs.map((doc) => (
+                                        <div key={doc.type} className="border border-slate-200 rounded-xl overflow-hidden">
+                                            <button
+                                                onClick={() => setActivePreview(activePreview === doc.type ? null : doc.type)}
+                                                className="w-full flex items-center justify-between p-4 bg-white hover:bg-slate-50 transition-colors text-left"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 rounded-lg bg-blue-100">
+                                                        <FileText className="h-5 w-5 text-blue-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-slate-900">{DOC_TYPE_LABELS[doc.type] || doc.type}</p>
+                                                        <p className="text-xs text-slate-500">{activePreview === doc.type ? 'Нажмите чтобы свернуть' : 'Нажмите чтобы развернуть предпросмотр'}</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="text-sm font-semibold text-slate-900">{DOC_TYPE_LABELS[doc.type] || doc.type}</p>
-                                                    <p className="text-xs text-slate-500">{activePreview === doc.type ? 'Нажмите чтобы свернуть' : 'Нажмите чтобы развернуть предпросмотр'}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs text-slate-400">
+                                                        {activePreview === doc.type ? 'Свернуть' : 'Развернуть'}
+                                                    </span>
+                                                    <ChevronRight className={cn("h-4 w-4 text-slate-400 transition-transform", activePreview === doc.type && "rotate-90")} />
                                                 </div>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs text-slate-400">
-                                                    {activePreview === doc.type ? 'Свернуть' : 'Развернуть'}
-                                                </span>
-                                                <ChevronRight className={cn("h-4 w-4 text-slate-400 transition-transform", activePreview === doc.type && "rotate-90")} />
-                                            </div>
-                                        </button>
-                                        {activePreview === doc.type && (
-                                            <div className="border-t border-slate-100 bg-slate-50/50">
-                                                <div className="p-4">
-                                                    <iframe
-                                                        srcDoc={doc.content}
-                                                        className="w-full h-96 border border-slate-200 rounded-lg bg-white"
-                                                        title={DOC_TYPE_LABELS[doc.type] || doc.type}
-                                                    />
+                                            </button>
+                                            {activePreview === doc.type && (
+                                                <div className="border-t border-slate-100 bg-slate-50/50">
+                                                    <div className="p-4">
+                                                        <iframe
+                                                            srcDoc={doc.content}
+                                                            className="w-full h-96 border border-slate-200 rounded-lg bg-white"
+                                                            title={DOC_TYPE_LABELS[doc.type] || doc.type}
+                                                        />
+                                                    </div>
                                                 </div>
+                                            )}
+                                        </div>
+                                    ))}
+
+                                    {/* Inline signing actions on Preview step */}
+                                    {successfulDocs.length > 0 && !successfulDocs.every(d => d.document?.id && signedDocIds.includes(d.document.id)) && (
+                                        <div className="mt-6 pt-4 border-t border-slate-100">
+                                            <p className="text-sm font-semibold text-slate-900 mb-3">Действия с документами</p>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <button
+                                                    onClick={handleBulkSendToEmployee}
+                                                    disabled={isSubmitting}
+                                                    className="flex items-center gap-3 p-3 bg-white border-2 border-slate-200 rounded-xl hover:border-primary hover:bg-primary/5 transition-all text-left"
+                                                >
+                                                    <div className="p-2 rounded-lg bg-purple-100">
+                                                        <Send className="h-4 w-4 text-purple-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-slate-900">Отправить сотруднику</p>
+                                                        <p className="text-xs text-slate-500">eGov QR ссылка</p>
+                                                    </div>
+                                                </button>
+                                                <button
+                                                    onClick={handleBulkEmployerSign}
+                                                    disabled={successfulDocs.every(d => d.document?.id && signedDocIds.includes(d.document.id))}
+                                                    className="flex items-center gap-3 p-3 bg-white border-2 border-slate-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    <div className="p-2 rounded-lg bg-blue-100">
+                                                        <PenTool className="h-4 w-4 text-blue-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-slate-900">Подписать работодателем</p>
+                                                        <p className="text-xs text-slate-500">Через NCALayer</p>
+                                                    </div>
+                                                </button>
                                             </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
+                                            {successfulDocs.some(d => d.document?.id && !signedDocIds.includes(d.document.id)) && (
+                                                <div className="mt-2">
+                                                    <p className="text-xs font-medium text-slate-500 mb-1">Или по отдельности:</p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {successfulDocs.filter(d => d.document?.id && !signedDocIds.includes(d.document.id)).map((doc) => (
+                                                            <button
+                                                                key={doc.type}
+                                                                onClick={() => doc.document?.id && setEmployerSigningDocId(doc.document.id)}
+                                                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors"
+                                                            >
+                                                                <PenTool className="h-3 w-3" />
+                                                                {DOC_TYPE_LABELS[doc.type]}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -405,7 +531,7 @@ export function HiringWizard({ employeeId, employeeName, onClose, onSuccess }: H
                     <Button
                         variant="outline"
                         onClick={handleBack}
-                        disabled={currentStep === 0 || isGenerating}
+                        disabled={currentStep === 0 || isGenerating || isLoadingContent}
                         className={cn(currentStep === 0 && "invisible")}
                     >
                         <ChevronLeft className="h-4 w-4 mr-1" />
@@ -415,15 +541,15 @@ export function HiringWizard({ employeeId, employeeName, onClose, onSuccess }: H
                     {currentStep < 2 ? (
                         <Button
                             onClick={handleNext}
-                            disabled={isGenerating}
+                            disabled={isGenerating || isLoadingContent}
                             className="min-w-[140px]"
                         >
-                            {isGenerating ? (
+                            {isGenerating || isLoadingContent ? (
                                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
                             ) : (
                                 <ChevronRight className="h-4 w-4 mr-1" />
                             )}
-                            {isGenerating ? 'Генерация...' : currentStep === 0 ? 'Сформировать' : 'Далее'}
+                            {isLoadingContent ? 'Загрузка...' : isGenerating ? 'Генерация...' : currentStep === 0 ? 'Сформировать' : 'Далее'}
                         </Button>
                     ) : (
                         <Button onClick={handleFinish} variant="default" className="min-w-[140px]">
@@ -460,4 +586,3 @@ export function HiringWizard({ employeeId, employeeName, onClose, onSuccess }: H
         </div>
     );
 }
-

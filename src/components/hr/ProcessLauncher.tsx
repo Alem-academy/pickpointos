@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/services/api';
-import { FileText, UserPlus, Plane, Baby, UserX, RefreshCw, CheckCircle2, Clock, ChevronRight } from 'lucide-react';
+import { FileText, UserPlus, Plane, Baby, UserX, RefreshCw, CheckCircle2, Clock, ChevronRight, PenTool, Send, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { HiringWizard } from './HiringWizard';
 import { TerminationWizard } from './TerminationWizard';
@@ -13,7 +13,7 @@ interface ProcessLauncherProps {
     employeeId: string;
     employeeName?: string;
     employeeStatus?: string;
-    documents: Array<{ type: string; status: string; created_at: string; id?: string }>;
+    documents: Array<{ id: string; type: string; status: string; created_at: string; scan_url?: string }>;
     onDocumentsChange?: () => void;
 }
 
@@ -45,7 +45,6 @@ const PROCESS_COLORS: Record<string, string> = {
     data_change: 'orange',
 };
 
-// Static Tailwind class mappings (required for JIT compilation)
 const COLOR_CLASSES: Record<string, { bg: string; text: string; border: string; hoverBorder: string; hoverBg: string; cardBg: string }> = {
     blue: { bg: 'bg-blue-100', text: 'text-blue-600', border: 'border-blue-200', hoverBorder: 'hover:border-blue-300', hoverBg: 'hover:bg-blue-50', cardBg: 'bg-blue-50/30' },
     purple: { bg: 'bg-purple-100', text: 'text-purple-600', border: 'border-purple-200', hoverBorder: 'hover:border-purple-300', hoverBg: 'hover:bg-purple-50', cardBg: 'bg-purple-50/30' },
@@ -55,7 +54,6 @@ const COLOR_CLASSES: Record<string, { bg: string; text: string; border: string; 
     slate: { bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-200', hoverBorder: 'hover:border-slate-300', hoverBg: 'hover:bg-slate-50', cardBg: 'bg-slate-50/30' },
 };
 
-// Map document types to processes for status calculation
 const DOC_TYPE_TO_PROCESS: Record<string, string> = {
     '13_zayavlenie-o-prieme-na-rabotu': 'hiring',
     '14_prikaz-o-prieme-na-rabotu': 'hiring',
@@ -112,6 +110,7 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
     const [processes, setProcesses] = useState<ProcessInfo[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeWizard, setActiveWizard] = useState<string | null>(null);
+    const [wizardDocs, setWizardDocs] = useState<Array<{ id: string; type: string; status: string }>>([]);
 
     const loadProcesses = useCallback(async () => {
         try {
@@ -119,7 +118,6 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
             setProcesses(data);
         } catch (err) {
             console.error('Failed to load processes:', err);
-            // Fallback: show at least the hiring process
             setProcesses([{
                 key: 'hiring',
                 label: 'Приём на работу',
@@ -138,7 +136,50 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
 
     const handleWizardClose = () => {
         setActiveWizard(null);
+        setWizardDocs([]);
         onDocumentsChange?.();
+    };
+
+    const openWizard = (processKey: string, processDocs: ProcessLauncherProps['documents']) => {
+        setWizardDocs(processDocs.map(d => ({ id: d.id, type: d.type, status: d.status })));
+        setActiveWizard(processKey === 'data_change' ? 'name_change' : processKey);
+    };
+
+    const handleProcessClick = (processKey: string) => {
+        const processDocs = documents.filter(d => DOC_TYPE_TO_PROCESS[d.type] === processKey);
+        openWizard(processKey, processDocs);
+    };
+
+    const handleQuickSign = (e: React.MouseEvent, docId: string) => {
+        e.stopPropagation();
+        // Open signing modal directly for this document
+        // For now, open the wizard with existing docs
+        const doc = documents.find(d => d.id === docId);
+        if (doc) {
+            const processKey = DOC_TYPE_TO_PROCESS[doc.type];
+            if (processKey) {
+                const processDocs = documents.filter(d => DOC_TYPE_TO_PROCESS[d.type] === processKey);
+                openWizard(processKey, processDocs);
+            }
+        }
+    };
+
+    const handleQuickSendLink = async (e: React.MouseEvent, docId: string) => {
+        e.stopPropagation();
+        try {
+            const response = await fetch(`/api/documents/${docId}/signing-link`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            const data = await response.json();
+            if (data.success) {
+                await navigator.clipboard.writeText(data.signingUrl);
+                alert('✅ Ссылка на подпись скопирована!');
+            }
+        } catch (err) {
+            console.error('Failed to generate signing link:', err);
+            alert('Ошибка генерации ссылки');
+        }
     };
 
     if (loading) {
@@ -148,18 +189,6 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
             </div>
         );
     }
-
-    // For Phase 1, only show Hiring wizard. Other processes open legacy modal flow.
-    const handleProcessClick = (processKey: string) => {
-        if (processKey === 'hiring' || processKey === 'termination' || processKey === 'vacation' || processKey === 'maternity_return' || processKey === 'maternity_leave' || processKey === 'name_change' || processKey === 'data_change') {
-            // data_change uses the same template as name_change (03), so reuse the wizard
-            setActiveWizard(processKey === 'data_change' ? 'name_change' : processKey);
-        } else {
-            // For non-wizard processes, scroll to the legacy document grid
-            const el = document.getElementById('legacy-documents-section');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-        }
-    };
 
     return (
         <div className="space-y-4">
@@ -177,6 +206,11 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
                     const colorCls = COLOR_CLASSES[colorKey] || COLOR_CLASSES.slate;
                     const icon = PROCESS_ICONS[process.key] || <FileText className="h-5 w-5" />;
                     const processDocs = documents.filter(d => DOC_TYPE_TO_PROCESS[d.type] === process.key);
+                    const hasDocs = processDocs.length > 0;
+                    const allSigned = hasDocs && processDocs.every(d => d.status === 'signed' || d.status === 'fully_signed');
+                    const needsEmployerSign = hasDocs && processDocs.some(
+                        d => d.status === 'draft' || (d.status === 'signed' && !d.status?.includes('employer'))
+                    );
 
                     return (
                         <button
@@ -207,6 +241,37 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
                                     <span className="text-xs text-slate-400">{processDocs.length} док.</span>
                                 )}
                             </div>
+
+                            {/* Quick action buttons for existing unsigned docs */}
+                            {hasDocs && !allSigned && (
+                                <div className="flex items-center gap-1.5 w-full pt-2 border-t border-slate-100/50">
+                                    {needsEmployerSign && (
+                                        <>
+                                            <button
+                                                onClick={(e) => handleQuickSendLink(e, processDocs[0].id)}
+                                                className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-md transition-colors"
+                                            >
+                                                <Send className="h-3 w-3" />
+                                                Ссылка
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleQuickSign(e, processDocs[0].id)}
+                                                className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+                                            >
+                                                <PenTool className="h-3 w-3" />
+                                                Подписать
+                                            </button>
+                                        </>
+                                    )}
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleProcessClick(process.key); }}
+                                        className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-md transition-colors ml-auto"
+                                    >
+                                        <Eye className="h-3 w-3" />
+                                        Открыть
+                                    </button>
+                                </div>
+                            )}
                         </button>
                     );
                 })}
@@ -216,6 +281,7 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
                 <HiringWizard
                     employeeId={employeeId}
                     employeeName={employeeName}
+                    existingDocuments={wizardDocs}
                     onClose={handleWizardClose}
                     onSuccess={handleWizardClose}
                 />
