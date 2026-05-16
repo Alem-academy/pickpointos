@@ -216,8 +216,31 @@ export function DocumentParamsModal({ isOpen, documentType, employeeData, onClos
                 {Object.entries(schema.variables).map(([key, def]) => {
                     const isRequired = schema.required?.includes(key);
                     const value = formData[key] || '';
-                    const isAutoFilled = value && value !== '__________' && (
-                        key.startsWith('employee') || key.startsWith('employer') || key.startsWith('pvz') || key.startsWith('currentDate')
+                    const isAutoFilled = (
+                        key.startsWith('employee') ||
+                        key.startsWith('employer') ||
+                        key.startsWith('pvz') ||
+                        key.startsWith('currentDate') ||
+                        key.startsWith('date') ||
+                        key.startsWith('startDate') ||
+                        key.startsWith('contractDate') ||
+                        key.startsWith('returnDate') ||
+                        key.startsWith('vacation') ||
+                        key.startsWith('sickLeave') ||
+                        key.startsWith('certificate') ||
+                        key === 'directorNameShort' ||
+                        key === 'directorNameShortDat' ||
+                        key === 'directorNameShortRod' ||
+                        key === 'directorName' ||
+                        key === 'directorNameKz' ||
+                        key === 'directorNameRu' ||
+                        key === 'directorBasis' ||
+                        key === 'directorBasisKz' ||
+                        key === 'directorBasisRu' ||
+                        key === 'city' ||
+                        key === 'cityRu' ||
+                        key === 'cityKz' ||
+                        key === 'orderNumber'
                     );
 
                     return (
@@ -230,8 +253,12 @@ export function DocumentParamsModal({ isOpen, documentType, employeeData, onClos
                             <input
                                 type={key.toLowerCase().includes('date') && !key.includes('Day') && !key.includes('Month') && !key.includes('Year') ? 'date' : 'text'}
                                 value={value}
-                                onChange={(e) => setFormData({ ...formData, [key]: e.target.value })}
-                                className={`w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 ${isAutoFilled ? 'bg-emerald-50' : ''}`}
+                                onChange={(e) => {
+                                    if (isAutoFilled) return;
+                                    setFormData({ ...formData, [key]: e.target.value });
+                                }}
+                                readOnly={isAutoFilled}
+                                className={`w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 ${isAutoFilled ? 'bg-emerald-50 cursor-not-allowed' : ''}`}
                                 placeholder={def.example || ''}
                             />
                         </div>
