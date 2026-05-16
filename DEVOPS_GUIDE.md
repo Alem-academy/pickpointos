@@ -197,7 +197,7 @@ WorkingDirectory=/home/centos/sigex-gateway
 Environment=NODE_ENV=production
 Environment=PORT=8080
 Environment=SIGEX_API_URL=https://sigex.kz/api
-Environment=NODE_OPTIONS=--max-old-space-size=512
+Environment=NODE_OPTIONS=--max-old-space-size=2048
 
 # Process Management
 ExecStart=/usr/bin/node src/index.js
@@ -270,7 +270,7 @@ FRONTEND_URL=https://pickpointos-production.up.railway.app
 PORT=8080
 SIGEX_API_URL=https://sigex.kz/api
 NODE_ENV=production
-NODE_OPTIONS=--max-old-space-size=512
+NODE_OPTIONS=--max-old-space-size=2048
 ```
 
 ---
@@ -459,7 +459,7 @@ sync; echo 3 > /proc/sys/vm/drop_caches
 # Restart service
 sudo systemctl restart sigex-gateway
 
-# Add swap if needed (4 GB RAM should be enough)
+# With 4 GB RAM and 2 GB swap, OOM is unlikely. Monitor with: free -h
 ```
 
 ### Issue 3: Database Connection Failed

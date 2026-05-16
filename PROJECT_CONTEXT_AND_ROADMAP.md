@@ -56,7 +56,7 @@ PickPoint OS - HR management system for Wildberries pickup points. Manages emplo
 
 | Issue | Priority | Status | Workaround |
 |-------|----------|--------|------------|
-| **Sigex Gateway OOM** | 🔴 HIGH | Pending server upgrade | Add swap, limit Node.js memory |
+| **Sigex Gateway** | 🟢 OK | 4 CPU / 4 GB RAM / 80 GB Disk | Monitor memory usage |
 | **Additional Documents Not Generating** | 🟡 MEDIUM | Needs fix | Manual template check |
 | **ID Card Inputs Missing** | 🟡 MEDIUM | Needs implementation | Manual data entry later |
 
@@ -76,10 +76,10 @@ PickPoint OS - HR management system for Wildberries pickup points. Manages emplo
    - Location: `src/components/hr/new-employee/`
    - Fix: Add form fields, update validation
 
-3. **Gateway Memory Issue**
-   - Issue: 1 GB RAM insufficient
+3. **Gateway Configuration**
+   - Status: 4 CPU / 4 GB RAM / 80 GB Disk
    - Location: gateway.pvz.kz (195.49.215.116)
-   - Fix: Add swap OR upgrade to 2 GB RAM
+   - Note: NODE_OPTIONS can be increased to --max-old-space-size=2048
 
 ### Important (This Week)
 
@@ -255,7 +255,7 @@ NODE_OPTIONS=--max-old-space-size=512
 - ✅ Remote signing links feature
 - ✅ Share button in DocumentsList
 - ✅ GATEWAY_OPS_MANUAL.md created
-- ⚠️ Gateway OOM issue identified
+- ✅ Gateway upgraded: 4 CPU / 4 GB RAM / 80 GB SSD
 
 ### 2026-03-26
 
@@ -285,8 +285,8 @@ NODE_OPTIONS=--max-old-space-size=512
 ### This Week
 
 4. **Test remote signing flow end-to-end**
-5. **Monitor gateway memory usage**
-6. **Plan server upgrade (2 GB RAM)**
+5. **Monitor gateway memory usage (4 GB sufficient)**
+6. **Consider increasing NODE_OPTIONS to 2048 MB**
 
 ### Next Week
 

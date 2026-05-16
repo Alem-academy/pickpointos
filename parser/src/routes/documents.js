@@ -23,7 +23,7 @@ import { Logger } from '../lib/logger.js';
 import { logDocumentGenerated } from '../lib/activityLogger.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { generateSignatureSheet, getDocumentVerificationData } from '../services/signatureSheet.service.js';
-import { getTemplate, getSchema, listAllTemplates } from '../services/templateRegistry.js';
+import { getTemplate, getSchema, listAllTemplates, getProcessDefinition } from '../services/templateRegistry.js';
 
 // Sigex integration is handled via frontend SigexService
 // Documents are pre-registered on generation and signed via eGov QR
@@ -396,6 +396,8 @@ function buildTemplateData(emp, employer, schema, params = {}) {
     const autoData = {
         // Employee fields (base)
         employeeFullName: fullName,
+        employeeFullNameRu: fullName,
+        employeeFullNameKz: fullName, // Templates that need separate lang versions use same name for now
         employeeFullNameRod: declineFIO(fullName, 'rod'),
         employeeFullNameDat: declineFIO(fullName, 'dat'),
         employeeFullNameVin: declineFIO(fullName, 'vin'),
@@ -404,6 +406,8 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         employeeFullNameShortDat: declineShortFIO(shortName, 'dat'),
         employeeFullNameShortVin: declineShortFIO(shortName, 'vin'),
         employeePosition: position,
+        employeePositionRu: position,
+        employeePositionKz: position, // Same for now — could be translated later
         employeePositionRod: declinePosition(position, 'rod'),
         employeeIIN: emp.iin || '',
         employeeAddress: emp.registered_address || emp.address || '',
@@ -415,6 +419,7 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         employeeEmail: emp.email || '',
         employeeIBAN: emp.iban || '',
         employeeIdCard: emp.id_card_number || '',
+        idCardNumber: emp.id_card_number || '',
         employeeIdCardIssuedBy: emp.id_card_issued_by || '',
         idCardIssuerRu: emp.id_card_issued_by || '',
         idCardIssuerKz: translateAddressToKazakh(emp.id_card_issued_by || ''),
@@ -522,6 +527,386 @@ function buildTemplateData(emp, employer, schema, params = {}) {
     return result;
 }
 
+/**
+ * Generate a single document for an employee.
+ * This helper is used by both single-document and bulk-process endpoints.
+ */
+async function generateDocumentInternal(employeeId, type, userParams = {}, reqUser = null) {
+    // Fetch employee data WITH employer requisites
+    const empResult = await query(`
+        SELECT e.*, p.name as pvz_name, p.address as pvz_address, p.employer_id as pvz_employer_id,
+               emp.name_full as employer_name,
+               emp.name_short as employer_short_name,
+               emp.bin as employer_bin,
+               emp.iin as employer_iin,
+               emp.director_name as employer_director,
+               emp.director_name_dative as employer_director_dative,
+               emp.address_legal as employer_address,
+               emp.bank_name as employer_bank,
+               emp.bik as employer_bik,
+               emp.iban as employer_iban
+        FROM employees e
+        LEFT JOIN pvz_points p ON e.main_pvz_id = p.id
+        LEFT JOIN employers emp ON (e.employer_id = emp.id OR p.employer_id = emp.id)
+        WHERE e.id = $1
+    `, [employeeId]);
+
+    if (empResult.rows.length === 0) {
+        throw new Error('Employee not found');
+    }
+    const emp = empResult.rows[0];
+
+    const employer = {
+        name: emp.employer_name || 'Индивидуальный предприниматель «Жасмин»',
+        short_name: emp.employer_short_name || 'Жасмин',
+        bin: emp.employer_bin || emp.employer_iin || '910729401967',
+        director_name: emp.employer_director || 'Карабаева Г.Е.',
+        director_name_dative: emp.employer_director_dative || 'Карабаевой Г.Е.',
+        address: emp.employer_address || 'г.Алматы, Бурундайская, дом 93 А',
+        bank: emp.employer_bank || 'АО «Kaspi Bank»',
+        bik: emp.employer_bik || 'CASPKZKA',
+        iban: emp.employer_iban || 'KZ54722S000009084425',
+    };
+
+    let htmlContent = '';
+    const MONTHS_RU = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+    const MONTHS_KZ = ['қаңтарда', 'ақпанда', 'наурызда', 'сәуірде', 'мамырда', 'маусымда', 'шілдеде', 'тамызда', 'қыркүйекте', 'қазанда', 'қарашада', 'желтоқсанда'];
+    const now = new Date();
+    const contractDay = String(now.getDate()).padStart(2, '0');
+    const contractMonth = MONTHS_RU[now.getMonth()];
+    const contractMonthKz = MONTHS_KZ[now.getMonth()];
+    const contractYear = now.getFullYear();
+    const dateRu = `${contractDay} ${contractMonth} ${contractYear}`;
+
+    const cntRes = await query(
+        `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type = 'contract'`, [employeeId]
+    );
+    const seq = parseInt(cntRes.rows[0].count, 10) + 1;
+    const yearShort = String(contractYear).slice(-2);
+    const contractNum = `ТД-${String(seq).padStart(3, '0')}/${yearShort}`;
+
+    let schema = null;
+
+    if (type === 'contract') {
+        const startDateParam = userParams.startDate;
+        let effectiveHiredAt = emp.hired_at;
+        if (startDateParam) {
+            effectiveHiredAt = startDateParam;
+            await query('UPDATE employees SET hired_at = $1 WHERE id = $2', [startDateParam, employeeId]);
+        }
+        let endDateStr;
+        if (emp.contract_end_date) {
+            endDateStr = new Date(emp.contract_end_date).toLocaleDateString('ru-RU');
+        } else if (effectiveHiredAt) {
+            const d = new Date(effectiveHiredAt);
+            d.setFullYear(d.getFullYear() + 1);
+            endDateStr = d.toLocaleDateString('ru-RU');
+        } else {
+            const d = new Date();
+            d.setFullYear(d.getFullYear() + 1);
+            endDateStr = d.toLocaleDateString('ru-RU');
+        }
+        let probationText;
+        if (emp.probation_months) {
+            const m = emp.probation_months;
+            const suffix = m === 1 ? '' : m < 5 ? 'а' : 'ев';
+            probationText = `${m} месяц${suffix} / ${m} ай`;
+        } else if (emp.probation_until && effectiveHiredAt) {
+            const months = Math.round((new Date(emp.probation_until) - new Date(effectiveHiredAt)) / (30 * 24 * 60 * 60 * 1000));
+            const suffix = months === 1 ? '' : months < 5 ? 'а' : 'ев';
+            probationText = `${months} месяц${suffix} / ${months} ай`;
+        } else {
+            probationText = 'три месяца / үш ай';
+        }
+        const baseRate = emp.base_rate ? Number(emp.base_rate) : 85000;
+        const startDateStr = effectiveHiredAt ? new Date(effectiveHiredAt).toLocaleDateString('ru-RU') : dateRu;
+
+        htmlContent = fillTemplate(CONTRACT_TEMPLATE, {
+            doc_number: contractNum,
+            sign_date: dateRu,
+            employee_fio: emp.full_name,
+            id_num: emp.id_card_number || '__________',
+            id_date: emp.id_card_issue_date ? new Date(emp.id_card_issue_date).toLocaleDateString('ru-RU') : '__________',
+            id_issuer: emp.id_card_issued_by || '__________',
+            iin: emp.iin || '__________',
+            position: emp.role === 'rf' ? 'Региональный менеджер / Өңірлік менеджер' : 'Менеджер ПВЗ / ТҚО менеджері',
+            work_address: emp.pvz_address || 'не указан',
+            start_date: startDateStr,
+            end_date: endDateStr,
+            probation: probationText,
+            vacation_days: '24 календарных дня / 24 күнтізбелік күн',
+            salary: baseRate.toLocaleString('ru-RU'),
+            salary_words: `${numberToWordsRu(baseRate)} / ${numberToWordsKz(baseRate)}`,
+            emp_address: emp.registered_address || emp.address || '__________',
+            emp_phone: emp.phone || '__________',
+            emp_email: emp.email || '__________',
+            rules_link: 'https://drive.google.com/file/d/1Du_Sw3n9NmrTZB4CQZeiavH0OI3rUOEa/view',
+        });
+    } else if (type === 'order_hiring') {
+        const contractRes = await query(
+            `SELECT id, created_at FROM documents WHERE employee_id = $1 AND type = 'contract' ORDER BY created_at DESC LIMIT 1`,
+            [employeeId]
+        );
+        const existingNum = contractRes.rows.length > 0 ? `ТД-${String(seq).padStart(3, '0')}/${yearShort}` : '_______';
+        const existingDate = contractRes.rows.length > 0
+            ? new Date(contractRes.rows[0].created_at).toLocaleDateString('ru-RU') : '_______';
+
+        htmlContent = fillTemplate(HIRING_ORDER_TEMPLATE, {
+            order_number: `П-${String(seq).padStart(3, '0')}/${yearShort}`,
+            order_day: contractDay,
+            order_month_kz: contractMonthKz,
+            order_year: String(contractYear),
+            contract_number: existingNum,
+            contract_date: existingDate,
+            full_name: emp.full_name,
+            start_day: contractDay,
+            start_month_kz: contractMonthKz,
+            start_year: String(contractYear),
+            pvz_address: emp.pvz_address || 'не указан',
+            employer_name: employer.name,
+            employer_short_name: employer.short_name,
+            employer_director: employer.director_name,
+            sign_day: contractDay,
+            sign_month_kz: contractMonthKz,
+            sign_year: String(contractYear),
+        });
+    } else if (type === 'application') {
+        htmlContent = fillTemplate(EMPLOYMENT_APPLICATION_TEMPLATE, {
+            full_name: emp.full_name,
+            address: emp.address || '__________',
+            registered_address: emp.registered_address || emp.address || '__________',
+            phone: emp.phone || '__________',
+            start_day: contractDay,
+            start_month_kz: contractMonthKz,
+            start_year: String(contractYear),
+            employer_name: employer.name,
+            employer_director_dative: employer.director_name_dative,
+            date: `${contractDay}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(contractYear).slice(-2)}`,
+        });
+    } else if (type === 'vacation_application') {
+        const { vacationDays = 14, vacationStart, vacationEnd } = userParams;
+        const vacStart = vacationStart ? new Date(vacationStart) : now;
+        const vacEnd = vacationEnd ? new Date(vacationEnd) : new Date(vacStart.getTime() + vacationDays * 24 * 60 * 60 * 1000);
+
+        htmlContent = fillTemplate(VACATION_APPLICATION_TEMPLATE, {
+            full_name: emp.full_name,
+            iin: emp.iin || '__________',
+            position: emp.role === 'rf' ? 'Регионального менеджера' : 'Менеджера ПВЗ',
+            vacation_days: String(vacationDays),
+            vacation_start: vacStart.toLocaleDateString('ru-RU'),
+            vacation_end: vacEnd.toLocaleDateString('ru-RU'),
+            date: dateRu,
+            employer_name: employer.name,
+        });
+    } else if (type === 'vacation_order') {
+        const { vacationDays = 14, vacationStart, vacationEnd } = userParams;
+        const vacStart = vacationStart ? new Date(vacationStart) : now;
+        const vacEnd = vacationEnd ? new Date(vacationEnd) : new Date(vacStart.getTime() + vacationDays * 24 * 60 * 60 * 1000);
+
+        const orderCntRes = await query(
+            `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type::text LIKE '%order%'`, [employeeId]
+        );
+        const orderSeq = parseInt(orderCntRes.rows[0].count, 10) + 1;
+
+        htmlContent = fillTemplate(VACATION_ORDER_TEMPLATE, {
+            order_number: `ОТ-${String(orderSeq).padStart(3, '0')}/${yearShort}`,
+            full_name: emp.full_name,
+            iin: emp.iin || '__________',
+            position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ',
+            vacation_days: String(vacationDays),
+            vacation_start: vacStart.toLocaleDateString('ru-RU'),
+            vacation_end: vacEnd.toLocaleDateString('ru-RU'),
+            date: dateRu,
+            employer_name: employer.name,
+            employer_address: employer.address,
+        });
+    } else if (type === 'termination_order') {
+        const { terminationDate, terminationReason = 'по собственному желанию', contractNumber, contractDate } = userParams;
+        const termDate = terminationDate ? new Date(terminationDate) : now;
+
+        const orderCntRes = await query(
+            `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type::text LIKE '%order%'`, [employeeId]
+        );
+        const orderSeq = parseInt(orderCntRes.rows[0].count, 10) + 1;
+
+        htmlContent = fillTemplate(TERMINATION_ORDER_TEMPLATE, {
+            order_number: `УВ-${String(orderSeq).padStart(3, '0')}/${yearShort}`,
+            contract_number: contractNumber || '_______',
+            contract_date: contractDate || '_______',
+            full_name: emp.full_name,
+            iin: emp.iin || '__________',
+            position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ',
+            termination_date: termDate.toLocaleDateString('ru-RU'),
+            termination_reason: terminationReason,
+            date: dateRu,
+            employer_name: employer.name,
+            employer_address: employer.address,
+        });
+    } else if (type === 'employment_certificate') {
+        const { salary = 85000 } = userParams;
+
+        htmlContent = fillTemplate(EMPLOYMENT_CERTIFICATE_TEMPLATE, {
+            full_name: emp.full_name,
+            iin: emp.iin || '__________',
+            position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ',
+            start_date: emp.hired_at ? new Date(emp.hired_at).toLocaleDateString('ru-RU') : '_______',
+            salary: Number(salary).toLocaleString('ru-RU'),
+            date: dateRu,
+            employer_name: employer.name,
+            employer_address: employer.address,
+        });
+    } else if (type === 'addendum') {
+        const { contractNumber, contractDate, changeTopic } = userParams;
+
+        const addCntRes = await query(
+            `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type = 'addendum'`, [employeeId]
+        );
+        const addSeq = parseInt(addCntRes.rows[0].count, 10) + 1;
+        const addendumNum = `ДС-${String(addSeq).padStart(3, '0')}/${yearShort}`;
+
+        htmlContent = fillTemplate(ADDENDUM_TEMPLATE, {
+            doc_date: `${contractDay} ${contractMonth}`,
+            employee_full_name: emp.full_name,
+            pvz_address: emp.pvz_address || 'не указан',
+        });
+    } else {
+        // Universal template generation for document-templates/ files
+        const template = getTemplate(type);
+        schema = getSchema(type);
+
+        if (!template || !schema) {
+            throw new Error('Unsupported document type');
+        }
+
+        // Compute sequence numbers for templates that need them
+        const enhancedParams = { ...userParams };
+        const schemaVars = Object.keys(schema.variables || {});
+
+        // Contract number for hiring-related documents
+        if (schemaVars.includes('contractNumber') && !enhancedParams.contractNumber) {
+            const contractCntRes = await query(
+                `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type = 'contract'`, [employeeId]
+            );
+            const contractSeq = parseInt(contractCntRes.rows[0].count, 10) + 1;
+            const yearShort = String(new Date().getFullYear()).slice(-2);
+            enhancedParams.contractNumber = `ТД-${String(contractSeq).padStart(3, '0')}/${yearShort}`;
+        }
+
+        // Order number for order documents
+        if (schemaVars.includes('orderNumber')) {
+            const orderCntRes = await query(
+                `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type::text LIKE '%order%'`, [employeeId]
+            );
+            const orderSeq = parseInt(orderCntRes.rows[0].count, 10) + 1;
+            const yearShort = String(new Date().getFullYear()).slice(-2);
+            enhancedParams.orderNumber = enhancedParams.orderNumber || `П-${String(orderSeq).padStart(3, '0')}/${yearShort}`;
+        }
+
+        // Contract date
+        if (schemaVars.includes('contractDate') && !enhancedParams.contractDate) {
+            const contractRes = await query(
+                `SELECT created_at FROM documents WHERE employee_id = $1 AND type = 'contract' ORDER BY created_at DESC LIMIT 1`,
+                [employeeId]
+            );
+            if (contractRes.rows.length > 0) {
+                enhancedParams.contractDate = new Date(contractRes.rows[0].created_at).toLocaleDateString('ru-RU');
+            } else if (emp.hired_at) {
+                enhancedParams.contractDate = new Date(emp.hired_at).toLocaleDateString('ru-RU');
+            }
+        }
+
+        // Salary amount
+        if (schemaVars.includes('salaryAmount') && !enhancedParams.salaryAmount) {
+            enhancedParams.salaryAmount = emp.base_rate ? `${Number(emp.base_rate).toLocaleString('ru-RU')} тенге` : '85 000 тенге';
+        }
+
+        // Work schedule
+        if (schemaVars.includes('workSchedule') && !enhancedParams.workSchedule) {
+            enhancedParams.workSchedule = 'сменный график работы / ауысымдық жұмыс кестесі';
+        }
+
+        // Probation period
+        if (schemaVars.includes('probationPeriod') && !enhancedParams.probationPeriod) {
+            if (emp.probation_months) {
+                const m = emp.probation_months;
+                const suffix = m === 1 ? '' : m < 5 ? 'а' : 'ев';
+                enhancedParams.probationPeriod = `${m} месяц${suffix}`;
+            } else if (emp.probation_until && emp.hired_at) {
+                const months = Math.round((new Date(emp.probation_until) - new Date(emp.hired_at)) / (30 * 24 * 60 * 60 * 1000));
+                const suffix = months === 1 ? '' : months < 5 ? 'а' : 'ев';
+                enhancedParams.probationPeriod = `${months} месяц${suffix}`;
+            } else {
+                enhancedParams.probationPeriod = '3 (три) месяца';
+            }
+        }
+
+        // ID card issue date (formatted)
+        if (schemaVars.includes('idCardIssueDate') && !enhancedParams.idCardIssueDate && emp.id_card_issue_date) {
+            enhancedParams.idCardIssueDate = new Date(emp.id_card_issue_date).toLocaleDateString('ru-RU');
+        }
+
+        const data = buildTemplateData(emp, employer, schema, enhancedParams);
+        htmlContent = fillTemplate(template, data);
+    }
+
+    // Save generated HTML to S3
+    const htmlBuffer = Buffer.from(htmlContent, 'utf8');
+    const htmlKey = `documents/${employeeId}/${type}_${Date.now()}.html`;
+
+    await storageService.uploadFile(htmlBuffer, 'text/html', htmlKey);
+    Logger.info('[Docs] Document saved as HTML:', htmlKey);
+
+    // Save to database
+    const typesRequiringEmployerSignature = [
+        'contract', 'order_hiring', 'vacation_order', 'termination_order', 'employment_certificate', 'addendum',
+        '04_prikaz-ob-otpuske-po-beremennosti-i-rodam',
+        '05_prikaz-o-prodlenii-otpuska-po-beremennosti',
+        '06_prikaz-o-vnesenii-izmeneniy-v-fio',
+        '07_prikaz-o-vyhode-iz-otpuska-po-uhodu',
+        '08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu',
+        '11_soglashenie-o-rastorzhenii-trudovogo-dogovora',
+        '12_dop-soglashenie-ob-izmenenii-familii',
+        '14_prikaz-o-prieme-na-rabotu',
+        '15_trudovoy-dogovor',
+    ];
+    const requiresEmployerSignature = typesRequiringEmployerSignature.includes(type);
+
+    const dbTypeMap = {
+        'contract': 'contract',
+        'order_hiring': 'order',
+        'vacation_order': 'order',
+        'termination_order': 'order',
+        'employment_certificate': 'other',
+        'addendum': 'other',
+    };
+    const dbType = (schema && schema.type) || dbTypeMap[type] || 'other';
+
+    const docResult = await query(`
+        INSERT INTO documents (employee_id, type, status, scan_url, requires_employer_signature, created_at)
+        VALUES ($1, $2, 'draft', $3, $4, NOW())
+        RETURNING *
+    `, [employeeId, dbType, htmlKey, requiresEmployerSignature]);
+
+    const doc = docResult.rows[0];
+
+    if (type === 'employment_certificate') {
+        await query(`
+            UPDATE documents
+            SET employer_signed_at = NOW(),
+                status = 'signed',
+                employer_cert_info = $1
+            WHERE id = $2
+        `, [JSON.stringify({ auto_signed: true, reason: 'employer_generated_certificate' }), doc.id]);
+        doc.status = 'signed';
+        doc.employer_signed_at = new Date().toISOString();
+    }
+
+    // Log activity
+    await logDocumentGenerated(employeeId, type, doc.id, reqUser);
+
+    return { document: doc, content: htmlContent };
+}
+
 // POST /documents/generate - Generate a new document with employer data
 // Employer is automatically selected based on employee's main_pvz_id
 router.post('/documents/generate', async (req, res) => {
@@ -534,347 +919,127 @@ router.post('/documents/generate', async (req, res) => {
             await query('UPDATE employees SET iban = $1 WHERE id = $2', [normalizedIBAN, employeeId]);
         }
 
-        // Fetch employee data WITH employer requisites
-        // Employer is determined by the PVZ where the employee works
-        const empResult = await query(`
-            SELECT e.*, p.name as pvz_name, p.address as pvz_address, p.employer_id as pvz_employer_id,
-                   emp.name_full as employer_name,
-                   emp.name_short as employer_short_name,
-                   emp.bin as employer_bin,
-                   emp.iin as employer_iin,
-                   emp.director_name as employer_director,
-                   emp.director_name_dative as employer_director_dative,
-                   emp.address_legal as employer_address,
-                   emp.bank_name as employer_bank,
-                   emp.bik as employer_bik,
-                   emp.iban as employer_iban
-            FROM employees e
-            LEFT JOIN pvz_points p ON e.main_pvz_id = p.id
-            LEFT JOIN employers emp ON (e.employer_id = emp.id OR p.employer_id = emp.id)
-            WHERE e.id = $1
-        `, [employeeId]);
-
-        if (empResult.rows.length === 0) {
-            return res.status(404).json({ error: 'Employee not found' });
-        }
-        const emp = empResult.rows[0];
-
-        // Use employer from DB (based on PVZ), or fallback to defaults (ИП «Жасмин»)
-        // Data from: Матрица реквизитов - Лист1 (1).csv
-        const employer = {
-            name: emp.employer_name || 'Индивидуальный предприниматель «Жасмин»',
-            short_name: emp.employer_short_name || 'Жасмин',
-            bin: emp.employer_bin || emp.employer_iin || '910729401967',
-            director_name: emp.employer_director || 'Карабаева Г.Е.',
-            director_name_dative: emp.employer_director_dative || 'Карабаевой Г.Е.',
-            address: emp.employer_address || 'г.Алматы, Бурундайская, дом 93 А',
-            bank: emp.employer_bank || 'АО «Kaspi Bank»',
-            bik: emp.employer_bik || 'CASPKZKA',
-            iban: emp.employer_iban || 'KZ54722S000009084425',
-        };
-
-        let htmlContent = '';
-
-        // ─── Date helpers ──────────────────────────────────────────────────
-        const MONTHS_RU = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-        const MONTHS_KZ = ['қаңтарда', 'ақпанда', 'наурызда', 'сәуірде', 'мамырда', 'маусымда', 'шілдеде', 'тамызда', 'қыркүйекте', 'қазанда', 'қарашада', 'желтоқсанда'];
-        const now = new Date();
-        const contractDay = String(now.getDate()).padStart(2, '0');
-        const contractMonth = MONTHS_RU[now.getMonth()];
-        const contractMonthKz = MONTHS_KZ[now.getMonth()];
-        const contractYear = now.getFullYear();
-        const dateRu = `${contractDay} ${contractMonth} ${contractYear}`;
-
-        // ─── Contract number ───────────────────────────────────────────────
-        // Count existing contracts for this employee to get sequence
-        const cntRes = await query(
-            `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type = 'contract'`, [employeeId]
-        );
-        const seq = parseInt(cntRes.rows[0].count, 10) + 1;
-        const yearShort = String(contractYear).slice(-2);
-        const contractNum = `ТД-${String(seq).padStart(3, '0')}/${yearShort}`;
-
-        let schema = null;
-
-        if (type === 'contract') {
-            // Allow overriding start date from request
-            const startDateParam = req.body.startDate;
-            let effectiveHiredAt = emp.hired_at;
-            if (startDateParam) {
-                effectiveHiredAt = startDateParam;
-                // Update hired_at in DB so it's persisted for future docs
-                await query('UPDATE employees SET hired_at = $1 WHERE id = $2', [startDateParam, employeeId]);
-            }
-
-            // Compute contract end date
-            let endDateStr;
-            if (emp.contract_end_date) {
-                endDateStr = new Date(emp.contract_end_date).toLocaleDateString('ru-RU');
-            } else if (effectiveHiredAt) {
-                const d = new Date(effectiveHiredAt);
-                d.setFullYear(d.getFullYear() + 1);
-                endDateStr = d.toLocaleDateString('ru-RU');
-            } else {
-                const d = new Date();
-                d.setFullYear(d.getFullYear() + 1);
-                endDateStr = d.toLocaleDateString('ru-RU');
-            }
-
-            // Compute probation text
-            let probationText;
-            if (emp.probation_months) {
-                const m = emp.probation_months;
-                const suffix = m === 1 ? '' : m < 5 ? 'а' : 'ев';
-                probationText = `${m} месяц${suffix} / ${m} ай`;
-            } else if (emp.probation_until && effectiveHiredAt) {
-                const months = Math.round((new Date(emp.probation_until) - new Date(effectiveHiredAt)) / (30 * 24 * 60 * 60 * 1000));
-                const suffix = months === 1 ? '' : months < 5 ? 'а' : 'ев';
-                probationText = `${months} месяц${suffix} / ${months} ай`;
-            } else {
-                probationText = 'три месяца / үш ай';
-            }
-
-            const baseRate = emp.base_rate ? Number(emp.base_rate) : 85000;
-            const startDateStr = effectiveHiredAt ? new Date(effectiveHiredAt).toLocaleDateString('ru-RU') : dateRu;
-
-            htmlContent = fillTemplate(CONTRACT_TEMPLATE, {
-                doc_number: contractNum,
-                sign_date: dateRu,
-                employee_fio: emp.full_name,
-                id_num: emp.id_card_number || '__________',
-                id_date: emp.id_card_issue_date ? new Date(emp.id_card_issue_date).toLocaleDateString('ru-RU') : '__________',
-                id_issuer: emp.id_card_issued_by || '__________',
-                iin: emp.iin || '__________',
-                position: emp.role === 'rf' ? 'Региональный менеджер / Өңірлік менеджер' : 'Менеджер ПВЗ / ТҚО менеджері',
-                work_address: emp.pvz_address || 'не указан',
-                start_date: startDateStr,
-                end_date: endDateStr,
-                probation: probationText,
-                vacation_days: '24 календарных дня / 24 күнтізбелік күн',
-                salary: baseRate.toLocaleString('ru-RU'),
-                salary_words: `${numberToWordsRu(baseRate)} / ${numberToWordsKz(baseRate)}`,
-                emp_address: emp.registered_address || emp.address || '__________',
-                emp_phone: emp.phone || '__________',
-                emp_email: emp.email || '__________',
-                rules_link: 'https://drive.google.com/file/d/1Du_Sw3n9NmrTZB4CQZeiavH0OI3rUOEa/view',
-            });
-        } else if (type === 'order_hiring') {
-            const contractRes = await query(
-                `SELECT id, created_at FROM documents WHERE employee_id = $1 AND type = 'contract' ORDER BY created_at DESC LIMIT 1`,
-                [employeeId]
-            );
-            const existingNum = contractRes.rows.length > 0 ? `ТД-${String(seq).padStart(3, '0')}/${yearShort}` : '_______';
-            const existingDate = contractRes.rows.length > 0
-                ? new Date(contractRes.rows[0].created_at).toLocaleDateString('ru-RU') : '_______';
-
-            htmlContent = fillTemplate(HIRING_ORDER_TEMPLATE, {
-                order_number: `П-${String(seq).padStart(3, '0')}/${yearShort}`,
-                order_day: contractDay,
-                order_month_kz: contractMonthKz,
-                order_year: String(contractYear),
-                contract_number: existingNum,
-                contract_date: existingDate,
-                full_name: emp.full_name,
-                start_day: contractDay,
-                start_month_kz: contractMonthKz,
-                start_year: String(contractYear),
-                pvz_address: emp.pvz_address || 'не указан',
-                employer_name: employer.name,
-                employer_short_name: employer.short_name,
-                employer_director: employer.director_name,
-                sign_day: contractDay,
-                sign_month_kz: contractMonthKz,
-                sign_year: String(contractYear),
-            });
-        } else if (type === 'application') {
-            htmlContent = fillTemplate(EMPLOYMENT_APPLICATION_TEMPLATE, {
-                full_name: emp.full_name,
-                address: emp.address || '__________',
-                registered_address: emp.registered_address || emp.address || '__________',
-                phone: emp.phone || '__________',
-                start_day: contractDay,
-                start_month_kz: contractMonthKz,
-                start_year: String(contractYear),
-                employer_name: employer.name,
-                employer_director_dative: employer.director_name_dative,
-                date: `${contractDay}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(contractYear).slice(-2)}`,
-            });
-        } else if (type === 'vacation_application') {
-            // Заявление на отпуск
-            const { vacationDays = 14, vacationStart, vacationEnd } = req.body;
-            const vacStart = vacationStart ? new Date(vacationStart) : now;
-            const vacEnd = vacationEnd ? new Date(vacationEnd) : new Date(vacStart.getTime() + vacationDays * 24 * 60 * 60 * 1000);
-
-            htmlContent = fillTemplate(VACATION_APPLICATION_TEMPLATE, {
-                full_name: emp.full_name,
-                iin: emp.iin || '__________',
-                position: emp.role === 'rf' ? 'Регионального менеджера' : 'Менеджера ПВЗ',
-                vacation_days: String(vacationDays),
-                vacation_start: vacStart.toLocaleDateString('ru-RU'),
-                vacation_end: vacEnd.toLocaleDateString('ru-RU'),
-                date: dateRu,
-                employer_name: employer.name,
-            });
-        } else if (type === 'vacation_order') {
-            // Приказ на отпуск
-            const { vacationDays = 14, vacationStart, vacationEnd } = req.body;
-            const vacStart = vacationStart ? new Date(vacationStart) : now;
-            const vacEnd = vacationEnd ? new Date(vacationEnd) : new Date(vacStart.getTime() + vacationDays * 24 * 60 * 60 * 1000);
-
-            // Generate order number
-            const orderCntRes = await query(
-                `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type::text LIKE '%order%'`, [employeeId]
-            );
-            const orderSeq = parseInt(orderCntRes.rows[0].count, 10) + 1;
-
-            htmlContent = fillTemplate(VACATION_ORDER_TEMPLATE, {
-                order_number: `ОТ-${String(orderSeq).padStart(3, '0')}/${yearShort}`,
-                full_name: emp.full_name,
-                iin: emp.iin || '__________',
-                position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ',
-                vacation_days: String(vacationDays),
-                vacation_start: vacStart.toLocaleDateString('ru-RU'),
-                vacation_end: vacEnd.toLocaleDateString('ru-RU'),
-                date: dateRu,
-                employer_name: employer.name,
-                employer_address: employer.address,
-            });
-        } else if (type === 'termination_order') {
-            // Приказ об увольнении
-            const { terminationDate, terminationReason = 'по собственному желанию', contractNumber, contractDate } = req.body;
-            const termDate = terminationDate ? new Date(terminationDate) : now;
-
-            // Generate order number
-            const orderCntRes = await query(
-                `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type::text LIKE '%order%'`, [employeeId]
-            );
-            const orderSeq = parseInt(orderCntRes.rows[0].count, 10) + 1;
-
-            htmlContent = fillTemplate(TERMINATION_ORDER_TEMPLATE, {
-                order_number: `УВ-${String(orderSeq).padStart(3, '0')}/${yearShort}`,
-                contract_number: contractNumber || '_______',
-                contract_date: contractDate || '_______',
-                full_name: emp.full_name,
-                iin: emp.iin || '__________',
-                position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ',
-                termination_date: termDate.toLocaleDateString('ru-RU'),
-                termination_reason: terminationReason,
-                date: dateRu,
-                employer_name: employer.name,
-                employer_address: employer.address,
-            });
-        } else if (type === 'employment_certificate') {
-            // Справка с места работы
-            const { salary = 85000 } = req.body;
-
-            htmlContent = fillTemplate(EMPLOYMENT_CERTIFICATE_TEMPLATE, {
-                full_name: emp.full_name,
-                iin: emp.iin || '__________',
-                position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ',
-                start_date: emp.hired_at ? new Date(emp.hired_at).toLocaleDateString('ru-RU') : '_______',
-                salary: Number(salary).toLocaleString('ru-RU'),
-                date: dateRu,
-                employer_name: employer.name,
-                employer_address: employer.address,
-            });
-        } else if (type === 'addendum') {
-            // Дополнительное соглашение к трудовому договору
-            const { contractNumber, contractDate, changeTopic } = req.body;
-
-            // Generate addendum number
-            const addCntRes = await query(
-                `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type = 'addendum'`, [employeeId]
-            );
-            const addSeq = parseInt(addCntRes.rows[0].count, 10) + 1;
-            const addendumNum = `ДС-${String(addSeq).padStart(3, '0')}/${yearShort}`;
-
-            htmlContent = fillTemplate(ADDENDUM_TEMPLATE, {
-                doc_date: `${contractDay} ${contractMonth}`,
-                employee_full_name: emp.full_name,
-                pvz_address: emp.pvz_address || 'не указан',
-            });
-        } else {
-            // Universal template generation for document-templates/ files
-            const template = getTemplate(type);
-            schema = getSchema(type);
-
-            if (!template || !schema) {
-                return res.status(400).json({ error: 'Unsupported document type' });
-            }
-
-            const userParams = req.body.params || {};
-            const data = buildTemplateData(emp, employer, schema, userParams);
-            htmlContent = fillTemplate(template, data);
-        }
-
-        // Save generated HTML to S3
-        const htmlBuffer = Buffer.from(htmlContent, 'utf8');
-        const htmlKey = `documents/${employeeId}/${type}_${Date.now()}.html`;
-
-        try {
-            await storageService.uploadFile(htmlBuffer, 'text/html', htmlKey);
-            Logger.info('[Docs] Document saved as HTML:', htmlKey);
-        } catch (uploadErr) {
-            Logger.error('[Docs] S3 upload failed:', uploadErr.message);
-            throw uploadErr;
-        }
-
-        // Save to database
-        // Documents requiring employer signature per ст. 33 ТК РК
-        const typesRequiringEmployerSignature = [
-            'contract', 'order_hiring', 'vacation_order', 'termination_order', 'employment_certificate', 'addendum',
-            '04_prikaz-ob-otpuske-po-beremennosti-i-rodam',
-            '05_prikaz-o-prodlenii-otpuska-po-beremennosti',
-            '06_prikaz-o-vnesenii-izmeneniy-v-fio',
-            '07_prikaz-o-vyhode-iz-otpuska-po-uhodu',
-            '08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu',
-            '11_soglashenie-o-rastorzhenii-trudovogo-dogovora',
-            '12_dop-soglashenie-ob-izmenenii-familii',
-            '14_prikaz-o-prieme-na-rabotu',
-            '15_trudovoy-dogovor',
-        ];
-        const requiresEmployerSignature = typesRequiringEmployerSignature.includes(type);
-
-        // Map template key to DB enum value
-        const dbTypeMap = {
-            'contract': 'contract',
-            'order_hiring': 'order',
-            'vacation_order': 'order',
-            'termination_order': 'order',
-            'employment_certificate': 'other',
-            'addendum': 'other',
-        };
-        const dbType = (schema && schema.type) || dbTypeMap[type] || 'other';
-
-        const docResult = await query(`
-            INSERT INTO documents (employee_id, type, status, scan_url, requires_employer_signature, created_at)
-            VALUES ($1, $2, 'draft', $3, $4, NOW())
-            RETURNING *
-        `, [employeeId, dbType, htmlKey, requiresEmployerSignature]);
-
-        // Auto-sign employer for one-sided documents (e.g. employment certificate)
-        if (type === 'employment_certificate') {
-            await query(`
-                UPDATE documents
-                SET employer_signed_at = NOW(),
-                    status = 'signed',
-                    employer_cert_info = $1
-                WHERE id = $2
-            `, [JSON.stringify({ auto_signed: true, reason: 'employer_generated_certificate' }), docResult.rows[0].id]);
-            docResult.rows[0].status = 'signed';
-            docResult.rows[0].employer_signed_at = new Date().toISOString();
-        }
-
-        // Log activity - document generated
-        await logDocumentGenerated(employeeId, type, docResult.rows[0].id, req.user);
-
-        res.status(201).json({
-            document: docResult.rows[0],
-            content: htmlContent
-        });
-
+        const result = await generateDocumentInternal(employeeId, type, req.body.params || req.body, req.user);
+        res.status(201).json(result);
     } catch (err) {
         Logger.error('[Docs] Error generating document:', err);
+        if (err.message === 'Employee not found') {
+            return res.status(404).json({ error: err.message });
+        }
+        if (err.message === 'Unsupported document type') {
+            return res.status(400).json({ error: err.message });
+        }
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// POST /employees/:id/processes/:processType/generate - Bulk generate documents for a process
+router.post('/employees/:id/processes/:processType/generate', async (req, res) => {
+    try {
+        const { id: employeeId, processType } = req.params;
+        const { params = {} } = req.body;
+
+        const processDef = getProcessDefinition(processType);
+        if (!processDef) {
+            return res.status(400).json({ error: 'Unknown process type', available: listAllTemplates() });
+        }
+
+        Logger.info(`[Process] Starting bulk generation for ${processType}, employee ${employeeId}`);
+
+        // Update employee record with process-specific params before generating
+        if (params.probationMonths) {
+            const months = parseInt(params.probationMonths, 10);
+            if (!isNaN(months) && months > 0) {
+                const empResult = await query('SELECT hired_at FROM employees WHERE id = $1', [employeeId]);
+                const hiredAt = empResult.rows[0]?.hired_at;
+                if (hiredAt) {
+                    const probUntil = new Date(hiredAt);
+                    probUntil.setMonth(probUntil.getMonth() + months);
+                    await query('UPDATE employees SET probation_months = $1, probation_until = $2 WHERE id = $3', [months, probUntil.toISOString(), employeeId]);
+                }
+            }
+        }
+        if (params.contractEndDate) {
+            await query('UPDATE employees SET contract_end_date = $1 WHERE id = $2', [params.contractEndDate, employeeId]);
+        }
+
+        const documents = [];
+        const errors = [];
+
+        // Pre-compute shared sequence numbers for the entire process
+        // This ensures all documents reference the same contract/order numbers
+        const sharedParams = { ...params };
+        const yearShort = String(new Date().getFullYear()).slice(-2);
+
+        // Check if any doc in the process needs a contract number
+        const needsContractNumber = processDef.documentTypes.some(dt => {
+            const schema = getSchema(dt);
+            return schema && Object.keys(schema.variables || {}).includes('contractNumber');
+        });
+        if (needsContractNumber && !sharedParams.contractNumber) {
+            const contractCntRes = await query(
+                `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type = 'contract'`, [employeeId]
+            );
+            const contractSeq = parseInt(contractCntRes.rows[0].count, 10) + 1;
+            sharedParams.contractNumber = `ТД-${String(contractSeq).padStart(3, '0')}/${yearShort}`;
+        }
+
+        // Check if any doc in the process needs an order number
+        const needsOrderNumber = processDef.documentTypes.some(dt => {
+            const schema = getSchema(dt);
+            return schema && Object.keys(schema.variables || {}).includes('orderNumber');
+        });
+        if (needsOrderNumber && !sharedParams.orderNumber) {
+            const orderCntRes = await query(
+                `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type::text LIKE '%order%'`, [employeeId]
+            );
+            const orderSeq = parseInt(orderCntRes.rows[0].count, 10) + 1;
+            sharedParams.orderNumber = `П-${String(orderSeq).padStart(3, '0')}/${yearShort}`;
+        }
+
+        for (const docType of processDef.documentTypes) {
+            try {
+                const result = await generateDocumentInternal(employeeId, docType, sharedParams, req.user);
+                documents.push({
+                    type: docType,
+                    document: result.document,
+                    content: result.content,
+                    success: true,
+                });
+                Logger.info(`[Process] Generated ${docType} for ${processType}`);
+            } catch (docErr) {
+                Logger.error(`[Process] Failed to generate ${docType}:`, docErr.message);
+                errors.push({ type: docType, error: docErr.message });
+            }
+        }
+
+        // If all failed, return error
+        if (documents.length === 0 && errors.length > 0) {
+            return res.status(500).json({
+                error: 'All documents failed to generate',
+                errors,
+            });
+        }
+
+        res.status(201).json({
+            process: processType,
+            employeeId,
+            documents,
+            errors: errors.length > 0 ? errors : undefined,
+        });
+    } catch (err) {
+        Logger.error('[Process] Bulk generation error:', err);
+        res.status(500).json({ error: 'Internal server error', details: err.message });
+    }
+});
+
+// GET /processes - List available HR processes
+router.get('/processes', async (req, res) => {
+    try {
+        const processes = listProcesses();
+        res.json({ processes });
+    } catch (err) {
+        Logger.error('[Process] Error listing processes:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

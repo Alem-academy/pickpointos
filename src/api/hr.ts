@@ -174,4 +174,21 @@ export const hrApi = {
         const res = await axiosInstance.get(`/documents/${id}/final-pdf`);
         return res.data;
     },
+
+    /** Process-centric: list available HR processes */
+    async getProcesses(): Promise<Array<{ key: string; label: string; description: string; documentCount: number; requiresEmployerSignature: boolean }>> {
+        const res = await axiosInstance.get('/processes');
+        return res.data.processes;
+    },
+
+    /** Process-centric: bulk generate documents for a process */
+    async generateProcessDocuments(employeeId: string, processType: string, params?: any): Promise<{
+        process: string;
+        employeeId: string;
+        documents: Array<{ type: string; document: Document; content: string; success: boolean }>;
+        errors?: Array<{ type: string; error: string }>;
+    }> {
+        const res = await axiosInstance.post(`/employees/${employeeId}/processes/${processType}/generate`, { params });
+        return res.data;
+    },
 };

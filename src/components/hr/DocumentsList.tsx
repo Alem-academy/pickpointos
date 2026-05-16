@@ -48,6 +48,35 @@ const DOCUMENT_TYPES: any = {
     other: { label: 'Другой документ', icon: File, color: 'gray', category: 'uploaded' }
 };
 
+// Process group definitions for grouping documents in the list
+const PROCESS_GROUPS: Record<string, { label: string; color: string; docTypes: string[] }> = {
+    hiring: { label: 'Приём на работу', color: 'blue', docTypes: ['13_zayavlenie-o-prieme-na-rabotu', '14_prikaz-o-prieme-na-rabotu', '15_trudovoy-dogovor'] },
+    vacation: { label: 'Отпуск', color: 'purple', docTypes: ['vacation_application', 'vacation_order'] },
+    termination: { label: 'Расторжение', color: 'red', docTypes: ['termination_order', '11_soglashenie-o-rastorzhenii-trudovogo-dogovora'] },
+    maternity: { label: 'Декрет / Отпуск по уходу', color: 'pink', docTypes: ['01_zayavlenie-o-vyhode-s-dekreta', '02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom', '04_prikaz-ob-otpuske-po-beremennosti-i-rodam', '05_prikaz-o-prodlenii-otpuska-po-beremennosti', '07_prikaz-o-vyhode-iz-otpuska-po-uhodu', '08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu', '09_zayavlenie-na-otpusk-po-beremennosti', '10_zayavlenie-na-prodlenie-otpuska-po-beremennosti'] },
+    hr_change: { label: 'Кадровые изменения', color: 'orange', docTypes: ['03_zayavlenie-ob-izmenenii-personalnyh-dannyh', '06_prikaz-o-vnesenii-izmeneniy-v-fio', '12_dop-soglashenie-ob-izmenenii-familii'] },
+    other: { label: 'Прочие документы', color: 'slate', docTypes: ['employment_certificate', 'addendum'] },
+};
+
+// Static Tailwind color classes for JIT compilation
+const COLOR_MAP: Record<string, { bg: string; text: string }> = {
+    blue: { bg: 'bg-blue-50', text: 'text-blue-600' },
+    emerald: { bg: 'bg-emerald-50', text: 'text-emerald-600' },
+    amber: { bg: 'bg-amber-50', text: 'text-amber-600' },
+    purple: { bg: 'bg-purple-50', text: 'text-purple-600' },
+    red: { bg: 'bg-red-50', text: 'text-red-600' },
+    slate: { bg: 'bg-slate-50', text: 'text-slate-600' },
+    indigo: { bg: 'bg-indigo-50', text: 'text-indigo-600' },
+    pink: { bg: 'bg-pink-50', text: 'text-pink-600' },
+    orange: { bg: 'bg-orange-50', text: 'text-orange-600' },
+    green: { bg: 'bg-green-50', text: 'text-green-600' },
+    gray: { bg: 'bg-gray-50', text: 'text-gray-600' },
+};
+
+function getColorClasses(color: string) {
+    return COLOR_MAP[color] || COLOR_MAP.gray;
+}
+
 export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps) {
     const [documents, setDocuments] = useState<Document[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -63,6 +92,7 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
     const [selectedDocType, setSelectedDocType] = useState('');
     const [pendingFile, setPendingFile] = useState<File | null>(null);
     const [employeeData, setEmployeeData] = useState<any>(null);
+    const [showLegacyGrid, setShowLegacyGrid] = useState(false);
 
     const loadDocuments = useCallback(async () => {
         try {
@@ -267,95 +297,99 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
 
     return (
         <div className="space-y-6">
-            {/* Generated Documents */}
+            {/* Generated Documents — Grouped by Process */}
             <div>
                 <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3">Сформированные документы</h3>
-                <div className="space-y-2">
-                    {generatedDocs.length === 0 ? (
-                        <p className="text-sm text-slate-500 py-4">Нет сформированных документов</p>
-                    ) : (
-                        generatedDocs.map(doc => {
-                            const docConfig = DOCUMENT_TYPES[doc.type] || { label: doc.type, icon: FileText, color: 'gray' };
-                            const Icon = docConfig.icon;
+                {generatedDocs.length === 0 ? (
+                    <p className="text-sm text-slate-500 py-4">Нет сформированных документов</p>
+                ) : (
+                    <div className="space-y-4">
+                        {Object.entries(PROCESS_GROUPS).map(([groupKey, group]) => {
+                            const groupDocs = generatedDocs.filter(d => group.docTypes.includes(d.type));
+                            if (groupDocs.length === 0) return null;
+                            const allSigned = groupDocs.every(d => d.status === 'signed' || d.status === 'fully_signed');
                             return (
-                                <div key={doc.id} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg hover:border-slate-300 transition-colors">
-                                    <div className="flex items-center gap-3">
-                                        <div className={cn("p-2 rounded-lg", `bg-${docConfig.color}-50`)}>
-                                            <Icon className={cn("h-5 w-5", `text-${docConfig.color}-600`)} />
+                                <div key={groupKey} className={cn("border rounded-xl overflow-hidden", allSigned ? "border-emerald-200" : "border-slate-200")}>
+                                    <div className={cn("px-4 py-3 flex items-center justify-between", allSigned ? "bg-emerald-50" : "bg-slate-50")}>
+                                        <div className="flex items-center gap-2">
+                                            <span className={cn("w-2.5 h-2.5 rounded-full", `bg-${group.color}-500`)} />
+                                            <span className="text-sm font-semibold text-slate-900">{group.label}</span>
+                                            <span className="text-xs text-slate-500">({groupDocs.length})</span>
                                         </div>
-                                        <div>
-                                            <p className="text-sm font-semibold text-slate-900">{docConfig.label}</p>
-                                            <p className="text-xs text-slate-500">{new Date(doc.created_at).toLocaleDateString('ru-RU')}</p>
-                                        </div>
+                                        {allSigned && <span className="text-xs font-medium text-emerald-700">✓ Завершено</span>}
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        {getStatusBadge(doc)}
-                                        <Tooltip text="Просмотр документа">
-                                            <button onClick={() => handlePreview(doc)} className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
-                                                <Eye className="h-4 w-4" />
-                                            </button>
-                                        </Tooltip>
-                                        {doc.status === 'draft' && (
-                                            <>
-                                                <Tooltip text="Подписать (eGov или NCALayer)">
-                                                    <button
-                                                        onClick={() => setSigningDocId(doc.id)}
-                                                        className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors"
-                                                    >
-                                                        <CheckCircle className="h-4 w-4" />
-                                                    </button>
-                                                </Tooltip>
-                                                <Tooltip text="Подписать как работодатель (NCALayer)">
-                                                    <button
-                                                        onClick={() => setEmployerSigningDocId(doc.id)}
-                                                        className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
-                                                    >
-                                                        <PenTool className="h-4 w-4" />
-                                                    </button>
-                                                </Tooltip>
-                                                <Tooltip text="Отправить ссылку на подписание">
-                                                    <button
-                                                        onClick={() => handleGenerateSigningLink(doc.id)}
-                                                        className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
-                                                    >
-                                                        <Share2 className="h-4 w-4" />
-                                                    </button>
-                                                </Tooltip>
-                                            </>
-                                        )}
-                                        {/* Работник подписал, но работодатель ещё нет — показать кнопку подписания работодателем */}
-                                        {doc.status === 'signed' && (doc as any).requires_employer_signature && !(doc as any).employer_signed_at && (
-                                            <Tooltip text="Подписать как работодатель (NCALayer)">
-                                                <button
-                                                    onClick={() => setEmployerSigningDocId(doc.id)}
-                                                    className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
-                                                >
-                                                    <PenTool className="h-4 w-4" />
-                                                </button>
-                                            </Tooltip>
-                                        )}
-                                        {/* Документ подписан обеими сторонами — лист подписей */}
-                                        {(doc.status === 'fully_signed' || ((doc as any).employer_signed_at && doc.status === 'signed')) && (
-                                            <Tooltip text="Лист подписей">
-                                                <button
-                                                    onClick={() => setSignatureSheetDocId(doc.id)}
-                                                    className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors"
-                                                >
-                                                    <FileText className="h-4 w-4" />
-                                                </button>
-                                            </Tooltip>
-                                        )}
-                                        <Tooltip text="Удалить документ">
-                                            <button onClick={() => handleDelete(doc.id, doc.type, doc.status)} className="p-2 text-slate-400 hover:text-red-600 transition-colors" disabled={doc.status === 'signed'}>
-                                                <Trash2 className={cn("h-4 w-4", doc.status === 'signed' ? 'opacity-30 cursor-not-allowed' : '')} />
-                                            </button>
-                                        </Tooltip>
+                                    <div className="divide-y divide-slate-100">
+                                        {groupDocs.map(doc => {
+                                            const docConfig = DOCUMENT_TYPES[doc.type] || { label: doc.type, icon: FileText, color: 'gray' };
+                                            const Icon = docConfig.icon;
+                                            return (
+                                                <div key={doc.id} className="flex items-center justify-between p-3 bg-white hover:bg-slate-50 transition-colors">
+                                                    <div className="flex items-center gap-3">
+                                                        {(() => { const c = getColorClasses(docConfig.color); return (
+                                                        <div className={cn("p-2 rounded-lg", c.bg)}>
+                                                            <Icon className={cn("h-5 w-5", c.text)} />
+                                                        </div>
+                                                        ); })()}
+                                                        <div>
+                                                            <p className="text-sm font-semibold text-slate-900">{docConfig.label}</p>
+                                                            <p className="text-xs text-slate-500">{new Date(doc.created_at).toLocaleDateString('ru-RU')}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        {getStatusBadge(doc)}
+                                                        <Tooltip text="Просмотр документа">
+                                                            <button onClick={() => handlePreview(doc)} className="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                                                                <Eye className="h-4 w-4" />
+                                                            </button>
+                                                        </Tooltip>
+                                                        {doc.status === 'draft' && (
+                                                            <>
+                                                                <Tooltip text="Подписать (eGov или NCALayer)">
+                                                                    <button onClick={() => setSigningDocId(doc.id)} className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors">
+                                                                        <CheckCircle className="h-4 w-4" />
+                                                                    </button>
+                                                                </Tooltip>
+                                                                <Tooltip text="Подписать как работодатель (NCALayer)">
+                                                                    <button onClick={() => setEmployerSigningDocId(doc.id)} className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors">
+                                                                        <PenTool className="h-4 w-4" />
+                                                                    </button>
+                                                                </Tooltip>
+                                                                <Tooltip text="Отправить ссылку на подписание">
+                                                                    <button onClick={() => handleGenerateSigningLink(doc.id)} className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors">
+                                                                        <Share2 className="h-4 w-4" />
+                                                                    </button>
+                                                                </Tooltip>
+                                                            </>
+                                                        )}
+                                                        {doc.status === 'signed' && (doc as any).requires_employer_signature && !(doc as any).employer_signed_at && (
+                                                            <Tooltip text="Подписать как работодатель (NCALayer)">
+                                                                <button onClick={() => setEmployerSigningDocId(doc.id)} className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors">
+                                                                    <PenTool className="h-4 w-4" />
+                                                                </button>
+                                                            </Tooltip>
+                                                        )}
+                                                        {(doc.status === 'fully_signed' || ((doc as any).employer_signed_at && doc.status === 'signed')) && (
+                                                            <Tooltip text="Лист подписей">
+                                                                <button onClick={() => setSignatureSheetDocId(doc.id)} className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors">
+                                                                    <FileText className="h-4 w-4" />
+                                                                </button>
+                                                            </Tooltip>
+                                                        )}
+                                                        <Tooltip text="Удалить документ">
+                                                            <button onClick={() => handleDelete(doc.id, doc.type, doc.status)} className="p-2 text-slate-400 hover:text-red-600 transition-colors" disabled={doc.status === 'signed'}>
+                                                                <Trash2 className={cn("h-4 w-4", doc.status === 'signed' ? 'opacity-30 cursor-not-allowed' : '')} />
+                                                            </button>
+                                                        </Tooltip>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             );
-                        })
-                    )}
-                </div>
+                        })}
+                    </div>
+                )}
             </div>
 
             {/* Uploaded Documents */}
@@ -376,9 +410,11 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                             return (
                                 <div key={doc.id} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg hover:border-slate-300 transition-colors">
                                     <div className="flex items-center gap-3">
-                                        <div className={cn("p-2 rounded-lg", `bg-${docConfig.color}-50`)}>
-                                            <Icon className={cn("h-5 w-5", `text-${docConfig.color}-600`)} />
+                                        {(() => { const c = getColorClasses(docConfig.color); return (
+                                        <div className={cn("p-2 rounded-lg", c.bg)}>
+                                            <Icon className={cn("h-5 w-5", c.text)} />
                                         </div>
+                                        ); })()}
                                         <div>
                                             <p className="text-sm font-semibold text-slate-900">{docConfig.label}</p>
                                             <p className="text-xs text-slate-500">{new Date(doc.created_at).toLocaleDateString('ru-RU')}</p>
@@ -403,8 +439,27 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                 </div>
             </div>
 
-            {/* Generate Buttons - Redesigned */}
-            <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl p-5 border border-primary/20">
+            {/* Legacy Generate Buttons - Collapsed by default */}
+            <div className="border border-slate-200 rounded-xl overflow-hidden">
+                <button
+                    onClick={() => setShowLegacyGrid(!showLegacyGrid)}
+                    className="w-full flex items-center justify-between px-5 py-3 bg-slate-50 hover:bg-slate-100 transition-colors text-sm font-medium text-slate-700"
+                >
+                    <span className="flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        Показать все документы (классический режим)
+                    </span>
+                    <svg
+                        className={cn("h-4 w-4 text-slate-400 transition-transform", showLegacyGrid && "rotate-180")}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                {showLegacyGrid && (
+                <div className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 border-t border-slate-200">
                 <div className="flex items-center gap-2 mb-4">
                     <FileText className="h-5 w-5 text-primary" />
                     <h3 className="text-base font-bold text-slate-900">Сформировать документ</h3>
@@ -666,6 +721,8 @@ export function DocumentsList({ employeeId, onStatusChange }: DocumentsListProps
                 <p className="text-xs text-slate-500 mt-3">
                     💡 Документы формируются автоматически на основе данных сотрудника
                 </p>
+                </div>
+                )}
             </div>
 
             {/* Modals */}

@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api, type Employee } from "@/services/api";
 import { DocumentsList } from "@/components/hr/DocumentsList";
-import { Edit2, Save, Loader2, User, Phone, Mail, IdCard, Calendar, MapPin, Briefcase, CreditCard, Users, Clock, Trash2, Plus } from "lucide-react";
+import { ProcessLauncher } from "@/components/hr/ProcessLauncher";
+import { Edit2, Save, Loader2, User, Phone, Mail, IdCard, Calendar, MapPin, Briefcase, CreditCard, Users, Clock, Trash2, Plus, UserPlus, FileText } from "lucide-react";
 import { PhoneInput, IBANInput, IdCardInput, NumberInput } from "@/components/ui/masked-input";
 import { cn } from "@/lib/utils";
 import { TransferModal } from "@/components/hr/TransferModal";
@@ -45,19 +46,25 @@ export default function EmployeeProfile() {
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState<any>({});
     const [isSaving, setIsSaving] = useState(false);
+    const [documents, setDocuments] = useState<any[]>([]);
+
+    const loadEmployee = useCallback(async () => {
+        if (!id) return;
+        setIsLoading(true);
+        try {
+            const [emp, docs] = await Promise.all([
+                api.getEmployee(id),
+                api.getDocuments(id).catch(() => [])
+            ]);
+            setEmployee(emp);
+            setDocuments(docs);
+        } catch (err) { console.error(err); }
+        finally { setIsLoading(false); }
+    }, [id]);
 
     useEffect(() => {
-        const load = async () => {
-            if (!id) return;
-            setIsLoading(true);
-            try {
-                const emp = await api.getEmployee(id);
-                setEmployee(emp);
-            } catch (err) { console.error(err); }
-            finally { setIsLoading(false); }
-        };
-        load();
-    }, [id]);
+        loadEmployee();
+    }, [loadEmployee]);
 
     const handleEdit = () => {
         setEditData({
@@ -307,6 +314,48 @@ export default function EmployeeProfile() {
                     </div>
                 </div>
 
+                {/* Onboarding Banner for new employees */}
+                {employee.status === 'new' && !documents.some(d => ['13_zayavlenie-o-prieme-na-rabotu', '14_prikaz-o-prieme-na-rabotu', '15_trudovoy-dogovor'].includes(d.type)) && (
+                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 mb-6 text-white shadow-lg">
+                        <div className="flex items-start gap-4">
+                            <div className="p-3 bg-white/20 rounded-xl shrink-0">
+                                <UserPlus className="h-6 w-6 text-white" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-lg font-bold">Новый сотрудник ожидает оформления</h3>
+                                <p className="text-blue-100 mt-1 text-sm">
+                                    Для завершения приёма на работу необходимо сформировать пакет документов: заявление, приказ и трудовой договор.
+                                </p>
+                                <div className="mt-4">
+                                    <button
+                                        onClick={() => {
+                                            const el = document.getElementById('process-launcher');
+                                            if (el) el.scrollIntoView({ behavior: 'smooth' });
+                                        }}
+                                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-blue-700 font-semibold rounded-lg hover:bg-blue-50 transition-colors shadow-sm"
+                                    >
+                                        <FileText className="h-4 w-4" />
+                                        Перейти к оформлению
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Process Launcher */}
+                <div id="process-launcher" className="bg-white rounded-lg border border-slate-200 overflow-hidden mb-6">
+                    <div className="p-6">
+                        <ProcessLauncher
+                            employeeId={id!}
+                            employeeName={employee.full_name}
+                            employeeStatus={employee.status}
+                            documents={documents}
+                            onDocumentsChange={loadEmployee}
+                        />
+                    </div>
+                </div>
+
                 {/* Tabs */}
                 <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
                     <div className="flex border-b border-slate-200">
@@ -315,7 +364,7 @@ export default function EmployeeProfile() {
                         <button onClick={() => setActiveTab('discipline')} className={cn("flex-1 px-4 py-3 text-sm font-medium transition-colors", activeTab === 'discipline' ? "bg-white text-slate-900 border-b-2 border-slate-900" : "bg-slate-50 text-slate-600 hover:text-slate-900")}>⚠️ Дисциплина</button>
                     </div>
                     <div className="p-6">
-                        {activeTab === 'documents' && <DocumentsList employeeId={id!} employeeStatus={employee.status} onStatusChange={() => {}} />}
+                        {activeTab === 'documents' && <DocumentsList employeeId={id!} employeeStatus={employee.status} onStatusChange={loadEmployee} />}
                         {activeTab === 'history' && <HistoryTab employeeId={id!} />}
                         {activeTab === 'discipline' && <DisciplineTab employeeId={id!} hiredAt={employee.hired_at || new Date().toISOString()} />}
                     </div>

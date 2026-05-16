@@ -138,4 +138,71 @@ export function listAllTemplates() {
     return result;
 }
 
+// Process-centric mappings: which document types belong to which HR process
+const PROCESS_DEFINITIONS = {
+    hiring: {
+        label: 'Приём на работу',
+        description: 'Пакет документов для оформления нового сотрудника',
+        documentTypes: ['13_zayavlenie-o-prieme-na-rabotu', '14_prikaz-o-prieme-na-rabotu', '15_trudovoy-dogovor'],
+        editableParams: ['probationMonths', 'contractEndDate', 'vacationDays'],
+        requiresEmployerSignature: true,
+    },
+    vacation: {
+        label: 'Отпуск',
+        description: 'Заявление и приказ на отпуск',
+        documentTypes: ['vacation_application', 'vacation_order'],
+        editableParams: ['vacationDays', 'vacationStart', 'vacationEnd'],
+        requiresEmployerSignature: true,
+    },
+    termination: {
+        label: 'Увольнение',
+        description: 'Приказ об увольнении и соглашение о расторжении',
+        documentTypes: ['termination_order', '11_soglashenie-o-rastorzhenii-trudovogo-dogovora'],
+        editableParams: ['terminationDate', 'terminationReason', 'contractNumber', 'contractDate'],
+        requiresEmployerSignature: true,
+    },
+    maternity_leave: {
+        label: 'Декрет / Отпуск по беременности',
+        description: 'Документы для оформления декретного отпуска',
+        documentTypes: ['09_zayavlenie-na-otpusk-po-beremennosti', '04_prikaz-ob-otpuske-po-beremennosti-i-rodam'],
+        editableParams: ['vacationStart', 'vacationEnd'],
+        requiresEmployerSignature: true,
+    },
+    maternity_return: {
+        label: 'Выход из декрета',
+        description: 'Документы для выхода на работу после декрета',
+        documentTypes: ['01_zayavlenie-o-vyhode-s-dekreta', '07_prikaz-o-vyhode-iz-otpuska-po-uhodu'],
+        editableParams: ['returnDate'],
+        requiresEmployerSignature: true,
+    },
+    name_change: {
+        label: 'Изменение ФИО',
+        description: 'Приказ и доп. соглашение об изменении фамилии',
+        documentTypes: ['06_prikaz-o-vnesenii-izmeneniy-v-fio', '12_dop-soglashenie-ob-izmenenii-familii'],
+        editableParams: ['newSurname', 'newName', 'newPatronymic'],
+        requiresEmployerSignature: true,
+    },
+    data_change: {
+        label: 'Изменение персональных данных',
+        description: 'Заявление об изменении персональных данных',
+        documentTypes: ['03_zayavlenie-ob-izmenenii-personalnyh-dannyh'],
+        editableParams: ['changeTopic', 'newValue'],
+        requiresEmployerSignature: true,
+    },
+};
+
+export function getProcessDefinition(processType) {
+    return PROCESS_DEFINITIONS[processType] || null;
+}
+
+export function listProcesses() {
+    return Object.entries(PROCESS_DEFINITIONS).map(([key, def]) => ({
+        key,
+        label: def.label,
+        description: def.description,
+        documentCount: def.documentTypes.length,
+        requiresEmployerSignature: def.requiresEmployerSignature,
+    }));
+}
+
 export { getAllSchemas };

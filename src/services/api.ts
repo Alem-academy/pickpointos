@@ -52,7 +52,8 @@ export interface Document {
         | '05_prikaz-o-prodlenii-otpuska-po-beremennosti' | '06_prikaz-o-vnesenii-izmeneniy-v-fio'
         | '07_prikaz-o-vyhode-iz-otpuska-po-uhodu' | '08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu'
         | '09_zayavlenie-na-otpusk-po-beremennosti' | '10_zayavlenie-na-prodlenie-otpuska-po-beremennosti'
-        | '11_soglashenie-o-rastorzhenii-trudovogo-dogovora' | '12_dop-soglashenie-ob-izmenenii-familii';
+        | '11_soglashenie-o-rastorzhenii-trudovogo-dogovora' | '12_dop-soglashenie-ob-izmenenii-familii'
+        | '13_zayavlenie-o-prieme-na-rabotu' | '14_prikaz-o-prieme-na-rabotu' | '15_trudovoy-dogovor';
     status: 'draft' | 'sent_to_employee' | 'signed' | 'fully_signed' | 'employer_signed' | 'rejected' | 'archived';
     scan_url?: string;
     thumbnail_url?: string;

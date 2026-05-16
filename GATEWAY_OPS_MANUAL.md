@@ -246,17 +246,17 @@ npm ERR! code ELIFECYCLE
 # Check memory
 free -h
 
-# Clear cache
+# Current configuration: 4 GB RAM + 2 GB swap
+# With NODE_OPTIONS=--max-old-space-size=2048, OOM is unlikely
+
+# Clear cache if needed
 sync; echo 3 > /proc/sys/vm/drop_caches
 
 # Restart service (releases memory)
 systemctl restart sigex-gateway
 
-# Consider adding swap if needed
-dd if=/dev/zero of=/swapfile bs=1M count=2048
-chmod 600 /swapfile
-mkswap /swapfile
-swapon /swapfile
+# Verify swap is active
+swapon --show
 ```
 
 ---
