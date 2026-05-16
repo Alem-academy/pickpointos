@@ -945,6 +945,27 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
             if (formatted) enhancedParams.sickLeaveDate = formatted;
         }
 
+        // Compute vacation days and text
+        if (schemaVars.includes('vacationDays') || schemaVars.includes('vacationDaysText')) {
+            if (enhancedParams.vacationStart && enhancedParams.vacationEnd) {
+                const start = new Date(enhancedParams.vacationStart);
+                const end = new Date(enhancedParams.vacationEnd);
+                if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+                    const diffMs = end.getTime() - start.getTime();
+                    const diffDays = Math.round(diffMs / (24 * 60 * 60 * 1000)) + 1;
+                    if (schemaVars.includes('vacationDays')) enhancedParams.vacationDays = String(diffDays);
+                    if (schemaVars.includes('vacationDaysText')) enhancedParams.vacationDaysText = numberToWordsRu(diffDays);
+                }
+            } else if (enhancedParams.vacationDays && schemaVars.includes('vacationDaysText')) {
+                enhancedParams.vacationDaysText = numberToWordsRu(parseInt(enhancedParams.vacationDays, 10));
+            }
+        }
+
+        // Default sick leave series
+        if (schemaVars.includes('sickLeaveSeries') && !enhancedParams.sickLeaveSeries) {
+            enhancedParams.sickLeaveSeries = 'БД';
+        }
+
         const data = buildTemplateData(emp, employer, schema, enhancedParams);
         htmlContent = fillTemplate(template, data);
     }
