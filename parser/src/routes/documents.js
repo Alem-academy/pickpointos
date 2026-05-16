@@ -879,6 +879,72 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
             if (formatted) enhancedParams.lastWorkingDay = formatted;
         }
 
+        // Generic date component computation for templates with date parts
+        const MONTHS_KZ_NOM = ['қаңтар','ақпан','наурыз','сәуір','мамыр','маусым','шілде','тамыз','қыркүйек','қазан','қараша','желтоқсан'];
+        function computeDateComponents(isoDate, prefix) {
+            if (!isoDate) return {};
+            const d = new Date(isoDate);
+            if (isNaN(d.getTime())) return {};
+            const comps = {};
+            if (schemaVars.includes(`${prefix}Day`)) comps[`${prefix}Day`] = String(d.getDate());
+            if (schemaVars.includes(`${prefix}MonthRu`)) comps[`${prefix}MonthRu`] = MONTHS_RU_FULL[d.getMonth()];
+            if (schemaVars.includes(`${prefix}MonthKz`)) comps[`${prefix}MonthKz`] = MONTHS_KZ_NOM[d.getMonth()];
+            if (schemaVars.includes(`${prefix}Year`)) comps[`${prefix}Year`] = String(d.getFullYear());
+            return comps;
+        }
+
+        // Auto-fill date components for common prefixes
+        const datePrefixes = [
+            { field: 'returnDate', prefix: 'returnDate' },
+            { field: 'vacationStart', prefix: 'vacationStart' },
+            { field: 'vacationEnd', prefix: 'vacationEnd' },
+            { field: 'sickLeaveDate', prefix: 'sickLeave' },
+            { field: 'applicationDate', prefix: 'applicationDate' },
+        ];
+        for (const { field, prefix } of datePrefixes) {
+            if (enhancedParams[field]) {
+                const comps = computeDateComponents(enhancedParams[field], prefix);
+                Object.assign(enhancedParams, comps);
+            }
+        }
+
+        // Current date components (for templates that need them)
+        if (schemaVars.some(v => v.startsWith('currentDate')) || schemaVars.some(v => v === 'dateDay')) {
+            const now = new Date();
+            if (schemaVars.includes('currentDateDay')) enhancedParams.currentDateDay = String(now.getDate());
+            if (schemaVars.includes('currentDateMonthRu')) enhancedParams.currentDateMonthRu = MONTHS_RU_FULL[now.getMonth()];
+            if (schemaVars.includes('currentDateMonthKz')) enhancedParams.currentDateMonthKz = MONTHS_KZ_NOM[now.getMonth()];
+            if (schemaVars.includes('currentDateYear')) enhancedParams.currentDateYear = String(now.getFullYear());
+            if (schemaVars.includes('dateDay')) enhancedParams.dateDay = String(now.getDate());
+            if (schemaVars.includes('dateMonthRu')) enhancedParams.dateMonthRu = MONTHS_RU_FULL[now.getMonth()];
+            if (schemaVars.includes('dateMonthKz')) enhancedParams.dateMonthKz = MONTHS_KZ_NOM[now.getMonth()];
+            if (schemaVars.includes('dateYear')) enhancedParams.dateYear = String(now.getFullYear());
+        }
+
+        // Format returnDate if needed as full string
+        if (schemaVars.includes('returnDate') && enhancedParams.returnDate) {
+            const formatted = formatRuDateLong(enhancedParams.returnDate);
+            if (formatted) enhancedParams.returnDate = formatted;
+        }
+        // Format applicationDate if needed as short string
+        if (schemaVars.includes('applicationDate') && enhancedParams.applicationDate) {
+            const formatted = formatRuDateShort(enhancedParams.applicationDate);
+            if (formatted) enhancedParams.applicationDate = formatted;
+        }
+        // Format vacation dates
+        if (schemaVars.includes('vacationStartDate') && enhancedParams.vacationStart) {
+            const formatted = formatRuDateLong(enhancedParams.vacationStart);
+            if (formatted) enhancedParams.vacationStartDate = formatted;
+        }
+        if (schemaVars.includes('vacationEndDate') && enhancedParams.vacationEnd) {
+            const formatted = formatRuDateLong(enhancedParams.vacationEnd);
+            if (formatted) enhancedParams.vacationEndDate = formatted;
+        }
+        if (schemaVars.includes('sickLeaveDate') && enhancedParams.sickLeaveDate) {
+            const formatted = formatRuDateLong(enhancedParams.sickLeaveDate);
+            if (formatted) enhancedParams.sickLeaveDate = formatted;
+        }
+
         const data = buildTemplateData(emp, employer, schema, enhancedParams);
         htmlContent = fillTemplate(template, data);
     }
