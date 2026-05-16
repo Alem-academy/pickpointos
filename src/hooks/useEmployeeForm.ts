@@ -58,7 +58,7 @@ export function useEmployeeForm() {
         phone: '',
         iin: '',
         pvzId: '',
-        baseRate: '',
+        baseRate: '85000',
         role: 'employee' as EmployeeRole,
         email: '',
         address: '',

@@ -54,7 +54,7 @@ export function WorkConditionsStep({ formData, errors, handleChange, pvzList }: 
                         <span className="absolute left-4 top-3 text-muted-foreground font-bold">₸</span>
                         <NumberInput
                             name="baseRate"
-                            value={formData.baseRate || '85000'}
+                            value={formData.baseRate}
                             onChange={handleChange}
                             prefix=""
                             className={cn("pl-10", errors.baseRate && "border-red-500 focus:ring-red-500")}
