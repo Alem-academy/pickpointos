@@ -71,8 +71,21 @@ const DOC_TYPE_TO_PROCESS: Record<string, string> = {
     '03_zayavlenie-ob-izmenenii-personalnyh-dannyh': 'data_change',
 };
 
+// Generic DB types that can belong to multiple processes (legacy documents)
+const GENERIC_TYPE_TO_PROCESSES: Record<string, string[]> = {
+    'employee_application': ['hiring', 'vacation', 'maternity_leave', 'maternity_return', 'name_change', 'data_change'],
+    'employer_order': ['hiring', 'vacation', 'termination', 'maternity_leave', 'maternity_return', 'name_change'],
+    'mutual_agreement': ['termination', 'name_change'],
+    'generated': ['hiring', 'vacation', 'termination', 'maternity_leave', 'maternity_return', 'name_change', 'data_change'],
+};
+
+function typeBelongsToProcess(type: string, processKey: string): boolean {
+    if (DOC_TYPE_TO_PROCESS[type] === processKey) return true;
+    return GENERIC_TYPE_TO_PROCESSES[type]?.includes(processKey) || false;
+}
+
 function getProcessStatus(processKey: string, docs: ProcessLauncherProps['documents']) {
-    const processDocs = docs.filter(d => DOC_TYPE_TO_PROCESS[d.type] === processKey);
+    const processDocs = docs.filter(d => typeBelongsToProcess(d.type, processKey));
     if (processDocs.length === 0) return 'not_started';
 
     const allSigned = processDocs.every(d => d.status === 'signed' || d.status === 'fully_signed');
@@ -146,7 +159,7 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
     };
 
     const handleProcessClick = (processKey: string) => {
-        const processDocs = documents.filter(d => DOC_TYPE_TO_PROCESS[d.type] === processKey);
+        const processDocs = documents.filter(d => typeBelongsToProcess(d.type, processKey));
         openWizard(processKey, processDocs);
     };
 
@@ -156,9 +169,9 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
         // For now, open the wizard with existing docs
         const doc = documents.find(d => d.id === docId);
         if (doc) {
-            const processKey = DOC_TYPE_TO_PROCESS[doc.type];
+            const processKey = DOC_TYPE_TO_PROCESS[doc.type] || GENERIC_TYPE_TO_PROCESSES[doc.type]?.[0];
             if (processKey) {
-                const processDocs = documents.filter(d => DOC_TYPE_TO_PROCESS[d.type] === processKey);
+                const processDocs = documents.filter(d => typeBelongsToProcess(d.type, processKey));
                 openWizard(processKey, processDocs);
             }
         }
@@ -205,7 +218,7 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
                     const colorKey = PROCESS_COLORS[process.key] || 'slate';
                     const colorCls = COLOR_CLASSES[colorKey] || COLOR_CLASSES.slate;
                     const icon = PROCESS_ICONS[process.key] || <FileText className="h-5 w-5" />;
-                    const processDocs = documents.filter(d => DOC_TYPE_TO_PROCESS[d.type] === process.key);
+                    const processDocs = documents.filter(d => typeBelongsToProcess(d.type, process.key));
                     const hasDocs = processDocs.length > 0;
                     const allSigned = hasDocs && processDocs.every(d => d.status === 'signed' || d.status === 'fully_signed');
                     const needsEmployerSign = hasDocs && processDocs.some(

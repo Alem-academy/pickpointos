@@ -1026,7 +1026,10 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
         'employment_certificate': 'other',
         'addendum': 'other',
     };
-    const dbType = (schema && schema.type) || dbTypeMap[type] || 'other';
+    // Use dbTypeMap for legacy built-in types, otherwise store the specific type name
+    // schema.type is a logical category (employee_application, employer_order, etc.)
+    // and should NOT be used as the DB enum value
+    const dbType = dbTypeMap[type] || type || 'other';
 
     const docResult = await query(`
         INSERT INTO documents (employee_id, type, status, scan_url, requires_employer_signature, created_at)
