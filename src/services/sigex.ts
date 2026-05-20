@@ -12,12 +12,22 @@ const SIGEX_GATEWAY_URL = import.meta.env.VITE_SIGEX_GATEWAY_URL || 'http://loca
 
 export class SigexService {
     private static async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-        // Now pointing to our own gateway instead of directly to sigex.kz
         const url = `${SIGEX_GATEWAY_URL}${endpoint}`;
-        const response = await fetch(url, options);
+        let response: Response;
+        try {
+            response = await fetch(url, options);
+        } catch (networkErr: any) {
+            // Network error (gateway down, DNS, CORS blocked, etc.)
+            console.error(`[SigexService] Network error fetching ${url}:`, networkErr);
+            throw new Error(
+                `Не удалось подключиться к серверу подписания (${SIGEX_GATEWAY_URL}). ` +
+                `Проверьте интернет-соединение или попробуйте позже.`
+            );
+        }
 
         if (!response.ok) {
-            const errorText = await response.text();
+            const errorText = await response.text().catch(() => 'Unable to read error body');
+            console.error(`[SigexService] HTTP error ${response.status} from ${url}:`, errorText);
             throw new Error(`Sigex API Error: ${response.status} ${response.statusText} - ${errorText}`);
         }
 

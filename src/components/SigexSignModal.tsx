@@ -72,16 +72,20 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
             setStep('init');
             setError(null);
 
-            // 1. Регистрация QR + (если нет Sigex doc id) отправка реального PDF — иначе eGov Mobile не показывает предпросмотр
             let qrRes: Awaited<ReturnType<typeof SigexService.registerQrSigning>>;
             let dataPromise: Promise<any> | null = null;
 
             if (preRegisteredDocumentId) {
                 console.log('[Sigex] pre-registered document:', preRegisteredDocumentId);
-                qrRes = await SigexService.registerQrSigningWithDocument(
-                    preRegisteredDocumentId,
-                    `Подписание: ${documentTitle}`
-                );
+                try {
+                    qrRes = await SigexService.registerQrSigningWithDocument(
+                        preRegisteredDocumentId,
+                        `Подписание: ${documentTitle}`
+                    );
+                } catch (qrErr: any) {
+                    console.error('[Sigex] registerQrSigningWithDocument failed:', qrErr);
+                    throw new Error(qrErr.message || 'Не удалось инициализировать QR-подписание через eGov');
+                }
             } else {
                 let pdfBase64 = fetchedPdfBase64;
                 let pdfFileName = fetchedPdfName;
@@ -113,7 +117,12 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
                 }
 
                 console.log('[Sigex] PDF for eGov:', pdfFileName, `~${Math.round((pdfBase64?.length || 0) / 1024)} KB`);
-                qrRes = await SigexService.registerQrSigning(`Подписание: ${documentTitle}`);
+                try {
+                    qrRes = await SigexService.registerQrSigning(`Подписание: ${documentTitle}`);
+                } catch (qrErr: any) {
+                    console.error('[Sigex] registerQrSigning failed:', qrErr);
+                    throw new Error(qrErr.message || 'Не удалось инициализировать QR-подписание через eGov');
+                }
 
                 dataPromise = SigexService.sendQrData(
                     qrRes.operationId,
@@ -213,7 +222,12 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
 
         } catch (err: any) {
             console.error('Sigex Init Error:', err);
-            setError(err.message || 'Ошибка инициализации Sigex');
+            const msg = err.message || '';
+            if (msg.includes('Failed to fetch') || msg.includes('network') || msg.includes('NetworkError')) {
+                setError('Не удалось подключиться к серверу подписания. Проверьте интернет-соединение или попробуйте позже.');
+            } else {
+                setError(msg || 'Ошибка инициализации подписания через eGov');
+            }
             setStep('error');
         }
     };
