@@ -23,7 +23,7 @@ import { Logger } from '../lib/logger.js';
 import { logDocumentGenerated } from '../lib/activityLogger.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { generateSignatureSheet, getDocumentVerificationData } from '../services/signatureSheet.service.js';
-import { getTemplate, getSchema, listAllTemplates, getProcessDefinition } from '../services/templateRegistry.js';
+import { getTemplate, getSchema, listAllTemplates, getProcessDefinition, listProcesses } from '../services/templateRegistry.js';
 
 // Sigex integration is handled via frontend SigexService
 // Documents are pre-registered on generation and signed via eGov QR
