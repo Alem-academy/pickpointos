@@ -26,12 +26,14 @@ let templateCache = null;
 let schemaCache = null;
 
 function loadTemplates() {
-    if (templateCache) return templateCache;
+    if (templateCache !== null) return templateCache;
 
     templateCache = {};
 
     if (!fs.existsSync(TEMPLATES_DIR)) {
         Logger.warn(`⚠️ Templates directory not found: ${TEMPLATES_DIR}`);
+        Logger.warn(`   CWD: ${process.cwd()}`);
+        Logger.warn(`   __dirname: ${__dirname}`);
         return templateCache;
     }
 
@@ -54,12 +56,16 @@ function loadTemplates() {
 }
 
 function loadSchemas() {
-    if (schemaCache) return schemaCache;
+    if (schemaCache !== null) return schemaCache;
 
     schemaCache = {};
 
+    Logger.info(`🔍 Looking for schemas at: ${SCHEMAS_FILE}`);
     if (!fs.existsSync(SCHEMAS_FILE)) {
         Logger.warn(`⚠️ Schemas file not found: ${SCHEMAS_FILE}`);
+        Logger.warn(`   CWD: ${process.cwd()}`);
+        Logger.warn(`   __dirname: ${__dirname}`);
+        Logger.warn(`   TEMPLATES_DIR: ${TEMPLATES_DIR}`);
         return schemaCache;
     }
 
@@ -68,6 +74,10 @@ function loadSchemas() {
         const data = JSON.parse(raw);
         schemaCache = data.schemas || {};
         Logger.info(`📋 Loaded ${Object.keys(schemaCache).length} template schemas`);
+        const schemaKeys = Object.keys(schemaCache);
+        if (schemaKeys.length > 0) {
+            Logger.info(`   First 5 schemas: ${schemaKeys.slice(0, 5).join(', ')}`);
+        }
     } catch (err) {
         Logger.error(`❌ Failed to parse schemas:`, err.message);
     }

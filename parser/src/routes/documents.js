@@ -993,6 +993,8 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
         }
 
         const data = buildTemplateData(emp, employer, schema, enhancedParams);
+        Logger.info(`[Docs] Template ${type}: schema vars count=${Object.keys(schema.variables || {}).length}, data keys count=${Object.keys(data).length}`);
+        Logger.info(`[Docs] Template ${type} sample data:`, JSON.stringify(Object.fromEntries(Object.entries(data).slice(0, 10))));
         htmlContent = fillTemplate(template, data);
     }
 
