@@ -55,6 +55,7 @@ export function HiringWizard({ employeeId, employeeName, existingDocuments = [],
         probationMonths: '',
         contractEndDate: '',
         vacationDays: '24',
+        startDate: new Date().toISOString().split('T')[0],
     });
 
     // Load existing document content on mount
@@ -126,6 +127,7 @@ export function HiringWizard({ employeeId, employeeName, existingDocuments = [],
             setError(null);
             try {
                 const result = await api.generateProcessDocuments(employeeId, 'hiring', {
+                    startDate: params.startDate,
                     probationMonths: params.probationMonths || undefined,
                     contractEndDate: params.contractEndDate || undefined,
                     vacationDays: params.vacationDays || '24',
@@ -279,6 +281,19 @@ export function HiringWizard({ employeeId, employeeName, existingDocuments = [],
                             </div>
 
                             <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                                        Дата начала работы <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={params.startDate}
+                                        onChange={e => handleParamChange('startDate', e.target.value)}
+                                        className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                                    />
+                                    <p className="text-xs text-slate-400 mt-1">Дата, с которой сотрудник выходит на работу</p>
+                                </div>
+
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1.5">
                                         Испытательный срок (месяцев)

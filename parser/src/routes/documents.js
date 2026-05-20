@@ -475,9 +475,9 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         dateMonthKz: MONTHS_KZ[now.getMonth()],
         dateYear: String(now.getFullYear()),
 
-        // Start date (hiring) from employee hired_at
-        ...(emp.hired_at ? (() => {
-            const d = new Date(emp.hired_at);
+        // Start date (hiring) — prefer params.startDate, fallback to emp.hired_at
+        ...(params.startDate || emp.hired_at ? (() => {
+            const d = new Date(params.startDate || emp.hired_at);
             return {
                 startDateDay: String(d.getDate()),
                 startDateMonthRu: MONTHS_RU[d.getMonth()],
@@ -486,9 +486,9 @@ function buildTemplateData(emp, employer, schema, params = {}) {
             };
         })() : {}),
 
-        // Contract date (same as hired_at by default)
-        ...(emp.hired_at ? (() => {
-            const d = new Date(emp.hired_at);
+        // Contract date — prefer params.contractDate, then params.startDate, fallback to emp.hired_at
+        ...(params.contractDate || params.startDate || emp.hired_at ? (() => {
+            const d = new Date(params.contractDate || params.startDate || emp.hired_at);
             return {
                 contractDate: `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`,
                 contractDateDay: String(d.getDate()),
@@ -900,6 +900,7 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
             { field: 'vacationEnd', prefix: 'vacationEnd' },
             { field: 'sickLeaveDate', prefix: 'sickLeave' },
             { field: 'applicationDate', prefix: 'applicationDate' },
+            { field: 'startDate', prefix: 'startDate' },
         ];
         for (const { field, prefix } of datePrefixes) {
             if (enhancedParams[field]) {
