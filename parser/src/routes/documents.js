@@ -1487,7 +1487,10 @@ router.post('/sign/:token/submit-signature', async (req, res) => {
         const { token } = req.params;
         const { signature, sigex_operation_id, sigex_document_id } = req.body || {};
 
+        Logger.info(`[Docs] submit-signature called: token=${token?.substring(0,8)}..., sig_len=${signature?.length}, sigex_op=${sigex_operation_id}, sigex_doc=${sigex_document_id}`);
+
         if (!signature || typeof signature !== 'string') {
+            Logger.warn('[Docs] submit-signature rejected: missing signature');
             return res.status(400).json({ error: 'signature is required' });
         }
 
@@ -1500,10 +1503,12 @@ router.post('/sign/:token/submit-signature', async (req, res) => {
         `, [token]);
 
         if (linkResult.rows.length === 0) {
+            Logger.warn(`[Docs] submit-signature: link not found for token ${token?.substring(0,8)}`);
             return res.status(404).json({ error: 'Signing link not found' });
         }
 
         const row = linkResult.rows[0];
+        Logger.info(`[Docs] submit-signature: docId=${row.document_id}, status=${row.document_status}, type=${row.document_type}, active=${row.is_active}`);
 
         if (!row.is_active) {
             return res.status(403).json({ error: 'Signing link is deactivated' });
@@ -1512,6 +1517,7 @@ router.post('/sign/:token/submit-signature', async (req, res) => {
             return res.status(403).json({ error: 'Signing link has expired' });
         }
         if (row.document_status === 'signed') {
+            Logger.info(`[Docs] submit-signature: doc ${row.document_id} already signed`);
             return res.json({ success: true, document: { id: row.document_id, status: 'signed' }, alreadySigned: true });
         }
 
@@ -1536,8 +1542,11 @@ router.post('/sign/:token/submit-signature', async (req, res) => {
         ]);
 
         if (result.rows.length === 0) {
+            Logger.error(`[Docs] submit-signature: UPDATE returned 0 rows for doc ${docId}`);
             return res.status(404).json({ error: 'Document not found' });
         }
+
+        Logger.info(`[Docs] submit-signature: doc ${docId} updated to signed`);
 
         const docType = result.rows[0].type;
         if (['contract', 'order_hiring'].includes(docType)) {
