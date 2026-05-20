@@ -45,6 +45,11 @@ export function SignDocument() {
             const data = await response.json();
 
             if (!response.ok) {
+                // 403 with deactivated link usually means the document was already signed
+                if (response.status === 403 && data.error?.includes('deactivated')) {
+                    setError('Эта ссылка уже использована. Документ был подписан. Обратитесь к HR-менеджеру для проверки статуса.');
+                    return;
+                }
                 throw new Error(data.error || 'Ошибка загрузки');
             }
 
@@ -69,10 +74,12 @@ export function SignDocument() {
                 /* ignore */
             }
         }
-        // Refresh info after signing
-        setTimeout(() => {
-            loadSigningInfo();
-        }, 2000);
+        // Update local state to reflect signed status without re-fetching
+        // (the link is now deactivated, so GET /api/sign/{token} would return 403)
+        setSigningInfo(prev => prev ? {
+            ...prev,
+            document: { ...prev.document, status: 'signed' }
+        } : null);
     };
 
     /** Если подпись в eGov прошла, а вкладка не дождалась опроса — подтянуть CMS и сохранить по токену ссылки */
@@ -181,10 +188,21 @@ export function SignDocument() {
                         Подписание документа
                     </h1>
                     <p className="text-slate-600">
-                        {signingInfo.document.type === 'contract' ? 'Трудовой договор' : 
-                         signingInfo.document.type === 'application' ? 'Заявление на прием' :
-                         signingInfo.document.type === 'order_hiring' ? 'Приказ о приеме' :
-                         'Документ'}
+                        {(() => {
+                            const typeMap: Record<string, string> = {
+                                'contract': 'Трудовой договор',
+                                'application': 'Заявление на прием',
+                                'order_hiring': 'Приказ о приеме',
+                                '13_zayavlenie-o-prieme-na-rabotu': 'Заявление на прием',
+                                '14_prikaz-o-prieme-na-rabotu': 'Приказ о приеме',
+                                '15_trudovoy-dogovor': 'Трудовой договор',
+                                'vacation_application': 'Заявление на отпуск',
+                                'vacation_order': 'Приказ на отпуск',
+                                'termination_order': 'Приказ об увольнении',
+                                'addendum': 'Доп. соглашение',
+                            };
+                            return typeMap[signingInfo.document.type] || 'Документ';
+                        })()}
                     </p>
                 </div>
 

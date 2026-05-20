@@ -327,6 +327,7 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
                         })
                     });
                     const data = await res.json().catch(() => ({}));
+                    console.log('[Sigex] submit-signature response:', { status: res.status, ok: res.ok, data });
                     if (!res.ok) {
                         throw new Error((data as { error?: string }).error || `Ошибка сервера: ${res.status}`);
                     }

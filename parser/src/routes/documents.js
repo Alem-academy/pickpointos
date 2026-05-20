@@ -1419,7 +1419,8 @@ router.post('/documents/:id/sign', async (req, res) => {
 
         // Update employee status to 'active' if signing contract or hiring order
         const docType = result.rows[0].type;
-        if (['contract', 'order_hiring'].includes(docType)) {
+        const hiringDocTypes = ['contract', 'order_hiring', '13_zayavlenie-o-prieme-na-rabotu', '14_prikaz-o-prieme-na-rabotu', '15_trudovoy-dogovor'];
+        if (hiringDocTypes.includes(docType)) {
             await query(`
                 UPDATE employees
                 SET status = 'active', hired_at = COALESCE(hired_at, NOW())
@@ -1549,7 +1550,8 @@ router.post('/sign/:token/submit-signature', async (req, res) => {
         Logger.info(`[Docs] submit-signature: doc ${docId} updated to signed`);
 
         const docType = result.rows[0].type;
-        if (['contract', 'order_hiring'].includes(docType)) {
+        const hiringDocTypes = ['contract', 'order_hiring', '13_zayavlenie-o-prieme-na-rabotu', '14_prikaz-o-prieme-na-rabotu', '15_trudovoy-dogovor'];
+        if (hiringDocTypes.includes(docType)) {
             await query(`
                 UPDATE employees
                 SET status = 'active', hired_at = COALESCE(hired_at, NOW())
