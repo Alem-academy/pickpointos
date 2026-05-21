@@ -487,6 +487,16 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         employeeIdNumber: emp.id_card_number || '',
         employeeIdDate: emp.id_card_issue_date ? new Date(emp.id_card_issue_date).toLocaleDateString('ru-RU') : '',
 
+        // Gender-based forms
+        employeeGender: emp.gender || 'male',
+        employeeResidentAdj: emp.gender === 'female' ? 'проживающая' : 'проживающий',
+        employeeRegisteredAdj: emp.gender === 'female' ? 'Зарегистрированная' : 'Зарегистрированный',
+        employeeCitizen: emp.gender === 'female' ? 'гражданка' : 'гражданин',
+        employeeCitizenKz: emp.gender === 'female' ? 'азаматша' : 'азамат',
+        employeeAcknowledged: emp.gender === 'female' ? 'ознакомлена' : 'ознакомлен',
+        employeeReturned: emp.gender === 'female' ? 'приступившей' : 'приступившим',
+        directorActing: employer.director_name && (employer.director_name.toLowerCase().includes('ова') || employer.director_name.toLowerCase().includes('ева') || employer.director_name.toLowerCase().includes('ина') || employer.director_name.toLowerCase().includes('ская')) ? 'действующей' : 'действующего',
+
         // Employer fields
         employerName: employer.name || '',
         employerShortName: employer.short_name || '',

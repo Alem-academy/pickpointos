@@ -35,6 +35,7 @@ export function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmployeeModa
         base_rate: number;
         hired_at: string;
         probation_until: string;
+        gender: 'male' | 'female' | '';
     }>({
         iin: '',
         fullName: '',
@@ -46,7 +47,8 @@ export function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmployeeModa
         address: '',
         base_rate: 0,
         hired_at: new Date().toISOString().split('T')[0],
-        probation_until: ''
+        probation_until: '',
+        gender: ''
     });
 
     useEffect(() => {
@@ -113,7 +115,8 @@ export function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmployeeModa
                 address: formData.address,
                 base_rate: formData.base_rate,
                 hired_at: formData.hired_at,
-                probation_until: formData.probation_until
+                probation_until: formData.probation_until,
+                gender: formData.gender || undefined
             });
             onSuccess();
             onClose();
@@ -129,7 +132,8 @@ export function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmployeeModa
                 address: '',
                 base_rate: 0,
                 hired_at: new Date().toISOString().split('T')[0],
-                probation_until: ''
+                probation_until: '',
+                gender: ''
             });
         } catch (err) {
             console.error('Failed to create employee:', err);
@@ -225,7 +229,7 @@ export function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmployeeModa
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                         <div className="space-y-1">
                             <label className="text-sm font-medium text-slate-700">Роль</label>
                             <select
@@ -238,6 +242,19 @@ export function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmployeeModa
                                 <option value="hr">HR Менеджер</option>
                                 <option value="admin">Администратор</option>
                                 <option value="financier">Финансист</option>
+                            </select>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-slate-700">Пол <span className="text-red-500">*</span></label>
+                            <select
+                                required
+                                value={formData.gender}
+                                onChange={e => setFormData({ ...formData, gender: e.target.value as 'male' | 'female' })}
+                                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2"
+                            >
+                                <option value="">Выберите...</option>
+                                <option value="male">Мужской</option>
+                                <option value="female">Женский</option>
                             </select>
                         </div>
                         <div className="space-y-1">

@@ -39,6 +39,7 @@ export interface EmployeeFormData {
     address: string;
     registeredAddress: string;
     iban: string;
+    gender: 'male' | 'female' | '';
     // ID Card fields
     idCardNumber?: string;
     idCardIssueDate?: string;
@@ -64,6 +65,7 @@ export function useEmployeeForm() {
         address: '',
         registeredAddress: '',
         iban: '',
+        gender: '',
         idCardNumber: '',
         idCardIssueDate: '',
         idCardIssuedBy: '',

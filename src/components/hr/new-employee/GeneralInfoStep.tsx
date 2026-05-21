@@ -101,6 +101,20 @@ export function GeneralInfoStep({ formData, errors, handleChange, emergencyConta
                     />
                 </div>
                 <div className="space-y-2">
+                    <label className="text-sm font-semibold">Пол <span className="text-destructive">*</span></label>
+                    <select
+                        required
+                        name="gender"
+                        value={formData.gender}
+                        onChange={handleChange}
+                        className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                        <option value="">Выберите...</option>
+                        <option value="male">Мужской</option>
+                        <option value="female">Женский</option>
+                    </select>
+                </div>
+                <div className="space-y-2">
                     <label className="text-sm font-semibold">IBAN</label>
                     <IBANInput
                         name="iban"

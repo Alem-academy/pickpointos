@@ -113,6 +113,7 @@ export interface Employee {
     onboarding_checklist?: Record<string, boolean>;
     rejection_reason?: string | null; // Reason for revision status
     emergency_contacts?: EmergencyContact[]; // Array of emergency contacts
+    gender?: 'male' | 'female';
 }
 
 export interface Shift {

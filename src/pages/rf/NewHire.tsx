@@ -34,6 +34,7 @@ export default function NewHire() {
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
+        gender: '' as 'male' | 'female' | '',
         phone: '',
         iin: '',
         pvzId: '',
@@ -72,7 +73,7 @@ export default function NewHire() {
 
     const validateStep = (stepIndex: number) => {
         if (stepIndex === 0) {
-            return formData.firstName && formData.lastName && formData.iin.length === 12 && formData.phone;
+            return formData.firstName && formData.lastName && formData.gender && formData.iin.length === 12 && formData.phone;
         }
         if (stepIndex === 1) {
             return formData.pvzId !== '';
@@ -108,6 +109,7 @@ export default function NewHire() {
             const newEmployee = await api.createEmployee({
                 full_name: `${formData.lastName} ${formData.firstName}`,
                 iin: formData.iin,
+                gender: formData.gender || undefined,
                 phone: formData.phone,
                 email: null,
                 role: formData.role,
@@ -230,6 +232,20 @@ export default function NewHire() {
                                                 className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                                                 placeholder="Например: Нұрланов"
                                             />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-semibold">Пол <span className="text-destructive">*</span></label>
+                                            <select
+                                                required
+                                                name="gender"
+                                                value={formData.gender}
+                                                onChange={handleChange}
+                                                className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                            >
+                                                <option value="">Выберите...</option>
+                                                <option value="male">Мужской</option>
+                                                <option value="female">Женский</option>
+                                            </select>
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-sm font-semibold">ИИН <span className="text-destructive">*</span></label>

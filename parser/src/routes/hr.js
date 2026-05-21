@@ -167,7 +167,7 @@ router.get('/employees', authenticateToken, async (req, res) => {
 // POST /employees - Create new employee
 router.post('/employees', async (req, res) => {
     try {
-        const { iin, full_name, phone, email, role, main_pvz_id, status, address, base_rate, probation_until, hired_at, iban, emergency_contacts, id_card_number, id_card_issued_by, id_card_issue_date, registered_address, employer_id, patronymic, contract_end_date, probation_months } = req.body;
+        const { iin, full_name, phone, email, role, main_pvz_id, status, address, base_rate, probation_until, hired_at, iban, emergency_contacts, id_card_number, id_card_issued_by, id_card_issue_date, registered_address, employer_id, patronymic, contract_end_date, probation_months, gender } = req.body;
 
         // Basic validation
         if (!iin || !full_name || !role) {
@@ -187,9 +187,9 @@ router.post('/employees', async (req, res) => {
                 iin, full_name, phone, email, role, main_pvz_id, status,
                 address, base_rate, probation_until, hired_at, iban, emergency_contacts,
                 id_card_number, id_card_issued_by, id_card_issue_date, registered_address, employer_id, patronymic,
-                contract_end_date, probation_months
+                contract_end_date, probation_months, gender
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
             RETURNING *
         `, [
             iin,
@@ -212,7 +212,8 @@ router.post('/employees', async (req, res) => {
             employer_id || null,
             patronymic || null,
             contract_end_date || null,
-            probation_months || null
+            probation_months || null,
+            gender || null
         ]);
 
         res.status(201).json(result.rows[0]);
@@ -412,6 +413,10 @@ router.patch('/employees/:id/status', async (req, res) => {
         if (req.body.address !== undefined) {
             sql += `, address = $${paramIdx++}`;
             params.push(req.body.address);
+        }
+        if (req.body.gender !== undefined) {
+            sql += `, gender = $${paramIdx++}`;
+            params.push(req.body.gender);
         }
 
         // Auto-compute probation_until if hired_at and probation_months are present

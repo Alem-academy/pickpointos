@@ -91,7 +91,8 @@ export default function NewEmployeePage() {
                 id_card_issued_by: formData.idCardIssuedBy || undefined,
                 // Contract data
                 contract_end_date: formData.contractEndDate || undefined,
-                probation_months: formData.probationMonths ? Number(formData.probationMonths) : undefined
+                probation_months: formData.probationMonths ? Number(formData.probationMonths) : undefined,
+                gender: formData.gender || undefined
             });
 
             // 2. Upload files
