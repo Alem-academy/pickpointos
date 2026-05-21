@@ -301,10 +301,12 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
             setStep('error');
             return;
         }
+        console.log('[Sigex] finalizeSignature START', { signingRole, documentId, sigLength: signature.length });
         try {
             if (signingRole === 'employer') {
                 // Employer signing — uses NCALayer, saves via dedicated endpoint
                 const certInfo = signature ? extractCertInfo(signature) : undefined;
+                console.log('[Sigex] Calling signDocumentAsEmployer...', { documentId, certInfo });
                 await api.signDocumentAsEmployer(documentId, signature || '', certInfo);
                 console.log(`[Sigex] Employer signed document ${documentId}`);
             } else {
@@ -347,8 +349,12 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
                 onClose();
             }, 2000);
         } catch (err: any) {
-            console.error('Backend Sign Error:', err);
-            setError('Ошибка сохранения подписи на сервере');
+            console.error('Backend Sign Error FULL:', err);
+            console.error('Backend Sign Error message:', err?.message);
+            console.error('Backend Sign Error response:', err?.response?.data);
+            console.error('Backend Sign Error status:', err?.response?.status);
+            const serverMsg = err?.response?.data?.error || err?.response?.data?.details || err?.message;
+            setError(serverMsg || 'Ошибка сохранения подписи на сервере');
             setStep('error');
         }
     };
