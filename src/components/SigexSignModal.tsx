@@ -277,7 +277,7 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
                 NCALayerClient.basicsStorageAll,
                 pdfBase64 as string,
                 NCALayerClient.basicsCMSParamsAttached, // CMS_WITH_DATA = вложенные данные в подпись
-                NCALayerClient.basicsSignerSign // For documents it's usually Sign
+                NCALayerClient.basicsSignerSignAny // Любой сертификат для подписания
             );
             console.log('[NCALayer] Signature received, length:', signature?.length);
 
