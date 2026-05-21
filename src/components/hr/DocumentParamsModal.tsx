@@ -125,34 +125,54 @@ export function DocumentParamsModal({ isOpen, documentType, employeeData, onClos
                 setSchema(schema);
                 // Pre-fill auto-known fields from employeeData
                 const initial: Record<string, string> = {};
-                if (schema?.variables && employeeData) {
+                const emp = employeeData || {};
+                if (schema?.variables) {
                     for (const key of Object.keys(schema.variables)) {
-                        if (key === 'employeeFullName' && employeeData.full_name) initial[key] = employeeData.full_name;
-                        if (key === 'employeeIIN' && employeeData.iin) initial[key] = employeeData.iin;
-                        if (key === 'employeePositionRod') initial[key] = employeeData.role === 'rf' ? 'Регионального менеджера' : 'Менеджера ПВЗ';
-                        if (key === 'employeeAddress' && (employeeData.registered_address || employeeData.address)) {
-                            initial[key] = employeeData.registered_address || employeeData.address;
+                        // Employee fields
+                        if (key === 'employeeFullName' && emp.full_name) initial[key] = emp.full_name;
+                        if (key === 'employeeFullNameRu' && emp.full_name) initial[key] = emp.full_name;
+                        if (key === 'employeeFullNameKz' && emp.full_name) initial[key] = emp.full_name;
+                        if (key === 'employeeIIN' && emp.iin) initial[key] = emp.iin;
+                        if (key === 'employeePositionRod') initial[key] = emp.role === 'rf' ? 'регионального менеджера' : 'менеджера ПВЗ';
+                        if (key === 'employeePositionRu') initial[key] = emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ';
+                        if (key === 'employeePositionKz') initial[key] = emp.role === 'rf' ? 'Өңірлік менеджер' : 'ТҚО менеджері';
+                        if (key === 'employeeAddress' && (emp.registered_address || emp.address)) {
+                            initial[key] = emp.registered_address || emp.address;
                         }
-                        if (key === 'employeeAddressResidentRu') initial[key] = employeeData.address || employeeData.registered_address || '__________';
-                        if (key === 'employeeAddressRegRu') initial[key] = employeeData.registered_address || employeeData.address || '__________';
-                        if (key === 'employeePhone' && employeeData.phone) initial[key] = employeeData.phone;
-                        if (key === 'employeeEmail' && employeeData.email) initial[key] = employeeData.email;
-                        if (key === 'employeeIBAN' && employeeData.iban) initial[key] = employeeData.iban;
-                        if (key === 'employeeIdCard' && employeeData.id_card_number) initial[key] = employeeData.id_card_number;
-                        if (key === 'employeeIdCardIssuedBy' && employeeData.id_card_issued_by) initial[key] = employeeData.id_card_issued_by;
-                        if (key === 'pvzAddress' && employeeData.pvz_address) initial[key] = employeeData.pvz_address;
+                        if (key === 'employeeAddressRu') initial[key] = emp.registered_address || emp.address || '__________';
+                        if (key === 'employeeAddressResidentRu') initial[key] = emp.address || emp.registered_address || '__________';
+                        if (key === 'employeeAddressRegRu') initial[key] = emp.registered_address || emp.address || '__________';
+                        if (key === 'employeePhone' && emp.phone) initial[key] = emp.phone;
+                        if (key === 'employeeEmail' && emp.email) initial[key] = emp.email;
+                        if (key === 'employeeIBAN' && emp.iban) initial[key] = emp.iban;
+                        if (key === 'employeeIdCard' && emp.id_card_number) initial[key] = emp.id_card_number;
+                        if (key === 'idCardNumber' && emp.id_card_number) initial[key] = emp.id_card_number;
+                        if (key === 'employeeIdCardIssuedBy' && emp.id_card_issued_by) initial[key] = emp.id_card_issued_by;
+                        if (key === 'idCardIssuerRu' && emp.id_card_issued_by) initial[key] = emp.id_card_issued_by;
+                        if (key === 'pvzAddress' && emp.pvz_address) initial[key] = emp.pvz_address;
+                        if (key === 'workplaceAddressRu' && emp.pvz_address) initial[key] = emp.pvz_address;
+                        if (key === 'workplaceAddressKz' && emp.pvz_address) initial[key] = emp.pvz_address;
                         // Employer fields with fallback defaults
-                        if (key === 'employerName') initial[key] = employeeData.employer_name || 'Индивидуальный предприниматель «Жасмин»';
-                        if (key === 'employerShortName') initial[key] = employeeData.employer_short_name || 'Жасмин';
-                        if (key === 'directorName') initial[key] = employeeData.employer_director || 'Карабаева Г.Е.';
-                        if (key === 'directorNameShortDat') initial[key] = employeeData.employer_director_dative || 'Карабаевой Г.Е.';
-                        if (key === 'directorNameShortRod') initial[key] = employeeData.employer_director || 'Карабаевой Г.Е.';
+                        const employerName = emp.employer_name || emp.employer?.name || 'Индивидуальный предприниматель «Жасмин»';
+                        const employerShortName = emp.employer_short_name || emp.employer?.short_name || 'Жасмин';
+                        const employerDirector = emp.employer_director || emp.employer?.director_name || 'Карабаева Г.Е.';
+                        const employerDirectorDative = emp.employer_director_dative || emp.employer?.director_name_dative || 'Карабаевой Г.Е.';
+                        if (key === 'employerName') initial[key] = employerName;
+                        if (key === 'employerShortName') initial[key] = employerShortName;
+                        if (key === 'directorName') initial[key] = employerDirector;
+                        if (key === 'directorNameShortDat') initial[key] = employerDirectorDative;
+                        if (key === 'directorNameShortRod') initial[key] = employerDirectorDative;
+                        if (key === 'directorNameShort') initial[key] = employerDirector;
+                        if (key === 'directorNameShortKz') initial[key] = employerDirector;
+                        if (key === 'directorNameShortRu') initial[key] = employerDirector;
+                        if (key === 'directorNameKz') initial[key] = employerDirector;
+                        if (key === 'directorNameRu') initial[key] = employerDirector;
                         if (key === 'directorBasis' || key === 'directorBasisRu') initial[key] = 'Устава';
                         if (key === 'directorBasisKz') initial[key] = 'Жарғысы';
                         if (key === 'city' || key === 'cityRu') initial[key] = 'Алматы';
                         if (key === 'cityKz') initial[key] = 'Алматы';
                     }
-                    prefillDateFields(initial, schema.variables, employeeData);
+                    prefillDateFields(initial, schema.variables, emp);
                 }
                 setFormData(initial);
             })

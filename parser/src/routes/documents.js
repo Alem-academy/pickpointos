@@ -345,37 +345,38 @@ function buildTemplateData(emp, employer, schema, params = {}) {
     // Translate Russian address components to Kazakh
     function translateAddressToKazakh(address) {
         if (!address) return '';
-        const a = address;
-        // Abbreviations with explicit boundaries (\b doesn't work for Cyrillic in JS)
-        const boundary = '(^|[^а-яёәіңғүұқөһa-zA-Z])';
-        const boundaryEnd = '([^а-яёәіңғүұқөһa-zA-Z]|$)';
-        return a
-            .replace(new RegExp(boundary + 'Республика Казахстан' + boundaryEnd, 'gi'), '$1Қазақстан Республикасы$2')
-            .replace(/МВД РК/g, 'ҚР ІІМ')
-            .replace(/МВД/g, 'ІІМ')
-            .replace(new RegExp(boundary + 'РК' + boundaryEnd, 'g'), '$1ҚР$2')
-            .replace(/обл\.\s*/gi, 'облысы ')
-            .replace(/область/gi, 'облысы')
-            .replace(/р-н/gi, 'ауданы')
-            .replace(/район/gi, 'ауданы')
-            .replace(/г\.\s*/gi, 'қаласы ')
-            .replace(/город/gi, 'қаласы')
-            .replace(/ул\.\s*/gi, 'көшесі ')
-            .replace(/улица/gi, 'көшесі')
-            .replace(/д\.\s*/gi, 'үй ')
-            .replace(/дом/gi, 'үй')
-            .replace(/кв\.\s*/gi, 'пәтер ')
-            .replace(/квартира/gi, 'пәтер')
-            .replace(/уч\.\s*квартал/gi, 'есептік квартал')
-            .replace(/учетный квартал/gi, 'есептік квартал')
-            .replace(/пос\.\s*/gi, 'ауылы ')
-            .replace(/поселок/gi, 'ауылы')
-            .replace(/с\.\s*/gi, 'ауылы ')
-            .replace(/село/gi, 'ауылы')
-            .replace(/пр\.\s*/gi, 'даңғылы ')
-            .replace(/проспект/gi, 'даңғылы')
-            .replace(/пер\.\s*/gi, 'оралымы ')
-            .replace(/переулок/gi, 'оралымы');
+        let a = address;
+        // Direct replacements (no regex boundaries needed)
+        a = a.replace(/^РК[.,]?\b/g, 'ҚР');
+        a = a.replace(/\bРК[.,]?\b/g, 'ҚР');
+        a = a.replace(/\bРеспублика Казахстан\b/gi, 'Қазақстан Республикасы');
+        a = a.replace(/МВД РК/g, 'ҚР ІІМ');
+        a = a.replace(/МВД/g, 'ІІМ');
+        a = a.replace(/обл\.\s*Акмолинская/gi, 'Ақмола облысы');
+        a = a.replace(/обл\.\s*Алматинская/gi, 'Алматы облысы');
+        a = a.replace(/обл\.\s*/gi, 'облысы ');
+        a = a.replace(/область/gi, 'облысы');
+        a = a.replace(/р-н/gi, 'ауданы');
+        a = a.replace(/район/gi, 'ауданы');
+        a = a.replace(/г\.\s*/gi, 'қаласы ');
+        a = a.replace(/город/gi, 'қаласы');
+        a = a.replace(/ул\.\s*/gi, 'көшесі ');
+        a = a.replace(/улица/gi, 'көшесі');
+        a = a.replace(/д\.\s*/gi, 'үй ');
+        a = a.replace(/дом/gi, 'үй');
+        a = a.replace(/кв\.\s*/gi, 'пәтер ');
+        a = a.replace(/квартира/gi, 'пәтер');
+        a = a.replace(/уч\.\s*квартал/gi, 'есептік квартал');
+        a = a.replace(/учетный квартал/gi, 'есептік квартал');
+        a = a.replace(/пос\.\s*/gi, 'ауылы ');
+        a = a.replace(/поселок/gi, 'ауылы');
+        a = a.replace(/с\.\s*/gi, 'ауылы ');
+        a = a.replace(/село/gi, 'ауылы');
+        a = a.replace(/пр\.\s*/gi, 'даңғылы ');
+        a = a.replace(/проспект/gi, 'даңғылы');
+        a = a.replace(/пер\.\s*/gi, 'оралымы ');
+        a = a.replace(/переулок/gi, 'оралымы');
+        return a;
     }
 
     function declinePosition(position, case_) {
