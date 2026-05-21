@@ -37,6 +37,14 @@ export function SigexSignModal({ documentId, documentTitle, onClose, onSuccess, 
         return () => stopPolling();
     }, []);
 
+    // Auto-start NCALayer signing for employer flow (no method-selection step)
+    useEffect(() => {
+        if (signingRole === 'employer' && step === 'ncalayer_init') {
+            startNcaLayerSigning();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [signingRole, step]);
+
     const stopPolling = () => {
         if (pollInterval.current) {
             clearInterval(pollInterval.current);
