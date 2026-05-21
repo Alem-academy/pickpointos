@@ -78,26 +78,19 @@ async function buildSignatureSheetHtml(documentData) {
 
     const qrBase64 = await generateVerificationQr(id);
 
-    const isEmployerSigned = !!employer_signed_at;
-    const isEmployeeSigned = !!(employee_signed_at || documentData.signed_at);
-
     const data = {
         document_name: DOCUMENT_TYPE_NAMES[type] || type,
         document_uuid: id,
         employer_name: employer_name || '—',
         employer_bin: employer_bin || '—',
-        employer_sign_status: isEmployerSigned
-            ? '<div class="success-badge">✓ Подписано ЭЦП</div>'
-            : '<div class="pending-badge">⏳ Ожидает подписания</div>',
-        employer_sign_date: isEmployerSigned ? formatDate(employer_signed_at) : '—',
-        employer_cert_info: isEmployerSigned ? formatCertInfo(employer_cert_info) : '—',
+        employer_sign_status: '<div class="success-badge">✓ Подписано ЭЦП</div>',
+        employer_sign_date: formatDate(employer_signed_at),
+        employer_cert_info: formatCertInfo(employer_cert_info),
         employee_name: employee_name || '—',
         employee_iin: employee_iin || '—',
-        employee_sign_status: isEmployeeSigned
-            ? '<div class="success-badge">✓ Подписано ЭЦП (eGov QR)</div>'
-            : '<div class="pending-badge">⏳ Ожидает подписания</div>',
-        employee_sign_date: isEmployeeSigned ? formatDate(employee_signed_at || documentData.signed_at) : '—',
-        employee_cert_info: isEmployeeSigned ? formatCertInfo(employee_cert_info) : '—',
+        employee_sign_status: '<div class="success-badge">✓ Подписано ЭЦП (eGov QR)</div>',
+        employee_sign_date: formatDate(employee_signed_at || documentData.signed_at),
+        employee_cert_info: formatCertInfo(employee_cert_info),
         qr_code_base64: qrBase64
     };
 
@@ -195,7 +188,8 @@ export async function generateSignatureSheet(documentId) {
     const doc = docResult.rows[0];
 
     if (doc.status !== 'fully_signed') {
-        Logger.info(`[SignatureSheet] Document ${documentId} status: ${doc.status}. Generating provisional signature sheet.`);
+        Logger.warn(`[SignatureSheet] Document ${documentId} is not fully signed (status: ${doc.status}). Skipping.`);
+        return null;
     }
 
     // 2. Generate signature sheet HTML → PDF

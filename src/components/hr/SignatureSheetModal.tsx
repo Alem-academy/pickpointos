@@ -166,9 +166,9 @@ export function SignatureSheetModal({ documentId, documentTitle, onClose }: Sign
                                 <FileText className="h-6 w-6 text-amber-500" />
                             </div>
                             <div className="text-center">
-                                <p className="text-sm font-medium text-slate-700">Лист подписей не найден</p>
+                                <p className="text-sm font-medium text-slate-700">Лист подписей ещё не создан</p>
                                 <p className="text-xs text-slate-500 mt-1">
-                                    Возможна ошибка при автоматической генерации. Попробуйте создать вручную.
+                                    Создаётся автоматически при подписании обеими сторонами
                                 </p>
                             </div>
                             <button

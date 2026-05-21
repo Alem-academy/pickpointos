@@ -356,7 +356,24 @@ export function DocumentsList({ employeeId, documents: externalDocuments, onStat
                                                         onClick={() => handlePreview(doc)}
                                                     >
                                                         <p className="text-sm font-semibold text-slate-900 hover:text-primary transition-colors">{docConfig.label}</p>
-                                                        <p className="text-xs text-slate-500">{new Date(doc.created_at).toLocaleDateString('ru-RU')}</p>
+                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                            <p className="text-xs text-slate-500">{new Date(doc.created_at).toLocaleDateString('ru-RU')}</p>
+                                                            {(doc as any).requires_employer_signature && (
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium", (doc as any).signed_at ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500")} title={(doc as any).signed_at ? `Подписан сотрудником: ${new Date((doc as any).signed_at).toLocaleDateString('ru-RU')}` : 'Ожидает подписи сотрудника'}>
+                                                                        {(doc as any).signed_at ? '✓' : '⏳'} Сотрудник
+                                                                    </span>
+                                                                    <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium", (doc as any).employer_signed_at ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500")} title={(doc as any).employer_signed_at ? `Подписан работодателем: ${new Date((doc as any).employer_signed_at).toLocaleDateString('ru-RU')}` : 'Ожидает подписи работодателя'}>
+                                                                        {(doc as any).employer_signed_at ? '✓' : '⏳'} Работодатель
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                            {!(doc as any).requires_employer_signature && (doc as any).signed_at && (
+                                                                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-700" title={`Подписан: ${new Date((doc as any).signed_at).toLocaleDateString('ru-RU')}`}>
+                                                                    ✓ Подписан
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                     </div>
                                                     <div className="flex items-center gap-1">
@@ -438,7 +455,24 @@ export function DocumentsList({ employeeId, documents: externalDocuments, onStat
                                                         ); })()}
                                                         <div className="cursor-pointer" onClick={() => handlePreview(doc)}>
                                                             <p className="text-sm font-semibold text-slate-900 hover:text-primary transition-colors">{docConfig.label}</p>
-                                                            <p className="text-xs text-slate-500">{new Date(doc.created_at).toLocaleDateString('ru-RU')}</p>
+                                                            <div className="flex items-center gap-2 mt-0.5">
+                                                                <p className="text-xs text-slate-500">{new Date(doc.created_at).toLocaleDateString('ru-RU')}</p>
+                                                                {(doc as any).requires_employer_signature && (
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium", (doc as any).signed_at ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500")} title={(doc as any).signed_at ? `Подписан сотрудником: ${new Date((doc as any).signed_at).toLocaleDateString('ru-RU')}` : 'Ожидает подписи сотрудника'}>
+                                                                            {(doc as any).signed_at ? '✓' : '⏳'} Сотрудник
+                                                                        </span>
+                                                                        <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium", (doc as any).employer_signed_at ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500")} title={(doc as any).employer_signed_at ? `Подписан работодателем: ${new Date((doc as any).employer_signed_at).toLocaleDateString('ru-RU')}` : 'Ожидает подписи работодателя'}>
+                                                                            {(doc as any).employer_signed_at ? '✓' : '⏳'} Работодатель
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                                {!(doc as any).requires_employer_signature && (doc as any).signed_at && (
+                                                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-700" title={`Подписан: ${new Date((doc as any).signed_at).toLocaleDateString('ru-RU')}`}>
+                                                                        ✓ Подписан
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-1">
