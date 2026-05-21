@@ -376,17 +376,74 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         a = a.replace(/проспект/gi, 'даңғылы');
         a = a.replace(/пер\.\s*/gi, 'оралымы ');
         a = a.replace(/переулок/gi, 'оралымы');
+        a = a.replace(/мкр\.?\s*/gi, 'микрорайон ');
+        a = a.replace(/жк\.?\s*/gi, 'тұрғын үй кешені ');
+        a = a.replace(/жилой комплекс/gi, 'тұрғын үй кешені');
+        a = a.replace(/б-р\.?\s*/gi, 'бульвары ');
+        a = a.replace(/бульвар/gi, 'бульвары');
+        a = a.replace(/наб\.?\s*/gi, 'жағалауы ');
+        a = a.replace(/набережная/gi, 'жағалауы');
+        a = a.replace(/туп\.?\s*/gi, 'түтігі ');
+        a = a.replace(/тупик/gi, 'түтігі');
+        a = a.replace(/ш\.?\s*/gi, 'тас жолы ');
+        a = a.replace(/шоссе/gi, 'тас жолы');
+        a = a.replace(/пл\.?\s*/gi, 'алаңы ');
+        a = a.replace(/площадь/gi, 'алаңы');
+        a = a.replace(/км\.?\s*/gi, 'шақырым ');
+        a = a.replace(/километр/gi, 'шақырым');
+        a = a.replace(/\bТОО\b/g, 'ЖШС');
+        a = a.replace(/\bАО\b/g, 'АҚ');
+        a = a.replace(/\bИП\b/g, 'ЖК');
+        a = a.replace(/АО\s*«?Народный банк»?/gi, '«Халық банкі» АҚ');
+        a = a.replace(/АО\s*«?Halyk Bank»?/gi, '«Halyk Bank» АҚ');
+        a = a.replace(/Алмалинский/gi, 'Алмалы');
+        a = a.replace(/Ауэзовский/gi, 'Әуезов');
+        a = a.replace(/Бостандык/gi, 'Бостандық');
+        a = a.replace(/Жетысу/gi, 'Жетісу');
+        a = a.replace(/Медеу/gi, 'Медеу');
+        a = a.replace(/Наурызбай/gi, 'Наурызбай');
+        a = a.replace(/Турксиб/gi, 'Түркісіб');
         return a;
     }
 
     function declinePosition(position, case_) {
         if (!position) return '';
-        if (case_ === 'rod') {
-            return position
-                .replace(/менеджер по работе с клиентами/i, 'менеджера по работе с клиентами')
-                .replace(/менеджер ПВЗ/i, 'менеджера ПВЗ')
-                .replace(/региональный менеджер/i, 'регионального менеджера');
-        }
+        if (case_ !== 'rod') return position;
+        const p = position.toLowerCase().trim();
+        // Exact matches first
+        const exact = {
+            'менеджер по работе с клиентами': 'менеджера по работе с клиентами',
+            'менеджер пвз': 'менеджера ПВЗ',
+            'региональный менеджер': 'регионального менеджера',
+            'кассир': 'кассира',
+            'старший кассир': 'старшего кассира',
+            'оператор пвз': 'оператора ПВЗ',
+            'старший оператор': 'старшего оператора',
+            'администратор': 'администратора',
+            'кладовщик': 'кладовщика',
+            'водитель': 'водителя',
+            'грузчик': 'грузчика',
+            'упаковщик': 'упаковщика',
+            'уборщик': 'уборщика',
+            'охранник': 'охранника',
+            'курьер': 'курьера',
+            'специалист': 'специалиста',
+            'стажер': 'стажера',
+            'бухгалтер': 'бухгалтера',
+            'главный бухгалтер': 'главного бухгалтера',
+            'директор': 'директора',
+            'комплектовщик': 'комплектовщика',
+            'разнорабочий': 'разнорабочего',
+            'сборщик заказов': 'сборщика заказов',
+        };
+        if (exact[p]) return exact[p];
+        // Generic rules for unknown positions
+        if (p.endsWith('тель')) return position.slice(0, -2) + 'ля';
+        if (p.endsWith('арь') || p.endsWith('ир') || p.endsWith('ор') || p.endsWith('ур')) return position.slice(0, -2) + 'я';
+        if (p.endsWith('ант') || p.endsWith('ент')) return position.slice(0, -1) + 'а';
+        if (p.endsWith('ист')) return position.slice(0, -1) + 'а';
+        if (p.endsWith('ник') || p.endsWith('щик') || p.endsWith('чик')) return position.slice(0, -1) + 'а';
+        if (p.endsWith('ер')) return position.slice(0, -2) + 'ра';
         return position;
     }
 
@@ -450,13 +507,17 @@ function buildTemplateData(emp, employer, schema, params = {}) {
 
         // Director fields (individual variables for templates)
         directorName: employer.director_name || '',
-        directorNameShort: employer.director_name_dative || employer.director_name || '', // backward compat
-        directorNameShortDat: employer.director_name_dative || '',
+        directorNameShort: employer.director_name || '', // именительный падеж для подписи
+        directorNameShortDat: employer.director_name_dative || declineShortFIO(employer.director_name, 'dat'),
         directorNameShortRod: declineShortFIO(employer.director_name, 'rod'),
+        directorNameShortVin: declineShortFIO(employer.director_name, 'vin'),
         directorNameShortKz: employer.director_name || '',
         directorNameShortRu: employer.director_name || '',
         directorNameKz: employer.director_name || '',
         directorNameRu: employer.director_name || '',
+        directorNameRod: declineFIO(employer.director_name, 'rod'),
+        directorNameDat: declineFIO(employer.director_name, 'dat'),
+        directorNameVin: declineFIO(employer.director_name, 'vin'),
         directorBasis: 'Устава',
         directorBasisKz: 'Жарғысы',
         directorBasisRu: 'Устава',
