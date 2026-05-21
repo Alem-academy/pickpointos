@@ -1544,6 +1544,11 @@ router.post('/documents/:id/sign', async (req, res) => {
 
         res.json(result.rows[0]);
     } catch (err) {
+        console.error('[Docs] CRITICAL ERROR in /documents/:id/sign:', err);
+        console.error('[Docs] Error message:', err?.message);
+        console.error('[Docs] Error stack:', err?.stack);
+        console.error('[Docs] Error code:', err?.code);
+        console.error('[Docs] Error detail:', err?.detail);
         Logger.error('Error signing document FULL:', err);
         Logger.error('Error signing document msg:', err?.message, 'code:', err?.code, 'detail:', err?.detail);
         const msg = err?.message || '';
