@@ -421,6 +421,7 @@ export const SIGNATURE_SHEET_TEMPLATE = `
         .qr-container img { width: 150px; height: 150px; display: block; margin: 0 auto 10px; }
         .footer-note { font-size: 11px; color: #555; text-align: justify; margin-top: 40px; border-top: 1px solid #ddd; padding-top: 10px; }
         .success-badge { color: green; font-weight: bold; margin-bottom: 5px; }
+        .pending-badge { color: #b45309; font-weight: bold; margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -445,7 +446,7 @@ export const SIGNATURE_SHEET_TEMPLATE = `
         </tr>
         <tr>
             <td><strong>Результат подписания:</strong></td>
-            <td><div class="success-badge">✓ Подписано ЭЦП</div></td>
+            <td>{{employer_sign_status}}</td>
         </tr>
         <tr>
             <td><strong>Дата и время подписания:</strong></td>
@@ -471,7 +472,7 @@ export const SIGNATURE_SHEET_TEMPLATE = `
         </tr>
         <tr>
             <td><strong>Результат подписания:</strong></td>
-            <td><div class="success-badge">✓ Подписано ЭЦП (eGov QR)</div></td>
+            <td>{{employee_sign_status}}</td>
         </tr>
         <tr>
             <td><strong>Дата и время подписания:</strong></td>

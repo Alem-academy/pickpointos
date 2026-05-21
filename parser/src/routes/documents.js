@@ -1129,6 +1129,11 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
     // Log activity
     await logDocumentGenerated(employeeId, type, doc.id, reqUser);
 
+    // Generate provisional signature sheet immediately (will show "pending" for unsigned sides)
+    generateSignatureSheet(doc.id).catch(err => {
+        Logger.error(`[Docs] Initial signature sheet generation failed for ${doc.id}:`, err.message);
+    });
+
     return { document: doc, content: htmlContent };
 }
 
@@ -1415,12 +1420,10 @@ router.post('/documents/:id/sign-employer', authenticateToken, async (req, res) 
 
         Logger.info(`[Docs] Employer signed document ${id} (${doc.type})`);
 
-        // Фаза 3: Автогенерация листа подписей если документ теперь fully_signed
-        if (result.rows[0].status === 'fully_signed') {
-            generateSignatureSheet(id).catch(err => {
-                Logger.error(`[Docs] Auto signature sheet generation failed for ${id}:`, err.message);
-            });
-        }
+        // Фаза 3: Перегенерация листа подписей (обновляет статусы подписания)
+        generateSignatureSheet(id).catch(err => {
+            Logger.error(`[Docs] Signature sheet regeneration failed for ${id}:`, err.message);
+        });
 
         res.json(result.rows[0]);
     } catch (err) {
@@ -1535,12 +1538,10 @@ router.post('/documents/:id/sign', async (req, res) => {
             Logger.warn('[Docs] deactivate signing link skipped:', linkErr.message);
         }
 
-        // Фаза 3: Автогенерация листа подписей если документ теперь fully_signed
-        if (result.rows[0].status === 'fully_signed') {
-            generateSignatureSheet(id).catch(err => {
-                Logger.error(`[Docs] Auto signature sheet generation failed for ${id}:`, err.message);
-            });
-        }
+        // Фаза 3: Перегенерация листа подписей (обновляет статусы подписания)
+        generateSignatureSheet(docId).catch(err => {
+            Logger.error(`[Docs] Signature sheet regeneration failed for ${docId}:`, err.message);
+        });
 
         res.json(result.rows[0]);
     } catch (err) {

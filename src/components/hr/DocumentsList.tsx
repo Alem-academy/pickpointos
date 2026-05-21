@@ -392,13 +392,11 @@ export function DocumentsList({ employeeId, documents: externalDocuments, onStat
                                                                 </button>
                                                             </Tooltip>
                                                         )}
-                                                        {(doc.status === 'fully_signed' || ((doc as any).employer_signed_at && doc.status === 'signed')) && (
-                                                            <Tooltip text="Лист подписей">
-                                                                <button onClick={() => setSignatureSheetDocId(doc.id)} className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors">
-                                                                    <FileText className="h-4 w-4" />
-                                                                </button>
-                                                            </Tooltip>
-                                                        )}
+                                                        <Tooltip text="Лист подписей">
+                                                            <button onClick={() => setSignatureSheetDocId(doc.id)} className="p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors">
+                                                                <FileText className="h-4 w-4" />
+                                                            </button>
+                                                        </Tooltip>
                                                         <Tooltip text="Удалить документ">
                                                             <button onClick={() => handleDelete(doc.id, doc.type, doc.status)} className="p-2 text-slate-400 hover:text-red-600 transition-colors" disabled={doc.status === 'signed'}>
                                                                 <Trash2 className={cn("h-4 w-4", doc.status === 'signed' ? 'opacity-30 cursor-not-allowed' : '')} />
