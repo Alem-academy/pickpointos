@@ -1118,7 +1118,7 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
         await query(`
             UPDATE documents
             SET employer_signed_at = NOW(),
-                status = 'signed',
+                status = 'signed'::document_status,
                 employer_cert_info = $1
             WHERE id = $2
         `, [JSON.stringify({ auto_signed: true, reason: 'employer_generated_certificate' }), doc.id]);
@@ -1383,8 +1383,8 @@ router.post('/documents/:id/sign-employer', authenticateToken, async (req, res) 
                 employer_signed_at = NOW(),
                 employer_cert_info = $2,
                 status = CASE
-                    WHEN status = 'signed' THEN 'fully_signed'
-                    WHEN status = 'draft' THEN 'employer_signed'
+                    WHEN status = 'signed' THEN 'fully_signed'::document_status
+                    WHEN status = 'draft' THEN 'employer_signed'::document_status
                     ELSE status
                 END,
                 signing_completed_at = NOW(),
@@ -1465,8 +1465,8 @@ router.post('/documents/:id/sign', async (req, res) => {
         const result = await query(`
             UPDATE documents
             SET status = CASE
-                    WHEN employer_signed_at IS NOT NULL AND requires_employer_signature = TRUE THEN 'fully_signed'
-                    ELSE 'signed'
+                    WHEN employer_signed_at IS NOT NULL AND requires_employer_signature = TRUE THEN 'fully_signed'::document_status
+                    ELSE 'signed'::document_status
                 END,
                 signed_at = NOW(),
                 signature_cms = $1,
@@ -1612,7 +1612,7 @@ router.post('/sign/:token/submit-signature', async (req, res) => {
 
         const result = await query(`
             UPDATE documents
-            SET status = 'signed',
+            SET status = 'signed'::document_status,
                 signed_at = NOW(),
                 signature_cms = $1,
                 sigex_document_id = COALESCE($2, sigex_document_id),
