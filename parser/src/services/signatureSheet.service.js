@@ -111,7 +111,23 @@ const DOCUMENT_TYPE_NAMES = {
     vacation_application: 'Заявление на отпуск',
     vacation_order: 'Приказ на отпуск',
     termination_order: 'Приказ об увольнении',
-    employment_certificate: 'Справка с места работы'
+    employment_certificate: 'Справка с места работы',
+    addendum: 'Дополнительное соглашение',
+    '01_zayavlenie-o-vyhode-s-dekreta': 'Заявление о выходе с декрета',
+    '02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom': 'Заявление на отпуск по уходу за ребенком',
+    '03_zayavlenie-ob-izmenenii-personalnyh-dannyh': 'Заявление об изменении персональных данных',
+    '04_prikaz-ob-otpuske-po-beremennosti-i-rodam': 'Приказ об отпуске по беременности и родам',
+    '05_prikaz-o-prodlenii-otpuska-po-beremennosti': 'Приказ о продлении отпуска по беременности',
+    '06_prikaz-o-vnesenii-izmeneniy-v-fio': 'Приказ о внесении изменений в ФИО',
+    '07_prikaz-o-vyhode-iz-otpuska-po-uhodu': 'Приказ о выходе из отпуска по уходу',
+    '08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu': 'Приказ об отпуске без сохранения ЗП по уходу',
+    '09_zayavlenie-na-otpusk-po-beremennosti': 'Заявление на отпуск по беременности',
+    '10_zayavlenie-na-prodlenie-otpuska-po-beremennosti': 'Заявление на продление отпуска по беременности',
+    '11_soglashenie-o-rastorzhenii-trudovogo-dogovora': 'Соглашение о расторжении трудового договора',
+    '12_dop-soglashenie-ob-izmenenii-familii': 'Доп. соглашение об изменении фамилии',
+    '13_zayavlenie-o-prieme-na-rabotu': 'Заявление на прием на работу',
+    '14_prikaz-o-prieme-na-rabotu': 'Приказ о приеме на работу',
+    '15_trudovoy-dogovor': 'Трудовой договор'
 };
 
 /**
@@ -164,9 +180,8 @@ export async function generateSignatureSheet(documentId) {
         SELECT 
             d.id, d.type, d.status, d.scan_url, d.signed_at, d.signature_cms,
             d.employer_signed_at, d.signature_cms_employer, d.employer_cert_info,
-            d.employee_cert_info,
             e.full_name as employee_name, e.iin as employee_iin,
-            emp.name as employer_name, emp.bin as employer_bin
+            emp.name_full as employer_name, emp.bin as employer_bin
         FROM documents d
         LEFT JOIN employees e ON d.employee_id = e.id
         LEFT JOIN employers emp ON e.employer_id = emp.id
@@ -233,7 +248,7 @@ export async function getDocumentVerificationData(documentId) {
             d.id, d.type, d.status, d.created_at, d.signed_at, d.employer_signed_at,
             d.signature_sheet_url, d.final_pdf_url,
             e.full_name as employee_name, e.iin as employee_iin,
-            emp.name as employer_name, emp.bin as employer_bin
+            emp.name_full as employer_name, emp.bin as employer_bin
         FROM documents d
         LEFT JOIN employees e ON d.employee_id = e.id
         LEFT JOIN employers emp ON e.employer_id = emp.id
