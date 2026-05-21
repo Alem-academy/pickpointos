@@ -270,43 +270,68 @@ function buildTemplateData(emp, employer, schema, params = {}) {
 
     // Helper: simple FIO case declension (basic Russian rules)
     // For production accuracy, integrate petrovich or store pre-declined forms in DB
+    function declineFirstName(name, case_, isFemale) {
+        if (!name || case_ === 'nom') return name;
+        const n = name.toLowerCase();
+        // Female names
+        if (isFemale) {
+            if (n.endsWith('а')) return name.slice(0, -1) + (case_ === 'vin' ? 'у' : 'ы');
+            if (n.endsWith('я')) return name.slice(0, -1) + 'и';
+            return name;
+        }
+        // Male names
+        if (n.endsWith('й')) return name.slice(0, -1) + 'я';
+        if (n.endsWith('ь')) return name.slice(0, -1) + 'я';
+        if (/[аеёиоуыэюя]/.test(name.slice(-1))) return name; // ends with vowel
+        return name + 'а'; // consonant: Миржан → Миржана
+    }
+
+    function declinePatronymic(pat, case_, isFemale) {
+        if (!pat || case_ === 'nom') return pat;
+        if (isFemale) {
+            if (pat.toLowerCase().endsWith('на')) return pat.slice(0, -2) + 'ны';
+            return pat;
+        }
+        if (pat.toLowerCase().endsWith('ич')) return pat + 'а';
+        return pat;
+    }
+
     function declineFIO(fullName, case_) {
         if (!fullName) return '';
         const parts = fullName.trim().split(/\s+/);
         if (parts.length < 2) return fullName;
         const [last, first, mid = ''] = parts;
         const l = last.toLowerCase();
-        const suffix = mid ? ` ${mid}` : '';
+        const isFemale = l.endsWith('ская') || l.endsWith('цкая') || l.endsWith('ова') || l.endsWith('ева') || l.endsWith('ина') || (last.endsWith('а') && !l.endsWith('ов'));
 
-        // Женские фамилии на -ская / -цкая
+        // Decline last name
+        let declinedLast = last;
         if (l.endsWith('ская') || l.endsWith('цкая')) {
-            const base = last.slice(0, -2); // убираем 'ая'
-            if (case_ === 'rod' || case_ === 'dat') return `${base}ой ${first}${suffix}`;
-            if (case_ === 'vin') return `${base}ую ${first}${suffix}`;
-        }
-        // Женские фамилии на -ова / -ева / -ина
-        if (l.endsWith('ова') || l.endsWith('ева') || l.endsWith('ина')) {
-            const base = last.slice(0, -1);
-            if (case_ === 'rod' || case_ === 'dat') return `${base}ой ${first}${suffix}`;
-            if (case_ === 'vin') return `${base}у ${first}${suffix}`;
-        }
-        // Женские фамилии на -а
-        if (last.endsWith('а')) {
-            if (case_ === 'rod' || case_ === 'dat') return `${last.slice(0,-1)}ой ${first}${suffix}`;
-            if (case_ === 'vin') return `${last.slice(0,-1)}у ${first}${suffix}`;
-        }
-        // Мужские фамилии на -ев / -ов
-        if (last.endsWith('ев') || last.endsWith('ов')) {
             const base = last.slice(0, -2);
-            if (case_ === 'rod') return `${base}ова ${first}${suffix}`;
-            if (case_ === 'dat') return `${base}ову ${first}${suffix}`;
-            if (case_ === 'vin') return `${base}ова ${first}${suffix}`;
+            if (case_ === 'rod' || case_ === 'dat') declinedLast = `${base}ой`;
+            if (case_ === 'vin') declinedLast = `${base}ую`;
+        } else if (l.endsWith('ова') || l.endsWith('ева') || l.endsWith('ина')) {
+            const base = last.slice(0, -1);
+            if (case_ === 'rod' || case_ === 'dat') declinedLast = `${base}ой`;
+            if (case_ === 'vin') declinedLast = `${base}у`;
+        } else if (last.endsWith('а') && !l.endsWith('ов')) {
+            if (case_ === 'rod' || case_ === 'dat') declinedLast = `${last.slice(0,-1)}ой`;
+            if (case_ === 'vin') declinedLast = `${last.slice(0,-1)}у`;
+        } else if (last.endsWith('ев') || last.endsWith('ов')) {
+            const base = last.slice(0, -2);
+            if (case_ === 'rod') declinedLast = `${base}ова`;
+            if (case_ === 'dat') declinedLast = `${base}ову`;
+            if (case_ === 'vin') declinedLast = `${base}ова`;
+        } else {
+            if (case_ === 'rod') declinedLast = `${last}а`;
+            if (case_ === 'dat') declinedLast = `${last}у`;
+            if (case_ === 'vin') declinedLast = `${last}а`;
         }
-        // Мужские фамилии (прочие)
-        if (case_ === 'rod') return `${last}а ${first}${suffix}`;
-        if (case_ === 'dat') return `${last}у ${first}${suffix}`;
-        if (case_ === 'vin') return `${last}а ${first}${suffix}`;
-        return fullName;
+
+        const declinedFirst = declineFirstName(first, case_, isFemale);
+        const declinedMid = declinePatronymic(mid, case_, isFemale);
+
+        return [declinedLast, declinedFirst, declinedMid].filter(Boolean).join(' ');
     }
 
     function declineShortFIO(fullName, case_) {
@@ -583,7 +608,9 @@ function buildTemplateData(emp, employer, schema, params = {}) {
     };
 
     // Merge auto + manual params (manual overrides auto only when non-empty)
-    const result = {};
+    // Include ALL autoData keys so templates can use any auto-computed variable
+    // even if it's not explicitly declared in the schema
+    const result = { ...autoData };
     for (const key of Object.keys(schema.variables || {})) {
         const paramVal = params[key];
         const autoVal = autoData[key];
@@ -591,7 +618,7 @@ function buildTemplateData(emp, employer, schema, params = {}) {
             result[key] = paramVal;
         } else if (autoVal !== undefined && autoVal !== '') {
             result[key] = autoVal;
-        } else {
+        } else if (!(key in autoData)) {
             result[key] = '__________';
         }
     }
