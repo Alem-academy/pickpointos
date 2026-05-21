@@ -1506,19 +1506,23 @@ router.post('/documents/:id/sign', async (req, res) => {
 
         // Log activity - document signed
         if (docInfo.rows.length > 0) {
-            const { logActivity } = await import('../lib/activityLogger.js');
-            await logActivity({
-                employeeId: docInfo.rows[0].employee_id,
-                actionType: 'document_signed',
-                actionCategory: 'document',
-                title: `Документ подписан через Sigex`,
-                description: result.rows[0].type,
-                metadata: { 
-                    document_id: id,
-                    sigex_document_id,
-                    signType: signType || 'cms'
-                }
-            });
+            try {
+                const { logActivity } = await import('../lib/activityLogger.js');
+                await logActivity({
+                    employeeId: docInfo.rows[0].employee_id,
+                    actionType: 'document_signed',
+                    actionCategory: 'document',
+                    title: `Документ подписан через Sigex`,
+                    description: result.rows[0].type,
+                    metadata: { 
+                        document_id: id,
+                        sigex_document_id,
+                        signType: signType || 'cms'
+                    }
+                });
+            } catch (logErr) {
+                Logger.warn('[Docs] Activity log skipped:', logErr.message);
+            }
         }
 
         try {
@@ -1540,14 +1544,16 @@ router.post('/documents/:id/sign', async (req, res) => {
 
         res.json(result.rows[0]);
     } catch (err) {
-        Logger.error('Error signing document:', err.message, err.code || '', err.detail || '');
-        const msg = err.message || '';
+        Logger.error('Error signing document FULL:', err);
+        Logger.error('Error signing document msg:', err?.message, 'code:', err?.code, 'detail:', err?.detail);
+        const msg = err?.message || '';
         const isBtree =
             msg.includes('btree') ||
             msg.includes('index row size') ||
-            err.code === '54000';
+            err?.code === '54000';
         res.status(500).json({
             error: 'Internal server error',
+            details: msg || String(err),
             ...(isBtree
                 ? {
                       hint: 'Удалите индекс idx_documents_signature_cms (миграция parser/src/migrations/009_drop_signature_cms_index.sql).'
