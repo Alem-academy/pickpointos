@@ -65,22 +65,21 @@
     {{startDateDay}}        — день начала работы
     {{startDateMonthRu}}    — месяц начала работы (русский)
     {{startDateYear}}       — год начала работы
-    {{employeePositionRod}}    — должность
-    {{currentDateDay}}      — день подписания
-    {{currentDateMonthRu}}  — месяц подписания (русский)
-    {{currentDateYear}}     — год подписания
+    {{employeePositionRod}} — должность в родительном падеже
+    {{currentDateShort}}    — дата подписания (числовой формат, например: 03.11.2025)
   -->
 
   <div class="header-right">
-    <p>Директору {{employerName}}</p>
+    <p>Директору</p>
+    <p>{{employerName}}</p>
     <p>{{directorNameShortDat}}</p>
     <p>от {{employeeFullName}}</p>
     <p>{{employeeResidentAdj}} по адресу: {{employeeAddressResidentRu}}</p>
     <p>{{employeeRegisteredAdj}} по адресу: {{employeeAddressRegRu}}</p>
-    <p>Тел: {{employeePhone}}</p>
+    <p>тел: {{employeePhone}}</p>
   </div>
 
-  <div class="title">ЗАЯВЛЕНИЕ</div>
+  <div class="title">Заявление</div>
 
   <p class="body-text">
     Прошу Вас принять меня на работу с «{{startDateDay}}» {{startDateMonthRu}} {{startDateYear}} года 
@@ -89,7 +88,7 @@
 
   <div class="signature-block">
     <div class="date">
-      «{{currentDateDay}}» {{currentDateMonthRu}} {{currentDateYear}} г.
+      {{currentDateShort}}
     </div>
     <div class="sign">
       <span class="line"></span>

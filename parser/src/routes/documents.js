@@ -565,6 +565,7 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         currentDateMonthKz: MONTHS_KZ[now.getMonth()],
         currentDateYear: String(now.getFullYear()),
         currentDateShort: `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}`,
+        currentDateNumeric: `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}`,
 
         // Generic date
         dateDay: String(now.getDate()),

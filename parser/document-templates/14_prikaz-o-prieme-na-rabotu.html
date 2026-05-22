@@ -15,40 +15,10 @@
       margin: 0 auto;
       padding: 15mm 20mm;
     }
-    .bilingual-header {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 10px;
-    }
-    .bilingual-header td {
-      width: 50%;
-      vertical-align: top;
-      padding: 5px;
-    }
-    .bilingual-header .kz { text-align: left; }
-    .bilingual-header .ru { text-align: right; }
-    .bilingual-header p {
-      margin: 0;
-      font-weight: bold;
-      line-height: 1.3;
-    }
-    .meta-row {
-      width: 100%;
-      margin: 10px 0;
-    }
-    .meta-row td {
-      width: 50%;
-      vertical-align: top;
-      padding: 5px;
-    }
-    .meta-row .left { text-align: left; }
-    .meta-row .right { text-align: right; }
-    .meta-row p { margin: 0; }
     .order-title {
       text-align: center;
       font-weight: bold;
       margin: 20px 0;
-      text-transform: uppercase;
     }
     .body-text {
       text-align: justify;
@@ -72,62 +42,28 @@
       width: 150px;
       border-bottom: 1px solid #000;
     }
-    .acknowledge {
-      margin-top: 30px;
-    }
   </style>
 </head>
 <body>
   <!--
     Переменные:
-    {{employerName}}           — наименование работодателя (Жасмин)
+    {{employerName}}           — наименование работодателя (например: ИП «Жасмин»)
     {{orderNumber}}            — номер приказа
     {{dateDay}}                — день
-    {{dateMonthKz}}            — месяц на казахском
     {{dateMonthRu}}            — месяц на русском
     {{dateYear}}               — год
-    {{cityKz}}                 — город на казахском
-    {{cityRu}}                 — город на русском
     {{employeeFullNameVin}}    — ФИО в ВИНИТЕЛЬНОМ падеже (кого принять)
     {{employeeFullNameShort}}  — ФИО с инициалами (именительный)
     {{startDateDay}}           — день начала работы
     {{startDateMonthRu}}       — месяц начала (русский)
     {{startDateYear}}          — год начала
-    {{employeePositionRod}}       — должность
+    {{employeePositionRod}}    — должность в родительном падеже
     {{workplaceAddressRu}}     — адрес места работы (русский)
     {{probationPeriod}}        — испытательный срок (например: три месяца)
     {{contractNumber}}         — номер трудового договора
     {{contractDate}}           — дата трудового договора
     {{directorNameShort}}      — ФИО директора с инициалами
   -->
-
-  <table class="bilingual-header">
-    <tr>
-      <td class="kz">
-        <p>{{employerName}}</p>
-        <p>жеке кәсіпкер</p>
-        <p>БҰЙРЫҚ</p>
-      </td>
-      <td class="ru">
-        <p>Индивидуальный предприниматель</p>
-        <p>{{employerName}}</p>
-        <p>ПРИКАЗ</p>
-      </td>
-    </tr>
-  </table>
-
-  <table class="meta-row">
-    <tr>
-      <td class="left">
-        <p>«{{dateDay}}» {{dateMonthKz}} {{dateYear}} жыл</p>
-        <p>{{cityKz}} қаласы</p>
-      </td>
-      <td class="right">
-        <p>№ {{orderNumber}}</p>
-        <p>город {{cityRu}}</p>
-      </td>
-    </tr>
-  </table>
 
   <div class="order-title">
     О приеме на работу
@@ -141,7 +77,7 @@
   <p class="body-text no-indent"><strong>ПРИКАЗЫВАЮ:</strong></p>
 
   <p class="body-text">
-    Принять <strong>{{employeeFullNameVin}}</strong> с «{{startDateDay}}» {{startDateMonthRu}} {{startDateYear}} года 
+    Принять <strong>{{employeeFullNameVin}}</strong>, с «{{startDateDay}}» {{startDateMonthRu}} {{startDateYear}} года 
     в должности <strong>{{employeePositionRod}}</strong> с местом работы по адресу {{workplaceAddressRu}}, 
     с испытательным сроком на {{probationPeriod}} с момента заключения трудового договора 
     и с оплатой труда согласно трудовому договору № {{contractNumber}} от {{contractDate}}.
@@ -162,9 +98,8 @@
       </td>
       <td style="width: 30%;"></td>
       <td style="width: 40%;">
-        <p>С приказом ознакомлен(а):</p>
-        <p style="margin-top: 20px;">«{{dateDay}}» {{dateMonthRu}} {{dateYear}} г.</p>
-        <p style="margin-top: 10px;"><span class="sign-line"></span></p>
+        <p>С приказом ознакомлен (-а):</p>
+        <p style="margin-top: 20px;"><span class="sign-line"></span></p>
         <p style="font-size: 10pt;">(подпись)</p>
         <p>({{employeeFullNameShort}})</p>
       </td>
