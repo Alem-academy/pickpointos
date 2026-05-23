@@ -276,7 +276,10 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         // Female names
         if (isFemale) {
             if (n.endsWith('а')) return name.slice(0, -1) + (case_ === 'vin' ? 'у' : 'ы');
-            if (n.endsWith('я')) return name.slice(0, -1) + 'и';
+            if (n.endsWith('я')) {
+                if (case_ === 'vin') return name.slice(0, -1) + 'ю';
+                return name.slice(0, -1) + 'и';
+            }
             return name;
         }
         // Male names
@@ -289,7 +292,10 @@ function buildTemplateData(emp, employer, schema, params = {}) {
     function declinePatronymic(pat, case_, isFemale) {
         if (!pat || case_ === 'nom') return pat;
         if (isFemale) {
-            if (pat.toLowerCase().endsWith('на')) return pat.slice(0, -2) + 'ны';
+            if (pat.toLowerCase().endsWith('на')) {
+                if (case_ === 'vin') return pat.slice(0, -2) + 'ну';
+                return pat.slice(0, -2) + 'ны';
+            }
             return pat;
         }
         if (pat.toLowerCase().endsWith('ич')) return pat + 'а';
@@ -593,8 +599,33 @@ function buildTemplateData(emp, employer, schema, params = {}) {
                 contractDateMonthRu: MONTHS_RU[d.getMonth()],
                 contractDateMonthKz: MONTHS_KZ[d.getMonth()],
                 contractDateYear: String(d.getFullYear()),
+                contractStartDateDay: String(d.getDate()),
+                contractStartDateMonthRu: MONTHS_RU[d.getMonth()],
+                contractStartDateMonthKz: MONTHS_KZ[d.getMonth()],
+                contractStartDateYear: String(d.getFullYear()),
             };
         })() : {}),
+
+        // Contract end date
+        ...(params.contractEndDate ? (() => {
+            const d = new Date(params.contractEndDate);
+            return {
+                contractEndDate: `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`,
+                contractEndDateDay: String(d.getDate()),
+                contractEndDateMonthRu: MONTHS_RU[d.getMonth()],
+                contractEndDateMonthKz: MONTHS_KZ[d.getMonth()],
+                contractEndDateYear: String(d.getFullYear()),
+            };
+        })() : {}),
+
+        // Probation period
+        probationPeriod: (() => {
+            const m = parseInt(params.probationMonths, 10);
+            if (!m || isNaN(m)) return 'три месяца';
+            const forms = ['месяц', 'месяца', 'месяцев'];
+            const form = m % 10 === 1 && m % 100 !== 11 ? 0 : [2,3,4].includes(m % 10) && ![12,13,14].includes(m % 100) ? 1 : 2;
+            return `${m} (${numberToWordsRu(m)}) ${forms[form]}`;
+        })(),
 
         // City
         city: 'Алматы',
