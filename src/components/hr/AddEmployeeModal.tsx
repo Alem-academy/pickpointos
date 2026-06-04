@@ -237,7 +237,7 @@ export function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmployeeModa
                                 onChange={e => setFormData({ ...formData, role: e.target.value as EmployeeRole })}
                                 className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2"
                             >
-                                <option value="employee">Сотрудник ПВЗ</option>
+                                <option value="employee">Менеджер по работе с клиентами</option>
                                 <option value="rf">Региональный (RF)</option>
                                 <option value="hr">HR Менеджер</option>
                                 <option value="admin">Администратор</option>
