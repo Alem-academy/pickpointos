@@ -219,6 +219,10 @@ router.post('/employees', async (req, res) => {
         res.status(201).json(result.rows[0]);
     } catch (err) {
         Logger.error('Error creating employee:', err);
+        // Handle duplicate IIN
+        if (err.message && err.message.includes('duplicate key value violates unique constraint "employees_iin_key"')) {
+            return res.status(409).json({ error: 'Сотрудник с таким ИИН уже существует в базе' });
+        }
         res.status(500).json({ error: 'Internal server error', details: err.message });
     }
 });
