@@ -46,7 +46,7 @@ export interface ActivityLog {
 export interface Document {
     id: string;
     employee_id: string;
-    type: 'contract' | 'order_hiring' | 'application' | 'vacation_application' | 'vacation_order' | 'termination_order' | 'employment_certificate' | 'addendum' | 'id_main' | 'id_register' | 'id_scan' | 'cert_075' | 'photo' | 'bank_details' | 'cert_tb' | 'address_cert' | 'other'
+    type: 'contract' | 'order_hiring' | 'application' | 'vacation_application' | 'vacation_order' | 'termination_order' | 'employment_certificate' | 'addendum' | 'id_main' | 'id_register' | 'id_scan' | 'cert_075' | 'photo' | 'bank_details' | 'cert_tb' | 'address_cert' | 'criminal_record' | 'narc_psych' | 'handwritten_application' | 'tax_deduction' | 'other'
         | '01_zayavlenie-o-vyhode-s-dekreta' | '02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom'
         | '03_zayavlenie-ob-izmenenii-personalnyh-dannyh' | '04_prikaz-ob-otpuske-po-beremennosti-i-rodam'
         | '05_prikaz-o-prodlenii-otpuska-po-beremennosti' | '06_prikaz-o-vnesenii-izmeneniy-v-fio'

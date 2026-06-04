@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api, type Document } from '@/services/api';
-import { FileText, Loader2, Upload, Eye, Trash2, File, IdCard, Image, Award, Banknote, MapPin, Stethoscope, Plane, UserX, CheckCircle, Share2, PenTool, Mail } from 'lucide-react';
+import { FileText, Loader2, Upload, Eye, Trash2, File, IdCard, Image, Award, Banknote, MapPin, Stethoscope, Plane, UserX, CheckCircle, Share2, PenTool, Mail, FileCheck, FileEdit } from 'lucide-react';
 import { SigexSignModal } from '../SigexSignModal';
 import { SignatureSheetModal } from './SignatureSheetModal';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
@@ -46,11 +46,15 @@ const DOCUMENT_TYPES: any = {
     id_main: { label: 'Удостоверение личности (лиц.)', icon: IdCard, color: 'indigo', category: 'uploaded' },
     id_register: { label: 'Удостоверение личности (обор.)', icon: IdCard, color: 'indigo', category: 'uploaded' },
     id_scan: { label: 'Скан документа', icon: IdCard, color: 'indigo', category: 'uploaded' },
-    photo: { label: 'Фотография 3×4', icon: Image, color: 'pink', category: 'uploaded' },
+    photo: { label: 'Фото на фоне удостоверения', icon: Image, color: 'pink', category: 'uploaded' },
     cert_075: { label: 'Медсправка 075/у', icon: Stethoscope, color: 'green', category: 'uploaded' },
-    cert_tb: { label: 'Справка тубдиспансер', icon: Stethoscope, color: 'green', category: 'uploaded' },
+    cert_tb: { label: 'Справка нарко-, псих-, противотуберкулезного диспансера', icon: Stethoscope, color: 'green', category: 'uploaded' },
+    criminal_record: { label: 'Справка об отсутствии судимости', icon: FileCheck, color: 'slate', category: 'uploaded' },
+    narc_psych: { label: 'Справка нарко- и психдиспансера', icon: Stethoscope, color: 'green', category: 'uploaded' },
+    handwritten_application: { label: 'Заявление на прием (рукописное)', icon: FileEdit, color: 'amber', category: 'uploaded' },
+    tax_deduction: { label: 'Заявление на вычет', icon: Banknote, color: 'emerald', category: 'uploaded' },
     bank_details: { label: 'Справка IBAN', icon: Banknote, color: 'emerald', category: 'uploaded' },
-    address_cert: { label: 'Адресная справка', icon: MapPin, color: 'orange', category: 'uploaded' },
+    address_cert: { label: 'Скрин eGov с адресом регистрации', icon: MapPin, color: 'orange', category: 'uploaded' },
     other: { label: 'Другой документ', icon: File, color: 'gray', category: 'uploaded' }
 };
 
@@ -617,14 +621,20 @@ export function DocumentsList({ employeeId, documents: externalDocuments, onStat
                             </optgroup>
                             <optgroup label="Медицинские справки">
                                 <option value="cert_075">Медсправка 075/у</option>
-                                <option value="cert_tb">Справка тубдиспансер</option>
+                                <option value="cert_tb">Справка нарко-, псих-, противотуберкулезного диспансера</option>
+                                <option value="narc_psych">Справка нарко- и психдиспансера</option>
                             </optgroup>
                             <optgroup label="Банковские реквизиты">
-                                <option value="bank_details">Справка IBAN</option>
+                                <option value="bank_details">Справка банка с IBAN</option>
                             </optgroup>
-                            <optgroup label="Прочее">
-                                <option value="photo">Фотография 3×4</option>
-                                <option value="address_cert">Адресная справка</option>
+                            <optgroup label="Адрес и фото">
+                                <option value="photo">Фото на фоне удостоверения</option>
+                                <option value="address_cert">Скрин eGov с адресом регистрации</option>
+                            </optgroup>
+                            <optgroup label="Заявления и справки">
+                                <option value="handwritten_application">Заявление на прием (рукописное)</option>
+                                <option value="tax_deduction">Заявление на вычет</option>
+                                <option value="criminal_record">Справка об отсутствии судимости</option>
                                 <option value="other">Другой документ</option>
                             </optgroup>
                         </select>

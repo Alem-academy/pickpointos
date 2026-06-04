@@ -1,4 +1,4 @@
-import { CheckCircle2, AlertCircle, FileText, FileCheck, FileEdit, Plane, UserX, Award, Image, IdCard } from 'lucide-react';
+import { CheckCircle2, AlertCircle, FileText, FileCheck, FileEdit, Plane, UserX, Award, Image, IdCard, Stethoscope, Banknote, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface DocumentChecklistProps {
@@ -9,11 +9,21 @@ interface DocumentChecklistProps {
 
 export function DocumentChecklist({ documents = [], onGenerate, onUpload }: DocumentChecklistProps) {
     const requiredDocs = [
-        { type: 'contract', label: 'Трудовой договор', icon: FileText, color: 'blue', category: 'generated' },
-        { type: 'order_hiring', label: 'Приказ о приеме', icon: FileCheck, color: 'emerald', category: 'generated' },
-        { type: 'application', label: 'Заявление на прием', icon: FileEdit, color: 'amber', category: 'generated' },
-        { type: 'id_main', label: 'Удостоверение личности', icon: IdCard, color: 'indigo', category: 'uploaded' },
-        { type: 'photo', label: 'Фото 3х4', icon: Image, color: 'pink', category: 'uploaded' },
+        // Generated (hiring process)
+        { type: '13_zayavlenie-o-prieme-na-rabotu', label: 'Заявление о приеме на работу', icon: FileEdit, color: 'amber', category: 'generated' },
+        { type: '14_prikaz-o-prieme-na-rabotu', label: 'Приказ о приеме на работу', icon: FileCheck, color: 'emerald', category: 'generated' },
+        { type: '15_trudovoy-dogovor', label: 'Трудовой договор', icon: FileText, color: 'blue', category: 'generated' },
+        // Uploaded
+        { type: 'id_main', label: 'Удостоверение личности (лицевая)', icon: IdCard, color: 'indigo', category: 'uploaded' },
+        { type: 'id_register', label: 'Удостоверение личности (оборот)', icon: IdCard, color: 'indigo', category: 'uploaded' },
+        { type: 'cert_075', label: 'Справка № 075 (медосмотр)', icon: Stethoscope, color: 'green', category: 'uploaded' },
+        { type: 'photo', label: 'Фото на фоне удостоверения', icon: Image, color: 'pink', category: 'uploaded' },
+        { type: 'address_cert', label: 'Скрин eGov с адресом регистрации', icon: MapPin, color: 'orange', category: 'uploaded' },
+        { type: 'bank_details', label: 'Справка банка с IBAN', icon: Banknote, color: 'emerald', category: 'uploaded' },
+        { type: 'cert_tb', label: 'Справка нарко-, псих-, противотуберкулезного диспансера', icon: Stethoscope, color: 'green', category: 'uploaded' },
+        { type: 'criminal_record', label: 'Справка об отсутствии судимости', icon: FileCheck, color: 'slate', category: 'uploaded' },
+        { type: 'handwritten_application', label: 'Заявление на прием (рукописное)', icon: FileEdit, color: 'amber', category: 'uploaded' },
+        { type: 'tax_deduction', label: 'Заявление на вычет', icon: Banknote, color: 'emerald', category: 'uploaded' },
     ];
 
     const optionalDocs = [
