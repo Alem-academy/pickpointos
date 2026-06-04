@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api, type Document } from '@/services/api';
-import { FileText, Loader2, Upload, Eye, Trash2, File, IdCard, Image, Award, Banknote, MapPin, Stethoscope, Plane, UserX, CheckCircle, Share2, PenTool } from 'lucide-react';
+import { FileText, Loader2, Upload, Eye, Trash2, File, IdCard, Image, Award, Banknote, MapPin, Stethoscope, Plane, UserX, CheckCircle, Share2, PenTool, Mail } from 'lucide-react';
 import { SigexSignModal } from '../SigexSignModal';
 import { SignatureSheetModal } from './SignatureSheetModal';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
@@ -269,6 +269,21 @@ export function DocumentsList({ employeeId, documents: externalDocuments, onStat
         }
     };
 
+    const handleSendEmail = async (docId: string, docType: string) => {
+        try {
+            const docName = (DOCUMENT_TYPES as any)[docType]?.label || 'Документ';
+            const to = prompt(`Отправить «${docName}» на email:\n\nВведите адрес получателя или оставьте пустым для отправки сотруднику:`);
+            if (to === null) return; // cancelled
+
+            const payload = to.trim() ? { to: to.trim() } : { to: 'employee' };
+            const result = await api.sendDocumentEmail(docId, payload.to);
+            alert(`✅ Документ отправлен!\nMessage ID: ${result.messageId || '—'}`);
+        } catch (err: any) {
+            console.error('Failed to send email:', err);
+            alert('❌ Ошибка отправки: ' + (err.response?.data?.error || err.message));
+        }
+    };
+
     const getStatusBadge = (doc: Document) => {
         const requiresEmployer = doc.requires_employer_signature;
         const employerSigned = doc.employer_signed_at;
@@ -414,9 +429,19 @@ export function DocumentsList({ employeeId, documents: externalDocuments, onStat
                                                                 <FileText className="h-4 w-4" />
                                                             </button>
                                                         </Tooltip>
+                                                        <Tooltip text="Отправить на email">
+                                                            <button onClick={() => handleSendEmail(doc.id, doc.type)} className="p-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded transition-colors">
+                                                                <Mail className="h-4 w-4" />
+                                                            </button>
+                                                        </Tooltip>
                                                         <Tooltip text="Удалить документ">
                                                             <button onClick={() => handleDelete(doc.id, doc.type, doc.status)} className="p-2 text-slate-400 hover:text-red-600 transition-colors" disabled={doc.status === 'signed'}>
                                                                 <Trash2 className={cn("h-4 w-4", doc.status === 'signed' ? 'opacity-30 cursor-not-allowed' : '')} />
+                                                            </button>
+                                                        </Tooltip>
+                                                        <Tooltip text="Отправить на email">
+                                                            <button onClick={() => handleSendEmail(doc.id, doc.type)} className="p-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded transition-colors">
+                                                                <Mail className="h-4 w-4" />
                                                             </button>
                                                         </Tooltip>
                                                     </div>
@@ -562,6 +587,11 @@ export function DocumentsList({ employeeId, documents: externalDocuments, onStat
                                         <Tooltip text="Удалить документ">
                                             <button onClick={() => handleDelete(doc.id, doc.type, doc.status)} className="p-2 text-slate-400 hover:text-red-600 transition-colors" disabled={doc.status === 'signed'}>
                                                 <Trash2 className={cn("h-4 w-4", doc.status === 'signed' ? 'opacity-30 cursor-not-allowed' : '')} />
+                                            </button>
+                                        </Tooltip>
+                                        <Tooltip text="Отправить на email">
+                                            <button onClick={() => handleSendEmail(doc.id, doc.type)} className="p-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded transition-colors">
+                                                <Mail className="h-4 w-4" />
                                             </button>
                                         </Tooltip>
                                     </div>

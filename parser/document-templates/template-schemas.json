@@ -1751,7 +1751,8 @@
         "employerAddressRu": { "type": "string", "example": "г. Алматы, ул. Сатпаева, 30/8, офис 139", "description": "Адрес работодателя" },
         "employerBIC": { "type": "string", "example": "CASPKZKA", "description": "БИК работодателя" },
         "employerIIN": { "type": "string", "example": "910729401967", "description": "ИИН работодателя" },
-        "employerBank": { "type": "string", "example": "АО «Kaspi Bank»", "description": "Банк работодателя" }
+        "employerBank": { "type": "string", "example": "АО «Kaspi Bank»", "description": "Банк работодателя" },
+        "systemName": { "type": "string", "example": "edo.uchet.kz", "description": "Название системы ЭДО" }
       }
     }
   }

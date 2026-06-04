@@ -147,6 +147,11 @@ export const hrApi = {
         await axiosInstance.delete(`/documents/${id}`);
     },
 
+    async sendDocumentEmail(id: string, to?: string, subject?: string, html?: string): Promise<{ success: boolean; messageId: string }> {
+        const res = await axiosInstance.post(`/documents/${id}/email`, { to, subject, html });
+        return res.data;
+    },
+
     async getTemplateSchemas(): Promise<Array<{ key: string; name: string; type: string; required: string[]; variables: string[] }>> {
         const res = await axiosInstance.get('/templates/schemas');
         return res.data.templates;

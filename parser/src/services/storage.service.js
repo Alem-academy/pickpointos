@@ -2,6 +2,14 @@ import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Logger } from '../lib/logger.js';
 
+async function streamToBuffer(stream) {
+    const chunks = [];
+    for await (const chunk of stream) {
+        chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+}
+
 const s3Client = new S3Client({
     region: (process.env.AWS_REGION || 'auto').toLowerCase(),
     endpoint: process.env.AWS_ENDPOINT, // Required for R2/GCore: https://s-ed1.cloud.gcore.lu
@@ -72,6 +80,42 @@ export const storageService = {
             return url;
         } catch (error) {
             Logger.error(`[S3] Failed to generate signed URL for ${key}:`, error);
+            throw error;
+        }
+    },
+
+    /**
+     * Download a file from S3/R2 as a Buffer
+     * @param {string} key
+     * @returns {Promise<Buffer>}
+     */
+    async downloadFile(key) {
+        if (!BUCKET_NAME) {
+            Logger.error('[S3/R2] AWS_BUCKET_NAME is not defined');
+            throw new Error('AWS_BUCKET_NAME is not defined');
+        }
+
+        if (key.startsWith('http')) {
+            // Fetch from URL
+            const response = await fetch(key);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch file: ${response.statusText}`);
+            }
+            return Buffer.from(await response.arrayBuffer());
+        }
+
+        const command = new GetObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: key
+        });
+
+        try {
+            const response = await s3Client.send(command);
+            const buffer = await streamToBuffer(response.Body);
+            Logger.info(`[S3] Downloaded ${key} (${buffer.length} bytes)`);
+            return buffer;
+        } catch (error) {
+            Logger.error(`[S3] Failed to download ${key}:`, error);
             throw error;
         }
     }

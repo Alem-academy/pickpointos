@@ -18,6 +18,7 @@ import {
     numberToWordsKz
 } from '../services/templates.js';
 import { storageService } from '../services/storage.service.js';
+import { emailService } from '../services/email.service.js';
 import { htmlToPdfBuffer } from '../services/pdfRender.service.js';
 import { Logger } from '../lib/logger.js';
 import { logDocumentGenerated } from '../lib/activityLogger.js';
@@ -653,6 +654,11 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         } else if (!(key in autoData)) {
             result[key] = '__________';
         }
+    }
+
+    // Default system name for e-signature service reference in appendices
+    if (!result.systemName) {
+        result.systemName = 'edo.uchet.kz';
     }
 
     return result;
@@ -1485,6 +1491,64 @@ router.post('/documents/:id/sign-employer', authenticateToken, async (req, res) 
     } catch (err) {
         Logger.error('[Docs] Employer sign failed:', err.message);
         res.status(500).json({ error: 'Ошибка подписания работодателем', details: err.message });
+    }
+});
+
+// POST /documents/:id/email — Отправить документ по email (Resend)
+router.post('/documents/:id/email', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { to, subject, html } = req.body;
+
+        if (!emailService.isEnabled()) {
+            return res.status(503).json({ error: 'Email service not configured' });
+        }
+
+        if (!to) {
+            return res.status(400).json({ error: 'Email recipient (to) is required' });
+        }
+
+        // Fetch document info
+        const docResult = await query(
+            'SELECT id, type, file_url, file_name, status, employee_id FROM documents WHERE id = $1',
+            [id]
+        );
+        if (docResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Документ не найден' });
+        }
+
+        const doc = docResult.rows[0];
+        if (!doc.file_url) {
+            return res.status(400).json({ error: 'Документ ещё не сгенерирован (нет PDF)' });
+        }
+
+        // Fetch employee email as fallback
+        let recipient = to;
+        if (recipient === 'employee' && doc.employee_id) {
+            const empResult = await query('SELECT email FROM employees WHERE id = $1', [doc.employee_id]);
+            if (empResult.rows.length > 0 && empResult.rows[0].email) {
+                recipient = empResult.rows[0].email;
+            } else {
+                return res.status(400).json({ error: 'У сотрудника не указан email' });
+            }
+        }
+
+        const fileName = doc.file_name || `${doc.type}_${id}.pdf`;
+        const defaultSubject = `Документ: ${doc.type}`;
+        const defaultHtml = `<p>Здравствуйте,</p><p>Во вложении находится документ.</p>`;
+
+        const result = await emailService.sendDocument({
+            to: recipient,
+            subject: subject || defaultSubject,
+            html: html || defaultHtml,
+            fileKey: doc.file_url,
+            fileName
+        });
+
+        res.json({ success: true, messageId: result?.id });
+    } catch (err) {
+        Logger.error('[Docs] Email send failed:', err.message);
+        res.status(500).json({ error: 'Ошибка отправки email', details: err.message });
     }
 });
 
