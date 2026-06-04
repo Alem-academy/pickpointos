@@ -306,7 +306,7 @@ export default function NewHire() {
                                                 onChange={handleChange}
                                                 className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                                             >
-                                                <option value="employee">Менеджер ПВЗ</option>
+                                                <option value="employee">Менеджер по работе с клиентами</option>
                                                 <option value="rf">Региональный Менеджер (РФ)</option>
                                             </select>
                                         </div>

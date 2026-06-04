@@ -212,7 +212,7 @@ export default function InvitePage() {
                                         <dt className="text-slate-500 font-medium tracking-wide text-xs uppercase">Должность</dt>
                                         <dd className="font-semibold text-slate-900 text-right">
                                             {employee.role === 'rf' ? 'Региональный Менеджер' :
-                                                (employee.role === 'financier' ? 'Финансист' : 'Менеджер ПВЗ')}
+                                                (employee.role === 'financier' ? 'Финансист' : 'Менеджер по работе с клиентами')}
                                         </dd>
                                     </div>
                                     <div className="flex justify-between pt-1">

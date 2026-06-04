@@ -204,7 +204,7 @@ export default function EmployeeProfile() {
                                     </>
                                 ) : (
                                     <>
-                                        <InfoRow icon={<Briefcase className="w-4 h-4" />} label="Должность" value={employee.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ'} />
+                                        <InfoRow icon={<Briefcase className="w-4 h-4" />} label="Должность" value={employee.role === 'rf' ? 'Региональный менеджер' : 'Менеджер по работе с клиентами'} />
                                         <InfoRow icon={<MapPin className="w-4 h-4" />} label="Основной ПВЗ" value={employee.main_pvz_name} extra={employee.main_pvz_address} />
                                         <InfoRow icon={<Briefcase className="w-4 h-4" />} label="Юрлицо" value={employee.employer_name || 'Не назначено'} />
                                         <InfoRow icon={<CreditCard className="w-4 h-4" />} label="Ставка" value={employee.base_rate ? `${employee.base_rate.toLocaleString()} ₸` : 'Не установлена'} />

@@ -445,7 +445,6 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         // Exact matches first
         const exact = {
             'менеджер по работе с клиентами': 'менеджера по работе с клиентами',
-            'менеджер пвз': 'менеджера ПВЗ',
             'региональный менеджер': 'регионального менеджера',
             'кассир': 'кассира',
             'старший кассир': 'старшего кассира',
@@ -481,7 +480,7 @@ function buildTemplateData(emp, employer, schema, params = {}) {
 
     const fullName = emp.full_name || '';
     const shortName = fullName.split(' ').map((p, i) => i === 0 ? p : `${p[0]}.`).join(' ');
-    const position = emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ';
+    const position = emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер по работе с клиентами';
 
     const autoData = {
         // Employee fields (base)
@@ -766,7 +765,7 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
             id_date: emp.id_card_issue_date ? new Date(emp.id_card_issue_date).toLocaleDateString('ru-RU') : '__________',
             id_issuer: emp.id_card_issued_by || '__________',
             iin: emp.iin || '__________',
-            position: emp.role === 'rf' ? 'Региональный менеджер / Өңірлік менеджер' : 'Менеджер ПВЗ / ТҚО менеджері',
+            position: emp.role === 'rf' ? 'Региональный менеджер / Өңірлік менеджер' : 'Менеджер по работе с клиентами / Клиенттермен жұмыс жөніндегі менеджер',
             work_address: emp.pvz_address || 'не указан',
             start_date: startDateStr,
             end_date: endDateStr,
@@ -849,7 +848,7 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
             order_number: `ОТ-${String(orderSeq).padStart(3, '0')}/${yearShort}`,
             full_name: emp.full_name,
             iin: emp.iin || '__________',
-            position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ',
+            position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер по работе с клиентами',
             vacation_days: String(vacationDays),
             vacation_start: vacStart.toLocaleDateString('ru-RU'),
             vacation_end: vacEnd.toLocaleDateString('ru-RU'),
@@ -872,7 +871,7 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
             contract_date: contractDate || '_______',
             full_name: emp.full_name,
             iin: emp.iin || '__________',
-            position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ',
+            position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер по работе с клиентами',
             termination_date: termDate.toLocaleDateString('ru-RU'),
             termination_reason: terminationReason,
             date: dateRu,
@@ -885,7 +884,7 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
         htmlContent = fillTemplate(EMPLOYMENT_CERTIFICATE_TEMPLATE, {
             full_name: emp.full_name,
             iin: emp.iin || '__________',
-            position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ',
+            position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер по работе с клиентами',
             start_date: emp.hired_at ? new Date(emp.hired_at).toLocaleDateString('ru-RU') : '_______',
             salary: Number(salary).toLocaleString('ru-RU'),
             date: dateRu,

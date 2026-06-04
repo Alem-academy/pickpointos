@@ -101,7 +101,7 @@ for (const file of files) {
         else if (varName.includes('employeeFullName') && varName.includes('Dat')) data[varName] = 'Локутневской Дарье Максимовне';
         else if (varName.includes('employeeFullName')) data[varName] = testEmployee.full_name;
         else if (varName.includes('employeePosition') && varName.includes('Rod')) data[varName] = 'менеджера по работе с клиентами';
-        else if (varName.includes('employeePosition')) data[varName] = 'Менеджер ПВЗ / ТКО менеджері';
+        else if (varName.includes('employeePosition')) data[varName] = 'Менеджер по работе с клиентами / Клиенттермен жұмыс жөніндегі менеджер';
         else if (varName.includes('employeeIIN')) data[varName] = testEmployee.iin;
         else if (varName.includes('employeeAddressKz')) data[varName] = 'ҚР, Ақмола облысы, Целиноград ауданы, Аккайын, есептік квартал 088, үй 159';
         else if (varName.includes('employeeAddressResident')) data[varName] = testEmployee.address;

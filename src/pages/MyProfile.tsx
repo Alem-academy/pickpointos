@@ -25,7 +25,7 @@ interface EmployeeProfile {
 }
 
 const ROLE_LABELS: Record<string, string> = {
-    employee: 'Менеджер ПВЗ',
+    employee: 'Менеджер по работе с клиентами',
     rf: 'Региональный менеджер',
     hr: 'HR-менеджер',
     financier: 'Финансист',

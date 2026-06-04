@@ -36,7 +36,7 @@ export function CandidateModal({ candidate, onClose, onApprove, onReject, onRevi
                 <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-card px-6 py-4">
                     <div>
                         <h2 className="text-xl font-bold">{candidate.full_name}</h2>
-                        <span className="text-sm text-muted-foreground mt-1 block">Заявка на должность: {candidate.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ'}</span>
+                        <span className="text-sm text-muted-foreground mt-1 block">Заявка на должность: {candidate.role === 'rf' ? 'Региональный менеджер' : 'Менеджер по работе с клиентами'}</span>
                     </div>
                     <div className="flex items-center gap-3">
                         <Button

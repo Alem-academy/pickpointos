@@ -117,7 +117,7 @@ export function EmployeeHero({ employee, photoUrl, onEdit }: EmployeeHeroProps) 
                             {employee.full_name}
                         </h1>
                         <p className="text-sm font-medium text-slate-600">
-                            {employee.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ'}
+                            {employee.role === 'rf' ? 'Региональный менеджер' : 'Менеджер по работе с клиентами'}
                         </p>
                         {employee.main_pvz_name && (
                             <p className="text-xs text-slate-500">

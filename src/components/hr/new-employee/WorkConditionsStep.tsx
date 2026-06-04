@@ -41,7 +41,7 @@ export function WorkConditionsStep({ formData, errors, handleChange, pvzList }: 
                         onChange={handleChange}
                         className="w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                     >
-                        <option value="employee">Менеджер ПВЗ</option>
+                        <option value="employee">Менеджер по работе с клиентами</option>
                         <option value="rf">Региональный Менеджер (РФ)</option>
                         <option value="hr">HR</option>
                         <option value="admin">Администратор</option>

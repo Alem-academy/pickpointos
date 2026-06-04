@@ -508,7 +508,7 @@ await page.pdf({ format: 'A4', printBackground: true });
 | `employeeAddressRu` | Адрес регистрации (рус) | РК, обл. Акмолинская, Целиноградский р-н, Аккайын, учетный квартал 088, дом 159 |
 | `employeePhone` | Телефон | 7747987016 |
 | `employeeEmail` | Email | daryalokutnevskaya2002@gmail.com |
-| `employeePositionKz` | Должность (каз) | Менеджер ПВЗ / ТКО менеджері |
+| `employeePositionKz` | Должность (каз) | Менеджер по работе с клиентами / Клиенттермен жұмыс жөніндегі менеджер |
 | `employeePositionRu` | Должность (рус) | менеджер по работе с клиентами |
 | `workplaceAddressKz` | Адрес работы (каз) | Сатпаев, Ұлытау көшесі, 90 үй |
 | `workplaceAddressRu` | Адрес работы (рус) | Сатпаев, ул. Улытауская, д. 90 |

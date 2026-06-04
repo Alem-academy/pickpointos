@@ -134,8 +134,8 @@ export function DocumentParamsModal({ isOpen, documentType, employeeData, onClos
                         if (key === 'employeeFullNameKz' && emp.full_name) initial[key] = emp.full_name;
                         if (key === 'employeeIIN' && emp.iin) initial[key] = emp.iin;
                         if (key === 'employeePositionRod') initial[key] = emp.role === 'rf' ? 'регионального менеджера' : 'менеджера ПВЗ';
-                        if (key === 'employeePositionRu') initial[key] = emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер ПВЗ';
-                        if (key === 'employeePositionKz') initial[key] = emp.role === 'rf' ? 'Өңірлік менеджер' : 'ТҚО менеджері';
+                        if (key === 'employeePositionRu') initial[key] = emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер по работе с клиентами';
+                        if (key === 'employeePositionKz') initial[key] = emp.role === 'rf' ? 'Өңірлік менеджер' : 'Клиенттермен жұмыс жөніндегі менеджер';
                         if (key === 'employeeAddress' && (emp.registered_address || emp.address)) {
                             initial[key] = emp.registered_address || emp.address;
                         }

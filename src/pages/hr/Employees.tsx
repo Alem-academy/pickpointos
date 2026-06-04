@@ -147,7 +147,7 @@ export default function Employees() {
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold ${emp.role === 'rf' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                                        {emp.role === 'rf' ? 'Региональный' : 'Менеджер ПВЗ'}
+                                        {emp.role === 'rf' ? 'Региональный' : 'Менеджер по работе с клиентами'}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4">

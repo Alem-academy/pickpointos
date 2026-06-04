@@ -192,7 +192,7 @@ function ApplicationCard({ employee, onClick }: { employee: Employee, onClick: (
                     </div>
                     <div>
                         <h3 className="text-sm font-bold text-card-foreground leading-tight line-clamp-1" title={employee.full_name}>{employee.full_name}</h3>
-                        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{employee.role === 'rf' ? 'Региональный' : 'Менеджер ПВЗ'}</p>
+                        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{employee.role === 'rf' ? 'Региональный' : 'Менеджер по работе с клиентами'}</p>
                     </div>
                 </div>
                 {employee.created_at && (
