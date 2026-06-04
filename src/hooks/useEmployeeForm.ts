@@ -9,6 +9,10 @@ export interface FileUploadState {
     bank_cert: File | null;
     cert_tb: File | null;
     address_cert: File | null;
+    criminal_record: File | null;
+    narc_psych: File | null;
+    handwritten_application: File | null;
+    tax_deduction: File | null;
 }
 
 export interface EmergencyContact {
@@ -81,6 +85,10 @@ export function useEmployeeForm() {
         bank_cert: null,
         cert_tb: null,
         address_cert: null,
+        criminal_record: null,
+        narc_psych: null,
+        handwritten_application: null,
+        tax_deduction: null,
     });
 
     const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>([

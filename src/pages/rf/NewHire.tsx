@@ -14,6 +14,10 @@ interface FileUploadState {
     bank_cert: File | null;
     cert_tb: File | null;
     address_cert: File | null;
+    criminal_record: File | null;
+    narc_psych: File | null;
+    handwritten_application: File | null;
+    tax_deduction: File | null;
 }
 
 const STEPS = [
@@ -50,6 +54,10 @@ export default function NewHire() {
         bank_cert: null,
         cert_tb: null,
         address_cert: null,
+        criminal_record: null,
+        narc_psych: null,
+        handwritten_application: null,
+        tax_deduction: null,
     });
 
     useEffect(() => {
@@ -96,7 +104,7 @@ export default function NewHire() {
     const handleSubmit = async () => {
         const missingFiles = [];
         if (!files.id_main) missingFiles.push("Уд. личности (Лиц.)");
-        if (!files.photo) missingFiles.push("Фото 3х4");
+        if (!files.photo) missingFiles.push("Фото на фоне удостоверения");
 
         if (missingFiles.length > 0) {
             alert(`Загрузите обязательные документы: ${missingFiles.join(', ')}`);
@@ -128,6 +136,10 @@ export default function NewHire() {
             if (files.bank_cert) uploadPromises.push(api.uploadDocument(newEmployee.id, 'bank_details', files.bank_cert));
             if (files.cert_tb) uploadPromises.push(api.uploadDocument(newEmployee.id, 'cert_tb', files.cert_tb));
             if (files.address_cert) uploadPromises.push(api.uploadDocument(newEmployee.id, 'address_cert', files.address_cert));
+            if (files.criminal_record) uploadPromises.push(api.uploadDocument(newEmployee.id, 'criminal_record', files.criminal_record));
+            if (files.narc_psych) uploadPromises.push(api.uploadDocument(newEmployee.id, 'narc_psych', files.narc_psych));
+            if (files.handwritten_application) uploadPromises.push(api.uploadDocument(newEmployee.id, 'handwritten_application', files.handwritten_application));
+            if (files.tax_deduction) uploadPromises.push(api.uploadDocument(newEmployee.id, 'tax_deduction', files.tax_deduction));
 
             await Promise.all(uploadPromises);
 
@@ -342,7 +354,7 @@ export default function NewHire() {
                                             required
                                         />
                                         <FileUploadField
-                                            label="Фото 3х4 (Для профиля)"
+                                            label="Фото на фоне удостоверения"
                                             file={files.photo}
                                             onChange={(e) => handleFileChange('photo', e)}
                                             onRemove={() => removeFile('photo')}
@@ -361,22 +373,46 @@ export default function NewHire() {
                                             onRemove={() => removeFile('cert_075')}
                                         />
                                         <FileUploadField
-                                            label="Справка с банка (IBAN)"
+                                            label="Справка банка с IBAN"
                                             file={files.bank_cert}
                                             onChange={(e) => handleFileChange('bank_cert', e)}
                                             onRemove={() => removeFile('bank_cert')}
                                         />
                                         <FileUploadField
-                                            label="Справка Тубдиспансер"
+                                            label="Справка нарко-, псих-, противотуберкулезного диспансера"
                                             file={files.cert_tb}
                                             onChange={(e) => handleFileChange('cert_tb', e)}
                                             onRemove={() => removeFile('cert_tb')}
                                         />
                                         <FileUploadField
-                                            label="Справка eGov (Адресная)"
+                                            label="Скрин eGov с адресом регистрации"
                                             file={files.address_cert}
                                             onChange={(e) => handleFileChange('address_cert', e)}
                                             onRemove={() => removeFile('address_cert')}
+                                        />
+                                        <FileUploadField
+                                            label="Справка об отсутствии судимости"
+                                            file={files.criminal_record}
+                                            onChange={(e) => handleFileChange('criminal_record', e)}
+                                            onRemove={() => removeFile('criminal_record')}
+                                        />
+                                        <FileUploadField
+                                            label="Справка нарко- и психдиспансера"
+                                            file={files.narc_psych}
+                                            onChange={(e) => handleFileChange('narc_psych', e)}
+                                            onRemove={() => removeFile('narc_psych')}
+                                        />
+                                        <FileUploadField
+                                            label="Заявление на прием (рукописное)"
+                                            file={files.handwritten_application}
+                                            onChange={(e) => handleFileChange('handwritten_application', e)}
+                                            onRemove={() => removeFile('handwritten_application')}
+                                        />
+                                        <FileUploadField
+                                            label="Заявление на вычет"
+                                            file={files.tax_deduction}
+                                            onChange={(e) => handleFileChange('tax_deduction', e)}
+                                            onRemove={() => removeFile('tax_deduction')}
                                         />
                                     </div>
                                 </div>

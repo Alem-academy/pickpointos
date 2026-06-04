@@ -56,7 +56,7 @@ export default function NewEmployeePage() {
     const handleSubmit = async () => {
         const missingFiles = [];
         if (!files.id_main) missingFiles.push("Уд. личности (Лиц.)");
-        if (!files.photo) missingFiles.push("Фото 3х4");
+        if (!files.photo) missingFiles.push("Фото на фоне удостоверения");
 
         if (missingFiles.length > 0) {
             alert(`Загрузите обязательные документы: ${missingFiles.join(', ')}`);
@@ -106,6 +106,10 @@ export default function NewEmployeePage() {
             if (files.bank_cert) uploadPromises.push(api.uploadDocument(newEmployee.id, 'bank_details', files.bank_cert));
             if (files.cert_tb) uploadPromises.push(api.uploadDocument(newEmployee.id, 'cert_tb', files.cert_tb));
             if (files.address_cert) uploadPromises.push(api.uploadDocument(newEmployee.id, 'address_cert', files.address_cert));
+            if (files.criminal_record) uploadPromises.push(api.uploadDocument(newEmployee.id, 'criminal_record', files.criminal_record));
+            if (files.narc_psych) uploadPromises.push(api.uploadDocument(newEmployee.id, 'narc_psych', files.narc_psych));
+            if (files.handwritten_application) uploadPromises.push(api.uploadDocument(newEmployee.id, 'handwritten_application', files.handwritten_application));
+            if (files.tax_deduction) uploadPromises.push(api.uploadDocument(newEmployee.id, 'tax_deduction', files.tax_deduction));
 
             await Promise.all(uploadPromises);
 

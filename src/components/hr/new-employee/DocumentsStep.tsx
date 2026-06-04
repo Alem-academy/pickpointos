@@ -24,7 +24,7 @@ export function DocumentsStep({ files, handleFileChange, removeFile }: Documents
                     required
                 />
                 <FileUploadField
-                    label="Фото 3х4 (Для профиля)"
+                    label="Фото на фоне удостоверения"
                     file={files.photo}
                     onChange={(e) => handleFileChange('photo', e)}
                     onRemove={() => removeFile('photo')}
@@ -43,22 +43,46 @@ export function DocumentsStep({ files, handleFileChange, removeFile }: Documents
                     onRemove={() => removeFile('cert_075')}
                 />
                 <FileUploadField
-                    label="Справка с банка (IBAN)"
+                    label="Справка банка с IBAN"
                     file={files.bank_cert}
                     onChange={(e) => handleFileChange('bank_cert', e)}
                     onRemove={() => removeFile('bank_cert')}
                 />
                 <FileUploadField
-                    label="Справка Тубдиспансер"
+                    label="Справка нарко-, псих-, противотуберкулезного диспансера"
                     file={files.cert_tb}
                     onChange={(e) => handleFileChange('cert_tb', e)}
                     onRemove={() => removeFile('cert_tb')}
                 />
                 <FileUploadField
-                    label="Справка eGov (Адресная)"
+                    label="Скрин eGov с адресом регистрации"
                     file={files.address_cert}
                     onChange={(e) => handleFileChange('address_cert', e)}
                     onRemove={() => removeFile('address_cert')}
+                />
+                <FileUploadField
+                    label="Справка об отсутствии судимости"
+                    file={files.criminal_record}
+                    onChange={(e) => handleFileChange('criminal_record', e)}
+                    onRemove={() => removeFile('criminal_record')}
+                />
+                <FileUploadField
+                    label="Справка нарко- и психдиспансера"
+                    file={files.narc_psych}
+                    onChange={(e) => handleFileChange('narc_psych', e)}
+                    onRemove={() => removeFile('narc_psych')}
+                />
+                <FileUploadField
+                    label="Заявление на прием (рукописное)"
+                    file={files.handwritten_application}
+                    onChange={(e) => handleFileChange('handwritten_application', e)}
+                    onRemove={() => removeFile('handwritten_application')}
+                />
+                <FileUploadField
+                    label="Заявление на вычет"
+                    file={files.tax_deduction}
+                    onChange={(e) => handleFileChange('tax_deduction', e)}
+                    onRemove={() => removeFile('tax_deduction')}
                 />
             </div>
         </div>
