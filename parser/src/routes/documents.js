@@ -481,6 +481,7 @@ function buildTemplateData(emp, employer, schema, params = {}) {
     const fullName = emp.full_name || '';
     const shortName = fullName.split(' ').map((p, i) => i === 0 ? p : `${p[0]}.`).join(' ');
     const position = emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер по работе с клиентами';
+    const positionKz = emp.role === 'rf' ? 'Өңірлік менеджер' : 'Клиенттермен жұмыс жөніндегі менеджер';
 
     const autoData = {
         // Employee fields (base)
@@ -496,7 +497,7 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         employeeFullNameShortVin: declineShortFIO(shortName, 'vin'),
         employeePosition: position,
         employeePositionRu: position,
-        employeePositionKz: position, // Same for now — could be translated later
+        employeePositionKz: positionKz,
         employeePositionRod: declinePosition(position, 'rod'),
         employeeIIN: emp.iin || '',
         employeeAddress: emp.registered_address || emp.address || '',
