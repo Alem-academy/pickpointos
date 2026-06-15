@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 
 interface FileUploadState {
     id_main: File | null;
-    id_register: File | null;
     cert_075: File | null;
     photo: File | null;
     bank_cert: File | null;
@@ -48,7 +47,6 @@ export default function NewHire() {
 
     const [files, setFiles] = useState<FileUploadState>({
         id_main: null,
-        id_register: null,
         cert_075: null,
         photo: null,
         bank_cert: null,
@@ -103,7 +101,7 @@ export default function NewHire() {
 
     const handleSubmit = async () => {
         const missingFiles = [];
-        if (!files.id_main) missingFiles.push("Уд. личности (Лиц.)");
+        if (!files.id_main) missingFiles.push("Скан удостоверения личности (PDF из eGov)");
         if (!files.photo) missingFiles.push("Фото на фоне удостоверения");
 
         if (missingFiles.length > 0) {
@@ -130,7 +128,6 @@ export default function NewHire() {
             const uploadPromises = [];
 
             if (files.id_main) uploadPromises.push(api.uploadDocument(newEmployee.id, 'id_main', files.id_main));
-            if (files.id_register) uploadPromises.push(api.uploadDocument(newEmployee.id, 'id_register', files.id_register));
             if (files.cert_075) uploadPromises.push(api.uploadDocument(newEmployee.id, 'cert_075', files.cert_075));
             if (files.photo) uploadPromises.push(api.uploadDocument(newEmployee.id, 'photo', files.photo));
             if (files.bank_cert) uploadPromises.push(api.uploadDocument(newEmployee.id, 'bank_details', files.bank_cert));
@@ -347,11 +344,12 @@ export default function NewHire() {
                                     </div>
                                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                         <FileUploadField
-                                            label="Уд. личности (Лицевая)"
+                                            label="Скан удостоверения личности (PDF из eGov)"
                                             file={files.id_main}
                                             onChange={(e) => handleFileChange('id_main', e)}
                                             onRemove={() => removeFile('id_main')}
                                             required
+                                            accept=".pdf"
                                         />
                                         <FileUploadField
                                             label="Фото на фоне удостоверения"
@@ -359,12 +357,6 @@ export default function NewHire() {
                                             onChange={(e) => handleFileChange('photo', e)}
                                             onRemove={() => removeFile('photo')}
                                             required
-                                        />
-                                        <FileUploadField
-                                            label="Уд. личности (Обратная)"
-                                            file={files.id_register}
-                                            onChange={(e) => handleFileChange('id_register', e)}
-                                            onRemove={() => removeFile('id_register')}
                                         />
                                         <FileUploadField
                                             label="Мед. справка 075/у"
@@ -466,13 +458,15 @@ function FileUploadField({
     file,
     onChange,
     onRemove,
-    required = false
+    required = false,
+    accept = ".pdf,.jpg,.jpeg,.png"
 }: {
     label: string;
     file: File | null;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onRemove: () => void;
     required?: boolean;
+    accept?: string;
 }) {
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -496,7 +490,7 @@ function FileUploadField({
                         ref={inputRef}
                         type="file"
                         className="hidden"
-                        accept=".pdf,.jpg,.jpeg,.png"
+                        accept={accept}
                         onChange={onChange}
                     />
                 </div>

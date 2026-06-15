@@ -6,4 +6,10 @@ playwright/.cache/
 
 # Environment variables
 .env.test
-document-templates/test-output/
+
+# macOS
+.DS_Store
+
+# Generated test outputs
+parser/document-templates/test-output/
+parser/document-templates/test-screenshots/

@@ -3,7 +3,6 @@ import { type EmployeeRole } from "@/services/api";
 
 export interface FileUploadState {
     id_main: File | null;
-    id_register: File | null;
     cert_075: File | null;
     photo: File | null;
     bank_cert: File | null;
@@ -79,7 +78,6 @@ export function useEmployeeForm() {
 
     const [files, setFiles] = useState<FileUploadState>({
         id_main: null,
-        id_register: null,
         cert_075: null,
         photo: null,
         bank_cert: null,

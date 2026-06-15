@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Заявление о приеме на работу</title>
+  <title>Заявление на трудовой отпуск</title>
   <style>
     @page { size: A4; margin: 20mm; }
     * { box-sizing: border-box; }
@@ -57,35 +57,35 @@
   <!--
     Переменные:
     {{employerName}}           — наименование работодателя (например: ИП «Жасмин»)
-    {{directorNameShortDat}}   — ФИО директора в дательном падеже (например: Карабаевой Г.Е.)
-    {{employeeFullName}}       — ФИО сотрудника полностью (именительный)
-    {{employeeAddressResidentRu}} — адрес проживания (русский)
-    {{employeeAddressRegRu}}   — адрес регистрации (русский)
-    {{employeePhone}}          — телефон
-    {{startDateDay}}           — день начала работы
-    {{startDateMonthRu}}       — месяц начала работы (русский)
-    {{startDateYear}}          — год начала работы
-    {{employeePositionRod}}    — должность в родительном падеже
+    {{directorNameShortDat}}   — ФИО директора в дательном падеже
+    {{employeePositionRod}}    — должность сотрудника в родительном падеже
+    {{employeeFullName}}       — ФИО сотрудника полностью
+    {{vacationStartDay}}       — день начала отпуска
+    {{vacationStartMonthRu}}   — месяц начала отпуска (русский)
+    {{vacationStartYear}}      — год начала отпуска
+    {{vacationEndDay}}         — день окончания отпуска
+    {{vacationEndMonthRu}}     — месяц окончания отпуска (русский)
+    {{vacationEndYear}}        — год окончания отпуска
+    {{vacationDays}}           — продолжительность отпуска в календарных днях
     {{currentDateDay}}         — день подписания
     {{currentDateMonthRu}}     — месяц подписания (русский)
     {{currentDateYear}}        — год подписания
   -->
 
   <div class="header-right">
-    <p>Директору</p>
-    <p>{{employerName}}</p>
+    <p>Директору {{employerName}}</p>
     <p>{{directorNameShortDat}}</p>
-    <p>от {{employeeFullName}}</p>
-    <p>Проживающий по адресу: {{employeeAddressResidentRu}}</p>
-    <p>Зарегистрированный по адресу: {{employeeAddressRegRu}}</p>
-    <p>тел: {{employeePhone}}</p>
+    <p>от {{employeePositionRod}}</p>
+    <p>{{employeeFullName}}</p>
   </div>
 
   <div class="title">Заявление</div>
 
   <p class="body-text">
-    Прошу Вас принять меня на работу с «{{startDateDay}}» {{startDateMonthRu}} {{startDateYear}} года
-    на должность {{employeePositionRod}}.
+    Прошу предоставить мне часть оплачиваемого ежегодного трудового отпуска
+    с «{{vacationStartDay}}» {{vacationStartMonthRu}} {{vacationStartYear}} года
+    по «{{vacationEndDay}}» {{vacationEndMonthRu}} {{vacationEndYear}} года
+    продолжительностью {{vacationDays}} календарных дней.
   </p>
 
   <div class="signature-block">

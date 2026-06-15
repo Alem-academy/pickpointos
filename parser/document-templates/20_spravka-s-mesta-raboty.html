@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Справка с места работы</title>
+  <style>
+    @page { size: A4; margin: 20mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 12pt;
+      line-height: 1.4;
+      color: #000;
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 15mm 20mm;
+    }
+    .bilingual-header {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 10px;
+    }
+    .bilingual-header td {
+      width: 50%;
+      vertical-align: top;
+      padding: 5px;
+    }
+    .bilingual-header .kz { text-align: left; }
+    .bilingual-header .ru { text-align: right; }
+    .bilingual-header p {
+      margin: 0;
+      font-weight: bold;
+      line-height: 1.3;
+    }
+    .meta-row {
+      width: 100%;
+      margin: 10px 0;
+    }
+    .meta-row td {
+      width: 50%;
+      vertical-align: top;
+      padding: 5px;
+    }
+    .meta-row .left { text-align: left; }
+    .meta-row .right { text-align: right; }
+    .meta-row p { margin: 0; }
+    .doc-title {
+      text-align: center;
+      font-weight: bold;
+      margin: 30px 0;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    .body-text {
+      text-align: justify;
+      margin: 15px 0;
+      text-indent: 20px;
+    }
+    .signature-table {
+      width: 100%;
+      margin-top: 50px;
+      border-collapse: collapse;
+    }
+    .signature-table td {
+      vertical-align: bottom;
+      padding: 5px;
+    }
+    .sign-line {
+      display: inline-block;
+      width: 150px;
+      border-bottom: 1px solid #000;
+    }
+  </style>
+</head>
+<body>
+  <!--
+    Переменные:
+    {{employerName}}           — наименование работодателя
+    {{employeeFullName}}       — ФИО работника полностью
+    {{employeePositionRu}}     — должность работника (именительный падеж)
+    {{employeeIIN}}            — ИИН работника
+    {{idCardNumber}}           — номер удостоверения личности
+    {{idCardIssueDate}}        — дата выдачи удостоверения
+    {{idCardIssuerRu}}         — орган выдачи (русский)
+    {{startDateDay}}           — день начала работы
+    {{startDateMonthRu}}       — месяц начала работы (русский)
+    {{startDateYear}}          — год начала работы
+    {{currentDateDay}}         — день выдачи справки
+    {{currentDateMonthRu}}     — месяц выдачи справки (русский)
+    {{currentDateMonthKz}}     — месяц выдачи справки (казахский)
+    {{currentDateYear}}        — год выдачи справки
+    {{cityRu}}                 — город на русском
+    {{directorNameShort}}      — ФИО директора с инициалами
+  -->
+
+  <table class="bilingual-header">
+    <tr>
+      <td class="kz">
+        <p>{{employerName}}</p>
+        <p>жеке кәсіпкер</p>
+      </td>
+      <td class="ru">
+        <p>Индивидуальный предприниматель</p>
+        <p>{{employerName}}</p>
+      </td>
+    </tr>
+  </table>
+
+  <table class="meta-row">
+    <tr>
+      <td class="left">
+        <p>«{{currentDateDay}}» {{currentDateMonthKz}} {{currentDateYear}} жыл</p>
+        <p>{{cityRu}} қаласы</p>
+      </td>
+      <td class="right">
+        <p>По месту требования</p>
+        <p>город {{cityRu}}</p>
+      </td>
+    </tr>
+  </table>
+
+  <div class="doc-title">Справка</div>
+
+  <p class="body-text">
+    <strong>{{employeeFullName}}</strong>, (удостоверение личности № {{idCardNumber}}
+    от «{{idCardIssueDate}}» года, выдано {{idCardIssuerRu}}, ИИН {{employeeIIN}})
+    работает в должности <strong>{{employeePositionRu}}</strong> в {{employerName}}
+    с «{{startDateDay}}» {{startDateMonthRu}} {{startDateYear}} года по настоящее время.
+  </p>
+
+  <table class="signature-table">
+    <tr>
+      <td style="width: 30%;"><strong>Директор</strong></td>
+      <td style="width: 30%; text-align: center;"><span class="sign-line"></span></td>
+      <td style="width: 40%; text-align: right;"><strong>{{directorNameShort}}</strong></td>
+    </tr>
+  </table>
+</body>
+</html>

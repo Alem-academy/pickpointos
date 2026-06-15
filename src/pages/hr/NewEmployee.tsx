@@ -55,7 +55,7 @@ export default function NewEmployeePage() {
 
     const handleSubmit = async () => {
         const missingFiles = [];
-        if (!files.id_main) missingFiles.push("Уд. личности (Лиц.)");
+        if (!files.id_main) missingFiles.push("Скан удостоверения личности (PDF из eGov)");
         if (!files.photo) missingFiles.push("Фото на фоне удостоверения");
 
         if (missingFiles.length > 0) {
@@ -100,7 +100,6 @@ export default function NewEmployeePage() {
             const uploadPromises = [];
 
             if (files.id_main) uploadPromises.push(api.uploadDocument(newEmployee.id, 'id_main', files.id_main));
-            if (files.id_register) uploadPromises.push(api.uploadDocument(newEmployee.id, 'id_register', files.id_register));
             if (files.cert_075) uploadPromises.push(api.uploadDocument(newEmployee.id, 'cert_075', files.cert_075));
             if (files.photo) uploadPromises.push(api.uploadDocument(newEmployee.id, 'photo', files.photo));
             if (files.bank_cert) uploadPromises.push(api.uploadDocument(newEmployee.id, 'bank_details', files.bank_cert));

@@ -43,7 +43,7 @@ const DOCUMENT_TYPES: any = {
     '11_soglashenie-o-rastorzhenii-trudovogo-dogovora': { label: 'Соглашение о расторжении ТД', icon: FileText, color: 'red', category: 'termination' },
     '12_dop-soglashenie-ob-izmenenii-familii': { label: 'Доп. соглашение об изменении фамилии', icon: FileText, color: 'indigo', category: 'hr_change' },
     // Uploaded docs
-    id_main: { label: 'Удостоверение личности (лиц.)', icon: IdCard, color: 'indigo', category: 'uploaded' },
+    id_main: { label: 'Скан удостоверения личности', icon: IdCard, color: 'indigo', category: 'uploaded' },
     id_register: { label: 'Удостоверение личности (обор.)', icon: IdCard, color: 'indigo', category: 'uploaded' },
     id_scan: { label: 'Скан документа', icon: IdCard, color: 'indigo', category: 'uploaded' },
     photo: { label: 'Фото на фоне удостоверения', icon: Image, color: 'pink', category: 'uploaded' },
@@ -61,8 +61,8 @@ const DOCUMENT_TYPES: any = {
 // Process group definitions for grouping documents in the list
 const PROCESS_GROUPS: Record<string, { label: string; color: string; docTypes: string[] }> = {
     hiring: { label: 'Приём на работу', color: 'blue', docTypes: ['13_zayavlenie-o-prieme-na-rabotu', '14_prikaz-o-prieme-na-rabotu', '15_trudovoy-dogovor'] },
-    vacation: { label: 'Отпуск', color: 'purple', docTypes: ['vacation_application', 'vacation_order'] },
-    termination: { label: 'Расторжение', color: 'red', docTypes: ['termination_order', '11_soglashenie-o-rastorzhenii-trudovogo-dogovora'] },
+    vacation: { label: 'Отпуск', color: 'purple', docTypes: ['16_zayavlenie-na-otpusk', '17_prikaz-ob-otpuske', 'vacation_application', 'vacation_order'] },
+    termination: { label: 'Расторжение', color: 'red', docTypes: ['18_zayavlenie-na-uvolnenie', '19_prikaz-ob-uvolnenii', 'termination_order', '11_soglashenie-o-rastorzhenii-trudovogo-dogovora'] },
     maternity: { label: 'Декрет / Отпуск по уходу', color: 'pink', docTypes: ['01_zayavlenie-o-vyhode-s-dekreta', '02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom', '04_prikaz-ob-otpuske-po-beremennosti-i-rodam', '05_prikaz-o-prodlenii-otpuska-po-beremennosti', '07_prikaz-o-vyhode-iz-otpuska-po-uhodu', '08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu', '09_zayavlenie-na-otpusk-po-beremennosti', '10_zayavlenie-na-prodlenie-otpuska-po-beremennosti'] },
     hr_change: { label: 'Кадровые изменения', color: 'orange', docTypes: ['03_zayavlenie-ob-izmenenii-personalnyh-dannyh', '06_prikaz-o-vnesenii-izmeneniy-v-fio', '12_dop-soglashenie-ob-izmenenii-familii'] },
     other: { label: 'Прочие документы', color: 'slate', docTypes: ['employment_certificate', 'addendum'] },

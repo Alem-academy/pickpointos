@@ -149,16 +149,16 @@ const PROCESS_DEFINITIONS = {
     },
     vacation: {
         label: 'Отпуск',
-        description: 'Заявление и приказ на отпуск',
-        documentTypes: ['vacation_application', 'vacation_order'],
+        description: 'Заявление и приказ на ежегодный оплачиваемый отпуск',
+        documentTypes: ['16_zayavlenie-na-otpusk', '17_prikaz-ob-otpuske'],
         editableParams: ['vacationDays', 'vacationStart', 'vacationEnd'],
         requiresEmployerSignature: true,
     },
     termination: {
         label: 'Расторжение ТД',
-        description: 'Соглашение о расторжении трудового договора по согласованию сторон',
-        documentTypes: ['11_soglashenie-o-rastorzhenii-trudovogo-dogovora'],
-        editableParams: ['terminationDate', 'lastWorkingDay', 'compensationAmount'],
+        description: 'Заявление на увольнение, приказ об увольнении и соглашение о расторжении',
+        documentTypes: ['18_zayavlenie-na-uvolnenie', '19_prikaz-ob-uvolnenii', '11_soglashenie-o-rastorzhenii-trudovogo-dogovora'],
+        editableParams: ['terminationDate', 'lastWorkingDay', 'compensationAmount', 'unusedVacationDays'],
         requiresEmployerSignature: true,
     },
     maternity_leave: {

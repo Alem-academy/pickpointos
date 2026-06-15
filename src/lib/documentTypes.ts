@@ -77,6 +77,70 @@ export const DOCUMENT_TYPES: Record<string, DocumentTypeConfig> = {
         category: 'generated',
         color: 'indigo'
     },
+    '13_zayavlenie-o-prieme-na-rabotu': {
+        type: '13_zayavlenie-o-prieme-na-rabotu',
+        label: 'Заявление о приеме на работу',
+        labelShort: 'Заявление о приеме',
+        icon: 'FileEdit',
+        category: 'generated',
+        color: 'amber'
+    },
+    '14_prikaz-o-prieme-na-rabotu': {
+        type: '14_prikaz-o-prieme-na-rabotu',
+        label: 'Приказ о приеме на работу',
+        labelShort: 'Приказ о приеме',
+        icon: 'FileCheck',
+        category: 'generated',
+        color: 'emerald'
+    },
+    '15_trudovoy-dogovor': {
+        type: '15_trudovoy-dogovor',
+        label: 'Трудовой договор',
+        labelShort: 'Трудовой договор',
+        icon: 'FileText',
+        category: 'generated',
+        color: 'blue'
+    },
+    '16_zayavlenie-na-otpusk': {
+        type: '16_zayavlenie-na-otpusk',
+        label: 'Заявление на отпуск',
+        labelShort: 'Заявление на отпуск',
+        icon: 'Plane',
+        category: 'generated',
+        color: 'purple'
+    },
+    '17_prikaz-ob-otpuske': {
+        type: '17_prikaz-ob-otpuske',
+        label: 'Приказ об отпуске',
+        labelShort: 'Приказ об отпуске',
+        icon: 'CalendarCheck',
+        category: 'generated',
+        color: 'purple'
+    },
+    '18_zayavlenie-na-uvolnenie': {
+        type: '18_zayavlenie-na-uvolnenie',
+        label: 'Заявление на увольнение',
+        labelShort: 'Заявление на увольнение',
+        icon: 'FileEdit',
+        category: 'generated',
+        color: 'red'
+    },
+    '19_prikaz-ob-uvolnenii': {
+        type: '19_prikaz-ob-uvolnenii',
+        label: 'Приказ об увольнении',
+        labelShort: 'Приказ об увольнении',
+        icon: 'UserX',
+        category: 'generated',
+        color: 'red'
+    },
+    '20_spravka-s-mesta-raboty': {
+        type: '20_spravka-s-mesta-raboty',
+        label: 'Справка с места работы',
+        labelShort: 'Справка с места работы',
+        icon: 'Award',
+        category: 'generated',
+        color: 'slate'
+    },
     // Uploaded documents
     id_main: {
         type: 'id_main',

@@ -14,8 +14,7 @@ export function DocumentChecklist({ documents = [], onGenerate, onUpload }: Docu
         { type: '14_prikaz-o-prieme-na-rabotu', label: 'Приказ о приеме на работу', icon: FileCheck, color: 'emerald', category: 'generated' },
         { type: '15_trudovoy-dogovor', label: 'Трудовой договор', icon: FileText, color: 'blue', category: 'generated' },
         // Uploaded
-        { type: 'id_main', label: 'Удостоверение личности (лицевая)', icon: IdCard, color: 'indigo', category: 'uploaded' },
-        { type: 'id_register', label: 'Удостоверение личности (оборот)', icon: IdCard, color: 'indigo', category: 'uploaded' },
+        { type: 'id_main', label: 'Скан удостоверения личности (PDF из eGov)', icon: IdCard, color: 'indigo', category: 'uploaded' },
         { type: 'cert_075', label: 'Справка № 075 (медосмотр)', icon: Stethoscope, color: 'green', category: 'uploaded' },
         { type: 'photo', label: 'Фото на фоне удостоверения', icon: Image, color: 'pink', category: 'uploaded' },
         { type: 'address_cert', label: 'Скрин eGov с адресом регистрации', icon: MapPin, color: 'orange', category: 'uploaded' },

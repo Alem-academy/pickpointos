@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Приказ о приеме на работу</title>
+  <title>Приказ о предоставлении ежегодного трудового отпуска</title>
   <style>
     @page { size: A4; margin: 20mm; }
     * { box-sizing: border-box; }
@@ -48,6 +48,7 @@
       text-align: center;
       font-weight: bold;
       margin: 20px 0;
+      text-transform: uppercase;
     }
     .body-text {
       text-align: justify;
@@ -71,12 +72,15 @@
       width: 150px;
       border-bottom: 1px solid #000;
     }
+    .acknowledge {
+      margin-top: 30px;
+    }
   </style>
 </head>
 <body>
   <!--
     Переменные:
-    {{employerName}}           — наименование работодателя (например: ИП «Жасмин»)
+    {{employerName}}           — наименование работодателя
     {{orderNumber}}            — номер приказа
     {{dateDay}}                — день
     {{dateMonthRu}}            — месяц на русском
@@ -84,16 +88,14 @@
     {{dateYear}}               — год
     {{cityRu}}                 — город на русском
     {{cityKz}}                 — город на казахском
-    {{employeeFullNameVin}}    — ФИО в ВИНИТЕЛЬНОМ падеже (кого принять)
-    {{employeeFullNameShort}}  — ФИО с инициалами (именительный)
-    {{startDateDay}}           — день начала работы
-    {{startDateMonthRu}}       — месяц начала (русский)
-    {{startDateYear}}          — год начала
-    {{employeePositionRod}}    — должность в родительном падеже
-    {{workplaceAddressRu}}     — адрес места работы (русский)
-    {{probationPeriod}}        — испытательный срок (например: три месяца)
-    {{contractNumber}}         — номер трудового договора
-    {{contractDate}}           — дата трудового договора
+    {{employeeFullNameDat}}    — ФИО в дательном падеже (кому предоставить)
+    {{employeeFullNameShortRod}} — ФИО с инициалами в родительном падеже
+    {{employeePositionDat}}    — должность в дательном падеже
+    {{vacationDays}}           — количество дней
+    {{vacationDaysText}}       — количество дней прописью
+    {{vacationStartDate}}      — дата начала отпуска
+    {{vacationEndDate}}        — дата окончания отпуска
+    {{applicationDate}}        — дата заявления
     {{directorNameShort}}      — ФИО директора с инициалами
   -->
 
@@ -126,44 +128,40 @@
   </table>
 
   <div class="order-title">
-    О приеме на работу
+    О предоставлении ежегодного<br>
+    оплачиваемого трудового отпуска<br>
+    (части трудового отпуска)
   </div>
 
   <p class="body-text no-indent">
-    В соответствии со статьей 34 Трудового кодекса Республики Казахстан от 23 ноября 2015 года № 414-V
-    и условиями трудового договора
+    В соответствии с Трудовым кодексом Республики Казахстан от 23 ноября 2015 года № 414-V
+    и во исполнение графика отпусков на {{dateYear}} года,
   </p>
 
   <p class="body-text no-indent"><strong>ПРИКАЗЫВАЮ:</strong></p>
 
   <p class="body-text">
-    Принять <strong>{{employeeFullNameVin}}</strong>, с «{{startDateDay}}» {{startDateMonthRu}} {{startDateYear}} года
-    в должности <strong>{{employeePositionRod}}</strong> с местом работы по адресу {{workplaceAddressRu}},
-    с испытательным сроком на {{probationPeriod}} с момента заключения трудового договора
-    и с оплатой труда согласно трудовому договору № {{contractNumber}} от {{contractDate}}.
+    Предоставить <strong>{{employeeFullNameDat}}</strong>, <strong>{{employeePositionDat}}</strong>,
+    очередной оплачиваемый ежегодный трудовой отпуск сроком на {{vacationDays}} ({{vacationDaysText}})
+    календарных дней с {{vacationStartDate}} по {{vacationEndDate}} включительно.
   </p>
 
   <p class="body-text">
-    <strong>Основание:</strong> трудовой договор от «{{contractDate}}» № {{contractNumber}}.
+    <strong>Основание:</strong> заявление <strong>{{employeeFullNameShortRod}}</strong> от {{applicationDate}}.
   </p>
 
   <table class="signature-table">
     <tr>
-      <td style="width: 30%;">
-        <p><strong>{{employerName}}</strong></p>
-        <p><strong>Директор</strong></p>
-        <p style="margin-top: 20px;"><span class="sign-line"></span></p>
-        <p style="font-size: 10pt;">(подпись)</p>
-        <p><strong>{{directorNameShort}}</strong></p>
-      </td>
-      <td style="width: 30%;"></td>
-      <td style="width: 40%;">
-        <p>С приказом ознакомлен (-а):</p>
-        <p style="margin-top: 20px;"><span class="sign-line"></span></p>
-        <p style="font-size: 10pt;">(подпись)</p>
-        <p>({{employeeFullNameShort}})</p>
-      </td>
+      <td style="width: 30%;"><strong>Директор</strong></td>
+      <td style="width: 30%; text-align: center;"><span class="sign-line"></span></td>
+      <td style="width: 40%; text-align: right;"><strong>{{directorNameShort}}</strong></td>
     </tr>
   </table>
+
+  <div class="acknowledge">
+    <p>С приказом ознакомлен (-а):</p>
+    <p>«{{dateDay}}» {{dateMonthRu}} {{dateYear}} г.</p>
+    <p><span class="sign-line"></span> {{employeeFullNameShortRod}}</p>
+  </div>
 </body>
 </html>

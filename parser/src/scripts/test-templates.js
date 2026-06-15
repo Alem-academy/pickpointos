@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const TEMPLATES_DIR = path.resolve(__dirname, '../../../document-templates');
+const TEMPLATES_DIR = path.resolve(__dirname, '../../document-templates');
 const OUTPUT_DIR = path.join(TEMPLATES_DIR, 'test-output');
 
 // Ensure output dir exists
@@ -119,12 +119,18 @@ for (const file of files) {
         else if (varName.includes('workplaceAddress')) data[varName] = testEmployee.pvz_address;
         else if (varName.includes('cityKz') || varName.includes('cityRu')) data[varName] = 'Алматы';
         else if (varName === 'city') data[varName] = 'Алматы';
-        else if (varName.includes('dateDay') || varName.includes('StartDay') || varName.includes('EndDay')) data[varName] = '28';
+        else if (varName === 'currentDateDay') data[varName] = String(now.getDate());
+        else if (varName === 'currentDateMonthRu') data[varName] = MONTHS_RU[now.getMonth()];
+        else if (varName === 'currentDateMonthKz') data[varName] = MONTHS_KZ[now.getMonth()];
+        else if (varName === 'currentDateYear') data[varName] = String(now.getFullYear());
+        else if (varName.includes('currentDate')) data[varName] = `${now.getDate()} ${MONTHS_RU[now.getMonth()]} ${now.getFullYear()} г.`;
+        else if (varName === 'dateDay') data[varName] = '28';
+        else if (varName.includes('DateDay') || varName.includes('StartDay') || varName.includes('EndDay')) data[varName] = '28';
         else if (varName.includes('dateMonthKz') || varName.includes('MonthKz')) data[varName] = MONTHS_KZ[now.getMonth()];
         else if (varName.includes('dateMonthRu') || varName.includes('MonthRu')) data[varName] = MONTHS_RU[now.getMonth()];
         else if (varName === 'dateMonth') data[varName] = MONTHS_RU[now.getMonth()];
-        else if (varName.includes('dateYear') || varName.includes('StartYear') || varName.includes('EndYear')) data[varName] = String(now.getFullYear());
-        else if (varName.includes('currentDate')) data[varName] = `${now.getDate()} ${MONTHS_RU[now.getMonth()]} ${now.getFullYear()} г.`;
+        else if (varName === 'dateYear') data[varName] = String(now.getFullYear());
+        else if (varName.includes('DateYear') || varName.includes('StartYear') || varName.includes('EndYear')) data[varName] = String(now.getFullYear());
         else if (varName.includes('orderNumber')) data[varName] = '001-К';
         else if (varName.includes('contractNumber')) data[varName] = 'ТД-001/26';
         else if (varName.includes('contractDateDay') || varName.includes('startDateDay')) data[varName] = '28';
@@ -134,6 +140,10 @@ for (const file of files) {
         else if (varName.includes('contractDate')) data[varName] = '28.04.2026';
         else if (varName.includes('agreementNumber')) data[varName] = '1';
         else if (varName.includes('agreementDate')) data[varName] = '28.04.2026';
+        else if (varName === 'terminationDateDay') data[varName] = '15';
+        else if (varName === 'terminationDateMonthRu') data[varName] = 'марта';
+        else if (varName === 'terminationDateYear') data[varName] = '2026';
+        else if (varName === 'terminationDateMonthKz') data[varName] = 'наурыз';
         else if (varName.includes('terminationDate')) data[varName] = '15 марта 2026 года';
         else if (varName.includes('lastWorkingDay')) data[varName] = '15 марта 2026';
         else if (varName.includes('vacationDays')) data[varName] = '126';

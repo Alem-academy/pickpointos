@@ -22,6 +22,8 @@ interface GeneratedDoc {
 }
 
 const DOC_TYPE_LABELS: Record<string, string> = {
+    '16_zayavlenie-na-otpusk': 'Заявление на отпуск',
+    '17_prikaz-ob-otpuske': 'Приказ об отпуске',
     'vacation_application': 'Заявление на отпуск',
     'vacation_order': 'Приказ на отпуск',
 };

@@ -17,11 +17,12 @@ export function DocumentsStep({ files, handleFileChange, removeFile }: Documents
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <FileUploadField
-                    label="Уд. личности (Лицевая)"
+                    label="Скан удостоверения личности (PDF из eGov)"
                     file={files.id_main}
                     onChange={(e) => handleFileChange('id_main', e)}
                     onRemove={() => removeFile('id_main')}
                     required
+                    accept=".pdf"
                 />
                 <FileUploadField
                     label="Фото на фоне удостоверения"
@@ -29,12 +30,6 @@ export function DocumentsStep({ files, handleFileChange, removeFile }: Documents
                     onChange={(e) => handleFileChange('photo', e)}
                     onRemove={() => removeFile('photo')}
                     required
-                />
-                <FileUploadField
-                    label="Уд. личности (Обратная)"
-                    file={files.id_register}
-                    onChange={(e) => handleFileChange('id_register', e)}
-                    onRemove={() => removeFile('id_register')}
                 />
                 <FileUploadField
                     label="Мед. справка 075/у"
@@ -94,13 +89,15 @@ function FileUploadField({
     file,
     onChange,
     onRemove,
-    required = false
+    required = false,
+    accept = ".pdf,.jpg,.jpeg,.png"
 }: {
     label: string;
     file: File | null;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onRemove: () => void;
     required?: boolean;
+    accept?: string;
 }) {
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -124,7 +121,7 @@ function FileUploadField({
                         ref={inputRef}
                         type="file"
                         className="hidden"
-                        accept=".pdf,.jpg,.jpeg,.png"
+                        accept={accept}
                         onChange={onChange}
                     />
                 </div>

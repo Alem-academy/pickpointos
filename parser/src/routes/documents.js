@@ -57,6 +57,11 @@ const DOC_SIGN_FILE_NAME_ASCII = {
     '13_zayavlenie-o-prieme-na-rabotu': 'job_application.pdf',
     '14_prikaz-o-prieme-na-rabotu': 'hiring_order_new.pdf',
     '15_trudovoy-dogovor': 'employment_contract_new.pdf',
+    '16_zayavlenie-na-otpusk': 'vacation_application.pdf',
+    '17_prikaz-ob-otpuske': 'vacation_order.pdf',
+    '18_zayavlenie-na-uvolnenie': 'resignation_application.pdf',
+    '19_prikaz-ob-uvolnenii': 'termination_order.pdf',
+    '20_spravka-s-mesta-raboty': 'employment_certificate.pdf',
 };
 
 const DOC_SIGN_FILE_NAME_RU = {
@@ -83,6 +88,11 @@ const DOC_SIGN_FILE_NAME_RU = {
     '13_zayavlenie-o-prieme-na-rabotu': 'Заявление_на_прием',
     '14_prikaz-o-prieme-na-rabotu': 'Приказ_о_приеме',
     '15_trudovoy-dogovor': 'Трудовой_договор',
+    '16_zayavlenie-na-otpusk': 'Заявление_на_отпуск',
+    '17_prikaz-ob-otpuske': 'Приказ_на_отпуск',
+    '18_zayavlenie-na-uvolnenie': 'Заявление_на_увольнение',
+    '19_prikaz-ob-uvolnenii': 'Приказ_об_увольнении',
+    '20_spravka-s-mesta-raboty': 'Справка_с_места_работы',
 };
 
 function buildSignFileName(docType, employeeFullName) {
@@ -276,17 +286,29 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         const n = name.toLowerCase();
         // Female names
         if (isFemale) {
-            if (n.endsWith('а')) return name.slice(0, -1) + (case_ === 'vin' ? 'у' : 'ы');
+            if (n.endsWith('а')) {
+                if (case_ === 'vin') return name.slice(0, -1) + 'у';
+                if (case_ === 'inst') return name.slice(0, -1) + 'ой';
+                return name.slice(0, -1) + 'ы';
+            }
             if (n.endsWith('я')) {
                 if (case_ === 'vin') return name.slice(0, -1) + 'ю';
+                if (case_ === 'inst') return name.slice(0, -1) + 'ей';
                 return name.slice(0, -1) + 'и';
             }
             return name;
         }
         // Male names
-        if (n.endsWith('й')) return name.slice(0, -1) + 'я';
-        if (n.endsWith('ь')) return name.slice(0, -1) + 'я';
+        if (n.endsWith('й')) {
+            if (case_ === 'inst') return name.slice(0, -1) + 'ем';
+            return name.slice(0, -1) + 'я';
+        }
+        if (n.endsWith('ь')) {
+            if (case_ === 'inst') return name.slice(0, -1) + 'ем';
+            return name.slice(0, -1) + 'я';
+        }
         if (/[аеёиоуыэюя]/.test(name.slice(-1))) return name; // ends with vowel
+        if (case_ === 'inst') return name + 'ом';
         return name + 'а'; // consonant: Миржан → Миржана
     }
 
@@ -295,11 +317,15 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         if (isFemale) {
             if (pat.toLowerCase().endsWith('на')) {
                 if (case_ === 'vin') return pat.slice(0, -2) + 'ну';
+                if (case_ === 'inst') return pat.slice(0, -2) + 'ной';
                 return pat.slice(0, -2) + 'ны';
             }
             return pat;
         }
-        if (pat.toLowerCase().endsWith('ич')) return pat + 'а';
+        if (pat.toLowerCase().endsWith('ич')) {
+            if (case_ === 'inst') return pat + 'ем';
+            return pat + 'а';
+        }
         return pat;
     }
 
@@ -315,24 +341,24 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         let declinedLast = last;
         if (l.endsWith('ская') || l.endsWith('цкая')) {
             const base = last.slice(0, -2);
-            if (case_ === 'rod' || case_ === 'dat') declinedLast = `${base}ой`;
+            if (case_ === 'rod' || case_ === 'dat' || case_ === 'inst') declinedLast = `${base}ой`;
             if (case_ === 'vin') declinedLast = `${base}ую`;
         } else if (l.endsWith('ова') || l.endsWith('ева') || l.endsWith('ина')) {
             const base = last.slice(0, -1);
-            if (case_ === 'rod' || case_ === 'dat') declinedLast = `${base}ой`;
+            if (case_ === 'rod' || case_ === 'dat' || case_ === 'inst') declinedLast = `${base}ой`;
             if (case_ === 'vin') declinedLast = `${base}у`;
         } else if (last.endsWith('а') && !l.endsWith('ов')) {
-            if (case_ === 'rod' || case_ === 'dat') declinedLast = `${last.slice(0,-1)}ой`;
+            if (case_ === 'rod' || case_ === 'dat' || case_ === 'inst') declinedLast = `${last.slice(0,-1)}ой`;
             if (case_ === 'vin') declinedLast = `${last.slice(0,-1)}у`;
         } else if (last.endsWith('ев') || last.endsWith('ов')) {
             const base = last.slice(0, -2);
             if (case_ === 'rod') declinedLast = `${base}ова`;
             if (case_ === 'dat') declinedLast = `${base}ову`;
-            if (case_ === 'vin') declinedLast = `${base}ова`;
+            if (case_ === 'vin' || case_ === 'inst') declinedLast = `${base}овым`;
         } else {
             if (case_ === 'rod') declinedLast = `${last}а`;
             if (case_ === 'dat') declinedLast = `${last}у`;
-            if (case_ === 'vin') declinedLast = `${last}а`;
+            if (case_ === 'vin' || case_ === 'inst') declinedLast = `${last}ом`;
         }
 
         const declinedFirst = declineFirstName(first, case_, isFemale);
@@ -350,27 +376,27 @@ function buildTemplateData(emp, employer, schema, params = {}) {
 
         if (l.endsWith('ская') || l.endsWith('цкая')) {
             const base = last.slice(0, -2);
-            if (case_ === 'rod' || case_ === 'dat') return `${base}ой${suffix}`;
+            if (case_ === 'rod' || case_ === 'dat' || case_ === 'inst') return `${base}ой${suffix}`;
             if (case_ === 'vin') return `${base}ую${suffix}`;
         }
         if (l.endsWith('ова') || l.endsWith('ева') || l.endsWith('ина')) {
             const base = last.slice(0, -1);
-            if (case_ === 'rod' || case_ === 'dat') return `${base}ой${suffix}`;
+            if (case_ === 'rod' || case_ === 'dat' || case_ === 'inst') return `${base}ой${suffix}`;
             if (case_ === 'vin') return `${base}у${suffix}`;
         }
         if (last.endsWith('а')) {
-            if (case_ === 'rod' || case_ === 'dat') return `${last.slice(0,-1)}ой${suffix}`;
+            if (case_ === 'rod' || case_ === 'dat' || case_ === 'inst') return `${last.slice(0,-1)}ой${suffix}`;
             if (case_ === 'vin') return `${last.slice(0,-1)}у${suffix}`;
         }
         if (last.endsWith('ев') || last.endsWith('ов')) {
             const base = last.slice(0, -2);
             if (case_ === 'rod') return `${base}ова${suffix}`;
             if (case_ === 'dat') return `${base}ову${suffix}`;
-            if (case_ === 'vin') return `${base}ова${suffix}`;
+            if (case_ === 'vin' || case_ === 'inst') return `${base}овым${suffix}`;
         }
         if (case_ === 'rod') return `${last}а${suffix}`;
         if (case_ === 'dat') return `${last}у${suffix}`;
-        if (case_ === 'vin') return `${last}а${suffix}`;
+        if (case_ === 'vin' || case_ === 'inst') return `${last}ом${suffix}`;
         return fullName;
     }
 
@@ -440,35 +466,36 @@ function buildTemplateData(emp, employer, schema, params = {}) {
 
     function declinePosition(position, case_) {
         if (!position) return '';
-        if (case_ !== 'rod') return position;
+        if (case_ === 'nom') return position;
         const p = position.toLowerCase().trim();
-        // Exact matches first
+        // Exact matches first — maps nominative -> { rod, dat, inst }
         const exact = {
-            'менеджер по работе с клиентами': 'менеджера по работе с клиентами',
-            'региональный менеджер': 'регионального менеджера',
-            'кассир': 'кассира',
-            'старший кассир': 'старшего кассира',
-            'оператор пвз': 'оператора ПВЗ',
-            'старший оператор': 'старшего оператора',
-            'администратор': 'администратора',
-            'кладовщик': 'кладовщика',
-            'водитель': 'водителя',
-            'грузчик': 'грузчика',
-            'упаковщик': 'упаковщика',
-            'уборщик': 'уборщика',
-            'охранник': 'охранника',
-            'курьер': 'курьера',
-            'специалист': 'специалиста',
-            'стажер': 'стажера',
-            'бухгалтер': 'бухгалтера',
-            'главный бухгалтер': 'главного бухгалтера',
-            'директор': 'директора',
-            'комплектовщик': 'комплектовщика',
-            'разнорабочий': 'разнорабочего',
-            'сборщик заказов': 'сборщика заказов',
+            'менеджер по работе с клиентами': { rod: 'менеджера по работе с клиентами', dat: 'менеджеру по работе с клиентами', inst: 'менеджером по работе с клиентами' },
+            'региональный менеджер': { rod: 'регионального менеджера', dat: 'региональному менеджеру', inst: 'региональным менеджером' },
+            'кассир': { rod: 'кассира', dat: 'кассиру', inst: 'кассиром' },
+            'старший кассир': { rod: 'старшего кассира', dat: 'старшему кассиру', inst: 'старшим кассиром' },
+            'оператор пвз': { rod: 'оператора ПВЗ', dat: 'оператору ПВЗ', inst: 'оператором ПВЗ' },
+            'старший оператор': { rod: 'старшего оператора', dat: 'старшему оператору', inst: 'старшим оператором' },
+            'администратор': { rod: 'администратора', dat: 'администратору', inst: 'администратором' },
+            'кладовщик': { rod: 'кладовщика', dat: 'кладовщику', inst: 'кладовщиком' },
+            'водитель': { rod: 'водителя', dat: 'водителю', inst: 'водителем' },
+            'грузчик': { rod: 'грузчика', dat: 'грузчику', inst: 'грузчиком' },
+            'упаковщик': { rod: 'упаковщика', dat: 'упаковщику', inst: 'упаковщиком' },
+            'уборщик': { rod: 'уборщика', dat: 'уборщику', inst: 'уборщиком' },
+            'охранник': { rod: 'охранника', dat: 'охраннику', inst: 'охранником' },
+            'курьер': { rod: 'курьера', dat: 'курьеру', inst: 'курьером' },
+            'специалист': { rod: 'специалиста', dat: 'специалисту', inst: 'специалистом' },
+            'стажер': { rod: 'стажера', dat: 'стажеру', inst: 'стажером' },
+            'бухгалтер': { rod: 'бухгалтера', dat: 'бухгалтеру', inst: 'бухгалтером' },
+            'главный бухгалтер': { rod: 'главного бухгалтера', dat: 'главному бухгалтеру', inst: 'главным бухгалтером' },
+            'директор': { rod: 'директора', dat: 'директору', inst: 'директором' },
+            'комплектовщик': { rod: 'комплектовщика', dat: 'комплектовщику', inst: 'комплектовщиком' },
+            'разнорабочий': { rod: 'разнорабочего', dat: 'разнорабочему', inst: 'разнорабочим' },
+            'сборщик заказов': { rod: 'сборщика заказов', dat: 'сборщику заказов', inst: 'сборщиком заказов' },
         };
-        if (exact[p]) return exact[p];
-        // Generic rules for unknown positions
+        if (exact[p]) return exact[p][case_] || exact[p].rod;
+        // Generic rules for unknown positions (fallback to rod only)
+        if (case_ !== 'rod') return position;
         if (p.endsWith('тель')) return position.slice(0, -2) + 'ля';
         if (p.endsWith('арь') || p.endsWith('ир') || p.endsWith('ор') || p.endsWith('ур')) return position.slice(0, -2) + 'я';
         if (p.endsWith('ант') || p.endsWith('ент')) return position.slice(0, -1) + 'а';
@@ -491,14 +518,18 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         employeeFullNameRod: declineFIO(fullName, 'rod'),
         employeeFullNameDat: declineFIO(fullName, 'dat'),
         employeeFullNameVin: declineFIO(fullName, 'vin'),
+        employeeFullNameInst: declineFIO(fullName, 'inst'),
         employeeFullNameShort: declineShortFIO(shortName, 'rod'), // backward compat for orders
         employeeFullNameShortRod: declineShortFIO(shortName, 'rod'),
         employeeFullNameShortDat: declineShortFIO(shortName, 'dat'),
         employeeFullNameShortVin: declineShortFIO(shortName, 'vin'),
+        employeeFullNameShortInst: declineShortFIO(shortName, 'inst'),
         employeePosition: position,
         employeePositionRu: position,
         employeePositionKz: positionKz,
         employeePositionRod: declinePosition(position, 'rod'),
+        employeePositionDat: declinePosition(position, 'dat'),
+        employeePositionInst: declinePosition(position, 'inst'),
         employeeIIN: emp.iin || '',
         employeeAddress: emp.registered_address || emp.address || '',
         employeeAddressRu: emp.registered_address || emp.address || '',
@@ -546,6 +577,7 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         employerBIC: employer.bik || '',
         employerIBAN: employer.iban || '',
         employerAccount: employer.iban || '',
+        internalRulesUrl: employer.internal_rules_url || 'https://drive.google.com/drive/folders/1Ij1i31fvO0vZ7kG1jePrkVf59F0Bq1QT',
 
         // Director fields (individual variables for templates)
         directorName: employer.director_name || '',
@@ -997,10 +1029,6 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
             return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
         }
 
-        if (schemaVars.includes('terminationDate') && enhancedParams.terminationDate) {
-            const formatted = formatRuDateLong(enhancedParams.terminationDate);
-            if (formatted) enhancedParams.terminationDate = formatted;
-        }
         if (schemaVars.includes('agreementDate')) {
             if (enhancedParams.agreementDate) {
                 const formatted = formatRuDateShort(enhancedParams.agreementDate);
@@ -1009,6 +1037,16 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
                 // Default agreementDate to terminationDate (short format)
                 const termIso = userParams.terminationDate;
                 if (termIso) enhancedParams.agreementDate = formatRuDateShort(termIso);
+            }
+        }
+        if (schemaVars.includes('applicationDate')) {
+            if (enhancedParams.applicationDate) {
+                const formatted = formatRuDateShort(enhancedParams.applicationDate);
+                if (formatted) enhancedParams.applicationDate = formatted;
+            } else if (enhancedParams.terminationDate) {
+                // Default applicationDate to terminationDate (short format) for termination documents
+                const termIso = userParams.terminationDate;
+                if (termIso) enhancedParams.applicationDate = formatRuDateShort(termIso);
             }
         }
         if (schemaVars.includes('lastWorkingDay') && enhancedParams.lastWorkingDay) {
@@ -1038,6 +1076,7 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
             { field: 'sickLeaveDate', prefix: 'sickLeave' },
             { field: 'applicationDate', prefix: 'applicationDate' },
             { field: 'startDate', prefix: 'startDate' },
+            { field: 'terminationDate', prefix: 'terminationDate' },
         ];
         for (const { field, prefix } of datePrefixes) {
             if (enhancedParams[field]) {
@@ -1082,6 +1121,10 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
             const formatted = formatRuDateLong(enhancedParams.sickLeaveDate);
             if (formatted) enhancedParams.sickLeaveDate = formatted;
         }
+        if (schemaVars.includes('terminationDate') && enhancedParams.terminationDate) {
+            const formatted = formatRuDateLong(enhancedParams.terminationDate);
+            if (formatted) enhancedParams.terminationDate = formatted;
+        }
 
         // Compute vacation days and text
         if (schemaVars.includes('vacationDays') || schemaVars.includes('vacationDaysText')) {
@@ -1102,6 +1145,11 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
         // Default sick leave series
         if (schemaVars.includes('sickLeaveSeries') && !enhancedParams.sickLeaveSeries) {
             enhancedParams.sickLeaveSeries = 'БД';
+        }
+
+        // Default unused vacation days for termination order
+        if (schemaVars.includes('unusedVacationDays') && !enhancedParams.unusedVacationDays) {
+            enhancedParams.unusedVacationDays = '0';
         }
 
         // Compute old full name for name change templates
@@ -1155,6 +1203,9 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
         '12_dop-soglashenie-ob-izmenenii-familii',
         '14_prikaz-o-prieme-na-rabotu',
         '15_trudovoy-dogovor',
+        '17_prikaz-ob-otpuske',
+        '19_prikaz-ob-uvolnenii',
+        '20_spravka-s-mesta-raboty',
     ];
     const requiresEmployerSignature = typesRequiringEmployerSignature.includes(type);
 

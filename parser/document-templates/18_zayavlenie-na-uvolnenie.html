@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Заявление о приеме на работу</title>
+  <title>Заявление на увольнение</title>
   <style>
     @page { size: A4; margin: 20mm; }
     * { box-sizing: border-box; }
@@ -57,15 +57,12 @@
   <!--
     Переменные:
     {{employerName}}           — наименование работодателя (например: ИП «Жасмин»)
-    {{directorNameShortDat}}   — ФИО директора в дательном падеже (например: Карабаевой Г.Е.)
-    {{employeeFullName}}       — ФИО сотрудника полностью (именительный)
-    {{employeeAddressResidentRu}} — адрес проживания (русский)
-    {{employeeAddressRegRu}}   — адрес регистрации (русский)
-    {{employeePhone}}          — телефон
-    {{startDateDay}}           — день начала работы
-    {{startDateMonthRu}}       — месяц начала работы (русский)
-    {{startDateYear}}          — год начала работы
-    {{employeePositionRod}}    — должность в родительном падеже
+    {{directorNameShortDat}}   — ФИО директора в дательном падеже
+    {{employeePositionRod}}    — должность сотрудника в родительном падеже
+    {{employeeFullName}}       — ФИО сотрудника полностью
+    {{terminationDateDay}}     — день увольнения
+    {{terminationDateMonthRu}} — месяц увольнения (русский)
+    {{terminationDateYear}}    — год увольнения
     {{currentDateDay}}         — день подписания
     {{currentDateMonthRu}}     — месяц подписания (русский)
     {{currentDateYear}}        — год подписания
@@ -75,17 +72,15 @@
     <p>Директору</p>
     <p>{{employerName}}</p>
     <p>{{directorNameShortDat}}</p>
-    <p>от {{employeeFullName}}</p>
-    <p>Проживающий по адресу: {{employeeAddressResidentRu}}</p>
-    <p>Зарегистрированный по адресу: {{employeeAddressRegRu}}</p>
-    <p>тел: {{employeePhone}}</p>
+    <p>от {{employeePositionRod}}</p>
+    <p>{{employeeFullName}}</p>
   </div>
 
   <div class="title">Заявление</div>
 
   <p class="body-text">
-    Прошу Вас принять меня на работу с «{{startDateDay}}» {{startDateMonthRu}} {{startDateYear}} года
-    на должность {{employeePositionRod}}.
+    Прошу Вас уволить меня по собственному желанию
+    с «{{terminationDateDay}}» {{terminationDateMonthRu}} {{terminationDateYear}} года.
   </p>
 
   <div class="signature-block">

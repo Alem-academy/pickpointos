@@ -16,6 +16,8 @@ interface TerminationWizardProps {
 }
 
 const DOC_TYPE_LABELS: Record<string, string> = {
+    '18_zayavlenie-na-uvolnenie': 'Заявление на увольнение',
+    '19_prikaz-ob-uvolnenii': 'Приказ об увольнении',
     '11_soglashenie-o-rastorzhenii-trudovogo-dogovora': 'Соглашение о расторжении ТД',
 };
 
@@ -49,6 +51,7 @@ export function TerminationWizard({ employeeId, employeeName, existingDocuments 
         terminationDate: '',
         lastWorkingDay: '',
         compensationAmount: '',
+        unusedVacationDays: '0',
     });
 
     const handleParamChange = (key: string, value: string) => {
@@ -75,7 +78,7 @@ export function TerminationWizard({ employeeId, employeeName, existingDocuments 
 
         if (currentStep === 0) {
             const confirmed = window.confirm(
-                'Будет сформировано соглашение о расторжении трудового договора.\n\nРанее сгенерированные документы останутся в системе. Продолжить?'
+                'Будет сформирован пакет документов на расторжение трудового договора:\n• Заявление на увольнение\n• Приказ об увольнении\n• Соглашение о расторжении ТД\n\nРанее сгенерированные документы останутся в системе. Продолжить?'
             );
             if (!confirmed) return;
 
@@ -86,6 +89,7 @@ export function TerminationWizard({ employeeId, employeeName, existingDocuments 
                     terminationDate: params.terminationDate,
                     lastWorkingDay: params.lastWorkingDay,
                     compensationAmount: params.compensationAmount || undefined,
+                    unusedVacationDays: params.unusedVacationDays || '0',
                 });
                 const newDocs = result.documents
                     .filter((d: any) => d.success)
@@ -170,7 +174,7 @@ export function TerminationWizard({ employeeId, employeeName, existingDocuments 
                         <h2 className="text-lg font-bold text-slate-900">
                             Расторжение ТД {employeeName && <span className="text-slate-500 font-normal">— {employeeName}</span>}
                         </h2>
-                        <p className="text-sm text-slate-500">Соглашение о расторжении трудового договора</p>
+                        <p className="text-sm text-slate-500">Пакет документов на расторжение трудового договора</p>
                     </div>
                     <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
                         <X className="h-5 w-5" />
@@ -262,6 +266,21 @@ export function TerminationWizard({ employeeId, employeeName, existingDocuments 
                                         className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                                     />
                                     <p className="text-xs text-slate-400 mt-1">Если не указать — компенсация не включается в соглашение</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                                        Неиспользованные дни отпуска
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={params.unusedVacationDays}
+                                        onChange={e => handleParamChange('unusedVacationDays', e.target.value)}
+                                        placeholder="0"
+                                        min="0"
+                                        className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                                    />
+                                    <p className="text-xs text-slate-400 mt-1">Количество неиспользованных дней отпуска для компенсации</p>
                                 </div>
                             </div>
                         </div>
