@@ -30,6 +30,25 @@ import { getTemplate, getSchema, listAllTemplates, getProcessDefinition, listPro
 // Documents are pre-registered on generation and signed via eGov QR
 
 /**
+ * Atomically get the next document sequence number for an employer/year.
+ * Type: 'contract' | 'order'. Returns a plain integer sequence.
+ */
+async function getNextDocumentNumber(employerId, year, type) {
+    if (!employerId) {
+        throw new Error('Employer ID is required for document numbering');
+    }
+    const col = type === 'contract' ? 'contract_seq' : 'order_seq';
+    const res = await query(`
+        INSERT INTO document_counters (employer_id, year, ${col})
+        VALUES ($1, $2, 1)
+        ON CONFLICT (employer_id, year)
+        DO UPDATE SET ${col} = document_counters.${col} + 1
+        RETURNING ${col}
+    `, [employerId, year]);
+    return parseInt(res.rows[0][col], 10);
+}
+
+/**
  * Имя файла для Sigex/eGov Mobile: только ASCII (латиница, цифры, точка).
  * Кириллица в имени на части Android/Google viewer даёт плейсхолдер из подчёркиваний и ошибку «недопустимый PDF».
  */
@@ -724,6 +743,7 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
         throw new Error('Employee not found');
     }
     const emp = empResult.rows[0];
+    const employerId = emp.employer_id || emp.pvz_employer_id;
 
     const employer = {
         name: emp.employer_name || 'Индивидуальный предприниматель «Жасмин»',
@@ -747,16 +767,18 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
     const contractYear = now.getFullYear();
     const dateRu = `${contractDay} ${contractMonth} ${contractYear}`;
 
-    const cntRes = await query(
-        `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type = 'contract'`, [employeeId]
-    );
-    const seq = parseInt(cntRes.rows[0].count, 10) + 1;
     const yearShort = String(contractYear).slice(-2);
-    const contractNum = `ТД-${String(seq).padStart(3, '0')}/${yearShort}`;
+    let contractNum = null;
+    let orderNum = null;
+    let documentNumberToSave = null;
 
     let schema = null;
 
     if (type === 'contract') {
+        const seq = await getNextDocumentNumber(employerId, contractYear, 'contract');
+        contractNum = `${seq}/${yearShort}`;
+        documentNumberToSave = contractNum;
+
         const startDateParam = userParams.startDate;
         let effectiveHiredAt = emp.hired_at;
         if (startDateParam) {
@@ -812,16 +834,26 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
             rules_link: 'https://drive.google.com/file/d/1Du_Sw3n9NmrTZB4CQZeiavH0OI3rUOEa/view',
         });
     } else if (type === 'order_hiring') {
-        const contractRes = await query(
-            `SELECT id, created_at FROM documents WHERE employee_id = $1 AND type = 'contract' ORDER BY created_at DESC LIMIT 1`,
-            [employeeId]
-        );
-        const existingNum = contractRes.rows.length > 0 ? `ТД-${String(seq).padStart(3, '0')}/${yearShort}` : '_______';
-        const existingDate = contractRes.rows.length > 0
-            ? new Date(contractRes.rows[0].created_at).toLocaleDateString('ru-RU') : '_______';
+        const orderSeq = await getNextDocumentNumber(employerId, contractYear, 'order');
+        orderNum = `П-${String(orderSeq).padStart(3, '0')}/${yearShort}`;
+        documentNumberToSave = orderNum;
+
+        let existingNum = userParams.contractNumber || '_______';
+        let existingDate = userParams.contractDate || '_______';
+
+        if (existingNum === '_______') {
+            const contractRes = await query(
+                `SELECT document_number, created_at FROM documents WHERE employee_id = $1 AND type = 'contract' ORDER BY created_at DESC LIMIT 1`,
+                [employeeId]
+            );
+            if (contractRes.rows.length > 0 && contractRes.rows[0].document_number) {
+                existingNum = contractRes.rows[0].document_number;
+                existingDate = new Date(contractRes.rows[0].created_at).toLocaleDateString('ru-RU');
+            }
+        }
 
         htmlContent = fillTemplate(HIRING_ORDER_TEMPLATE, {
-            order_number: `П-${String(seq).padStart(3, '0')}/${yearShort}`,
+            order_number: orderNum,
             order_day: contractDay,
             order_month_kz: contractMonthKz,
             order_year: String(contractYear),
@@ -872,13 +904,12 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
         const vacStart = vacationStart ? new Date(vacationStart) : now;
         const vacEnd = vacationEnd ? new Date(vacationEnd) : new Date(vacStart.getTime() + vacationDays * 24 * 60 * 60 * 1000);
 
-        const orderCntRes = await query(
-            `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type::text LIKE '%order%'`, [employeeId]
-        );
-        const orderSeq = parseInt(orderCntRes.rows[0].count, 10) + 1;
+        const orderSeq = await getNextDocumentNumber(employerId, contractYear, 'order');
+        orderNum = `ОТ-${String(orderSeq).padStart(3, '0')}/${yearShort}`;
+        documentNumberToSave = orderNum;
 
         htmlContent = fillTemplate(VACATION_ORDER_TEMPLATE, {
-            order_number: `ОТ-${String(orderSeq).padStart(3, '0')}/${yearShort}`,
+            order_number: orderNum,
             full_name: emp.full_name,
             iin: emp.iin || '__________',
             position: emp.role === 'rf' ? 'Региональный менеджер' : 'Менеджер по работе с клиентами',
@@ -893,13 +924,12 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
         const { terminationDate, terminationReason = 'по собственному желанию', contractNumber, contractDate } = userParams;
         const termDate = terminationDate ? new Date(terminationDate) : now;
 
-        const orderCntRes = await query(
-            `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type::text LIKE '%order%'`, [employeeId]
-        );
-        const orderSeq = parseInt(orderCntRes.rows[0].count, 10) + 1;
+        const orderSeq = await getNextDocumentNumber(employerId, contractYear, 'order');
+        orderNum = `УВ-${String(orderSeq).padStart(3, '0')}/${yearShort}`;
+        documentNumberToSave = orderNum;
 
         htmlContent = fillTemplate(TERMINATION_ORDER_TEMPLATE, {
-            order_number: `УВ-${String(orderSeq).padStart(3, '0')}/${yearShort}`,
+            order_number: orderNum,
             contract_number: contractNumber || '_______',
             contract_date: contractDate || '_______',
             full_name: emp.full_name,
@@ -953,22 +983,20 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
 
         // Contract number for hiring-related documents
         if (schemaVars.includes('contractNumber') && !enhancedParams.contractNumber) {
-            const contractCntRes = await query(
-                `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type = 'contract'`, [employeeId]
-            );
-            const contractSeq = parseInt(contractCntRes.rows[0].count, 10) + 1;
-            const yearShort = String(new Date().getFullYear()).slice(-2);
-            enhancedParams.contractNumber = `ТД-${String(contractSeq).padStart(3, '0')}/${yearShort}`;
+            const contractSeq = await getNextDocumentNumber(employerId, contractYear, 'contract');
+            enhancedParams.contractNumber = `${contractSeq}/${yearShort}`;
+        }
+        if (enhancedParams.contractNumber && !documentNumberToSave) {
+            documentNumberToSave = enhancedParams.contractNumber;
         }
 
         // Order number for order documents
-        if (schemaVars.includes('orderNumber')) {
-            const orderCntRes = await query(
-                `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type::text LIKE '%order%'`, [employeeId]
-            );
-            const orderSeq = parseInt(orderCntRes.rows[0].count, 10) + 1;
-            const yearShort = String(new Date().getFullYear()).slice(-2);
-            enhancedParams.orderNumber = enhancedParams.orderNumber || `П-${String(orderSeq).padStart(3, '0')}/${yearShort}`;
+        if (schemaVars.includes('orderNumber') && !enhancedParams.orderNumber) {
+            const orderSeq = await getNextDocumentNumber(employerId, contractYear, 'order');
+            enhancedParams.orderNumber = `П-${String(orderSeq).padStart(3, '0')}/${yearShort}`;
+        }
+        if (enhancedParams.orderNumber && !documentNumberToSave) {
+            documentNumberToSave = enhancedParams.orderNumber;
         }
 
         // Contract date
@@ -1223,10 +1251,10 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
     const dbType = dbTypeMap[type] || type || 'other';
 
     const docResult = await query(`
-        INSERT INTO documents (employee_id, type, status, scan_url, requires_employer_signature, created_at)
-        VALUES ($1, $2, 'draft', $3, $4, NOW())
+        INSERT INTO documents (employee_id, type, status, scan_url, requires_employer_signature, document_number, created_at)
+        VALUES ($1, $2, 'draft', $3, $4, $5, NOW())
         RETURNING *
-    `, [employeeId, dbType, htmlKey, requiresEmployerSignature]);
+    `, [employeeId, dbType, htmlKey, requiresEmployerSignature, documentNumberToSave]);
 
     const doc = docResult.rows[0];
 
@@ -1307,22 +1335,29 @@ router.post('/employees/:id/processes/:processType/generate', async (req, res) =
         const documents = [];
         const errors = [];
 
+        // Fetch employer for global numbering
+        const empForProcess = await query(`
+            SELECT e.employer_id, p.employer_id as pvz_employer_id
+            FROM employees e
+            LEFT JOIN pvz_points p ON e.main_pvz_id = p.id
+            WHERE e.id = $1
+        `, [employeeId]);
+        const processEmployerId = empForProcess.rows[0]?.employer_id || empForProcess.rows[0]?.pvz_employer_id;
+
         // Pre-compute shared sequence numbers for the entire process
         // This ensures all documents reference the same contract/order numbers
         const sharedParams = { ...params };
-        const yearShort = String(new Date().getFullYear()).slice(-2);
+        const processYear = new Date().getFullYear();
+        const yearShort = String(processYear).slice(-2);
 
         // Check if any doc in the process needs a contract number
         const needsContractNumber = processDef.documentTypes.some(dt => {
             const schema = getSchema(dt);
             return schema && Object.keys(schema.variables || {}).includes('contractNumber');
         });
-        if (needsContractNumber && !sharedParams.contractNumber) {
-            const contractCntRes = await query(
-                `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type = 'contract'`, [employeeId]
-            );
-            const contractSeq = parseInt(contractCntRes.rows[0].count, 10) + 1;
-            sharedParams.contractNumber = `ТД-${String(contractSeq).padStart(3, '0')}/${yearShort}`;
+        if (needsContractNumber && !sharedParams.contractNumber && processEmployerId) {
+            const contractSeq = await getNextDocumentNumber(processEmployerId, processYear, 'contract');
+            sharedParams.contractNumber = `${contractSeq}/${yearShort}`;
         }
 
         // Check if any doc in the process needs an order number
@@ -1330,11 +1365,8 @@ router.post('/employees/:id/processes/:processType/generate', async (req, res) =
             const schema = getSchema(dt);
             return schema && Object.keys(schema.variables || {}).includes('orderNumber');
         });
-        if (needsOrderNumber && !sharedParams.orderNumber) {
-            const orderCntRes = await query(
-                `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND type::text LIKE '%order%'`, [employeeId]
-            );
-            const orderSeq = parseInt(orderCntRes.rows[0].count, 10) + 1;
+        if (needsOrderNumber && !sharedParams.orderNumber && processEmployerId) {
+            const orderSeq = await getNextDocumentNumber(processEmployerId, processYear, 'order');
             sharedParams.orderNumber = `П-${String(orderSeq).padStart(3, '0')}/${yearShort}`;
         }
 
