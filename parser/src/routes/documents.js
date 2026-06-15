@@ -32,20 +32,36 @@ import { getTemplate, getSchema, listAllTemplates, getProcessDefinition, listPro
 /**
  * Atomically get the next document sequence number for an employer/year.
  * Type: 'contract' | 'order'. Returns a plain integer sequence.
+ * If no employerId is provided, falls back to a per-employee counter so
+ * generation still works for legacy employees without an employer link.
  */
-async function getNextDocumentNumber(employerId, year, type) {
-    if (!employerId) {
-        throw new Error('Employer ID is required for document numbering');
-    }
+async function getNextDocumentNumber(employerId, year, type, employeeId = null) {
     const col = type === 'contract' ? 'contract_seq' : 'order_seq';
-    const res = await query(`
-        INSERT INTO document_counters (employer_id, year, ${col})
-        VALUES ($1, $2, 1)
-        ON CONFLICT (employer_id, year)
-        DO UPDATE SET ${col} = document_counters.${col} + 1
-        RETURNING ${col}
-    `, [employerId, year]);
-    return parseInt(res.rows[0][col], 10);
+
+    if (employerId) {
+        const res = await query(`
+            INSERT INTO document_counters (employer_id, year, ${col})
+            VALUES ($1, $2, 1)
+            ON CONFLICT (employer_id, year)
+            DO UPDATE SET ${col} = document_counters.${col} + 1
+            RETURNING ${col}
+        `, [employerId, year]);
+        return parseInt(res.rows[0][col], 10);
+    }
+
+    // Fallback: per-employee count for legacy records without an employer.
+    if (employeeId) {
+        const typeFilter = type === 'contract'
+            ? "type = 'contract'"
+            : "type::text LIKE '%order%'";
+        const cntRes = await query(
+            `SELECT COUNT(*) FROM documents WHERE employee_id = $1 AND ${typeFilter}`,
+            [employeeId]
+        );
+        return parseInt(cntRes.rows[0].count, 10) + 1;
+    }
+
+    throw new Error('Employer ID or Employee ID is required for document numbering');
 }
 
 /**
@@ -775,7 +791,7 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
     let schema = null;
 
     if (type === 'contract') {
-        const seq = await getNextDocumentNumber(employerId, contractYear, 'contract');
+        const seq = await getNextDocumentNumber(employerId, contractYear, 'contract', employeeId);
         contractNum = `${seq}/${yearShort}`;
         documentNumberToSave = contractNum;
 
@@ -834,7 +850,7 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
             rules_link: 'https://drive.google.com/file/d/1Du_Sw3n9NmrTZB4CQZeiavH0OI3rUOEa/view',
         });
     } else if (type === 'order_hiring') {
-        const orderSeq = await getNextDocumentNumber(employerId, contractYear, 'order');
+        const orderSeq = await getNextDocumentNumber(employerId, contractYear, 'order', employeeId);
         orderNum = `П-${String(orderSeq).padStart(3, '0')}/${yearShort}`;
         documentNumberToSave = orderNum;
 
@@ -904,7 +920,7 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
         const vacStart = vacationStart ? new Date(vacationStart) : now;
         const vacEnd = vacationEnd ? new Date(vacationEnd) : new Date(vacStart.getTime() + vacationDays * 24 * 60 * 60 * 1000);
 
-        const orderSeq = await getNextDocumentNumber(employerId, contractYear, 'order');
+        const orderSeq = await getNextDocumentNumber(employerId, contractYear, 'order', employeeId);
         orderNum = `ОТ-${String(orderSeq).padStart(3, '0')}/${yearShort}`;
         documentNumberToSave = orderNum;
 
@@ -924,7 +940,7 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
         const { terminationDate, terminationReason = 'по собственному желанию', contractNumber, contractDate } = userParams;
         const termDate = terminationDate ? new Date(terminationDate) : now;
 
-        const orderSeq = await getNextDocumentNumber(employerId, contractYear, 'order');
+        const orderSeq = await getNextDocumentNumber(employerId, contractYear, 'order', employeeId);
         orderNum = `УВ-${String(orderSeq).padStart(3, '0')}/${yearShort}`;
         documentNumberToSave = orderNum;
 
@@ -983,7 +999,7 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
 
         // Contract number for hiring-related documents
         if (schemaVars.includes('contractNumber') && !enhancedParams.contractNumber) {
-            const contractSeq = await getNextDocumentNumber(employerId, contractYear, 'contract');
+            const contractSeq = await getNextDocumentNumber(employerId, contractYear, 'contract', employeeId);
             enhancedParams.contractNumber = `${contractSeq}/${yearShort}`;
         }
         if (enhancedParams.contractNumber && !documentNumberToSave) {
@@ -992,7 +1008,7 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
 
         // Order number for order documents
         if (schemaVars.includes('orderNumber') && !enhancedParams.orderNumber) {
-            const orderSeq = await getNextDocumentNumber(employerId, contractYear, 'order');
+            const orderSeq = await getNextDocumentNumber(employerId, contractYear, 'order', employeeId);
             enhancedParams.orderNumber = `П-${String(orderSeq).padStart(3, '0')}/${yearShort}`;
         }
         if (enhancedParams.orderNumber && !documentNumberToSave) {
@@ -1355,8 +1371,8 @@ router.post('/employees/:id/processes/:processType/generate', async (req, res) =
             const schema = getSchema(dt);
             return schema && Object.keys(schema.variables || {}).includes('contractNumber');
         });
-        if (needsContractNumber && !sharedParams.contractNumber && processEmployerId) {
-            const contractSeq = await getNextDocumentNumber(processEmployerId, processYear, 'contract');
+        if (needsContractNumber && !sharedParams.contractNumber) {
+            const contractSeq = await getNextDocumentNumber(processEmployerId, processYear, 'contract', employeeId);
             sharedParams.contractNumber = `${contractSeq}/${yearShort}`;
         }
 
@@ -1365,8 +1381,8 @@ router.post('/employees/:id/processes/:processType/generate', async (req, res) =
             const schema = getSchema(dt);
             return schema && Object.keys(schema.variables || {}).includes('orderNumber');
         });
-        if (needsOrderNumber && !sharedParams.orderNumber && processEmployerId) {
-            const orderSeq = await getNextDocumentNumber(processEmployerId, processYear, 'order');
+        if (needsOrderNumber && !sharedParams.orderNumber) {
+            const orderSeq = await getNextDocumentNumber(processEmployerId, processYear, 'order', employeeId);
             sharedParams.orderNumber = `П-${String(orderSeq).padStart(3, '0')}/${yearShort}`;
         }
 
