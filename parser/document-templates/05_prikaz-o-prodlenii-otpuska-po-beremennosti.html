@@ -48,7 +48,6 @@
       text-align: center;
       font-weight: bold;
       margin: 20px 0;
-      text-transform: uppercase;
     }
     .body-text {
       text-align: justify;
@@ -83,7 +82,7 @@
 <body>
   <!--
     Переменные:
-    {{employerName}}         — наименование работодателя
+    {{employerShortName}}    — краткое наименование работодателя (например: Жасмин)
     {{orderNumber}}          — номер приказа
     {{dateDay}}              — день
     {{dateMonthKz}}          — месяц на казахском
@@ -91,13 +90,14 @@
     {{dateYear}}             — год
     {{cityKz}}               — город на казахском
     {{cityRu}}               — город на русском
-    {{employeePositionRod}}  — должность в родительном падеже
+    {{employeePositionDat}}  — должность в дательном падеже
     {{employeeFullNameRod}}  — ФИО в родительном падеже
     {{vacationDays}}         — количество дней продления
     {{vacationDaysText}}     — количество дней прописью
     {{vacationStartDate}}    — дата начала продления
     {{vacationEndDate}}      — дата окончания продления
     {{employeeFullNameShortRod}} — ФИО с инициалами в родительном падеже
+    {{employeeFullNameShort}}— ФИО с инициалами (именительный падеж)
     {{applicationDate}}      — дата заявления
     {{sickLeaveDate}}        — дата листка нетрудоспособности
     {{sickLeaveSeries}}      — серия листка
@@ -108,13 +108,14 @@
   <table class="bilingual-header">
     <tr>
       <td class="kz">
-        <p>{{employerName}}</p>
-        <p>жеке кәсіпкер</p>
-        <p>БҰЙРЫҚ</p>
+        <p>«{{employerShortName}}»</p>
+        <p>Жеке</p>
+        <p>Кәсіпкер</p>
+        <p>БҰЙРЫҚ.</p>
       </td>
       <td class="ru">
         <p>Индивидуальный предприниматель</p>
-        <p>{{employerName}}</p>
+        <p>«{{employerShortName}}»</p>
         <p>ПРИКАЗ</p>
       </td>
     </tr>
@@ -123,7 +124,7 @@
   <table class="meta-row">
     <tr>
       <td class="left">
-        <p>«{{dateDay}}» {{dateMonthKz}} {{dateYear}} жыл</p>
+        <p>{{dateDay}} {{dateMonthKz}} {{dateYear}} г.</p>
         <p>{{cityKz}} қаласы</p>
       </td>
       <td class="right">
@@ -144,14 +145,14 @@
   <p class="body-text no-indent"><strong>ПРИКАЗЫВАЮ:</strong></p>
 
   <p class="body-text">
-    Продлить отпуск по беременности и родам {{employeePositionRod}} 
+    Продлить отпуск по беременности и родам {{employeePositionDat}} 
     <strong>{{employeeFullNameRod}}</strong> продолжительностью {{vacationDays}} ({{vacationDaysText}}) 
     календарных дней с {{vacationStartDate}} по {{vacationEndDate}}.
   </p>
 
   <p class="body-text basis">
     <strong>Основание:</strong> заявление <strong>{{employeeFullNameShortRod}}</strong> 
-    от {{applicationDate}}, лист о временной нетрудоспособности от {{sickLeaveDate}}, 
+    от {{applicationDate}} г., лист о временной нетрудоспособности от {{sickLeaveDate}}, 
     серия {{sickLeaveSeries}} № {{sickLeaveNumber}}.
   </p>
 
@@ -164,9 +165,9 @@
   </table>
 
   <div class="acknowledge">
-    <p>С приказом {{employeeAcknowledged}}:</p>
+    <p>С приказом ознакомлен(а):</p>
     <p>«{{dateDay}}» {{dateMonthRu}} {{dateYear}} г.</p>
-    <p><span class="sign-line"></span> {{employeeFullNameShortRod}}</p>
+    <p><span class="sign-line"></span> {{employeeFullNameShort}}</p>
   </div>
 </body>
 </html>

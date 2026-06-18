@@ -5,7 +5,7 @@
       "fileName": "01_zayavlenie-o-vyhode-s-dekreta.html",
       "type": "employee_application",
       "required": [
-        "employerName",
+        "employerShortName",
         "directorNameShortDat",
         "employeePositionRod",
         "employeeFullName",
@@ -17,10 +17,10 @@
         "currentDateYear"
       ],
       "variables": {
-        "employerName": {
+        "employerShortName": {
           "type": "string",
-          "example": "ИП «Жасмин»",
-          "description": "Наименование работодателя"
+          "example": "Жасмин",
+          "description": "Краткое наименование работодателя"
         },
         "directorNameShortDat": {
           "type": "string",
@@ -70,34 +70,29 @@
       }
     },
     "02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom": {
-      "templateName": "Заявление на отпуск по уходу за ребенком",
+      "templateName": "Заявление на отпуск без сохранения заработной платы",
       "fileName": "02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom.html",
       "type": "employee_application",
       "required": [
-        "employerName",
+        "employerShortName",
         "directorNameShortDat",
         "employeePositionRod",
         "employeeFullName",
-        "employeeIIN",
-        "employeeAddressRu",
-        "employeePhone",
         "vacationStartDay",
         "vacationStartMonthRu",
         "vacationStartYear",
         "vacationEndDay",
         "vacationEndMonthRu",
         "vacationEndYear",
-        "certificateNumber",
-        "certificateDay",
-        "certificateMonthRu",
-        "certificateYear",
-        "currentDate"
+        "currentDateDay",
+        "currentDateMonthRu",
+        "currentDateYear"
       ],
       "variables": {
-        "employerName": {
+        "employerShortName": {
           "type": "string",
-          "example": "ИП «Жасмин»",
-          "description": "Наименование работодателя"
+          "example": "Жасмин",
+          "description": "Краткое наименование работодателя"
         },
         "directorNameShortDat": {
           "type": "string",
@@ -109,80 +104,55 @@
           "example": "Иванова Мария Петровна",
           "description": "ФИО сотрудника полностью"
         },
-        "employeeIIN": {
-          "type": "string",
-          "example": "940101400123",
-          "description": "ИИН сотрудника"
-        },
-        "employeeAddressRu": {
-          "type": "string",
-          "example": "г. Алматы, пр. Назарбаева 10",
-          "description": "Адрес проживания (русский)"
-        },
-        "employeePhone": {
-          "type": "string",
-          "example": "+7 701 123 4567",
-          "description": "Контактный телефон"
-        },
-        "vacationStartDay": {
-          "type": "string",
-          "example": "18",
-          "description": "День начала отпуска"
-        },
-        "vacationStartMonthRu": {
-          "type": "string",
-          "example": "февраля",
-          "description": "Месяц начала отпуска (русский)"
-        },
-        "vacationStartYear": {
-          "type": "string",
-          "example": "2026",
-          "description": "Год начала отпуска"
-        },
-        "vacationEndDay": {
-          "type": "string",
-          "example": "25",
-          "description": "День окончания отпуска"
-        },
-        "vacationEndMonthRu": {
-          "type": "string",
-          "example": "декабря",
-          "description": "Месяц окончания отпуска (русский)"
-        },
-        "vacationEndYear": {
-          "type": "string",
-          "example": "2028",
-          "description": "Год окончания отпуска"
-        },
-        "certificateNumber": {
-          "type": "string",
-          "example": "10312626",
-          "description": "Номер свидетельства о рождении"
-        },
-        "certificateDay": {
-          "type": "string",
-          "example": "29",
-          "description": "День свидетельства"
-        },
-        "certificateMonthRu": {
-          "type": "string",
-          "example": "декабря",
-          "description": "Месяц свидетельства (русский)"
-        },
-        "certificateYear": {
-          "type": "string",
-          "example": "2025",
-          "description": "Год свидетельства"
-        },
-        "currentDate": {
-          "type": "string",
-          "example": "15 февраля 2026 г.",
-          "description": "Дата подписания"
-        },
         "employeePositionRod": {
           "type": "string",
           "example": "менеджера по работе с клиентами",
           "description": "Должность сотрудника (родительный падеж)"
+        },
+        "vacationStartDay": {
+          "type": "string",
+          "example": "11",
+          "description": "День начала отпуска"
+        },
+        "vacationStartMonthRu": {
+          "type": "string",
+          "example": "августа",
+          "description": "Месяц начала отпуска (русский)"
+        },
+        "vacationStartYear": {
+          "type": "string",
+          "example": "2024",
+          "description": "Год начала отпуска"
+        },
+        "vacationEndDay": {
+          "type": "string",
+          "example": "15",
+          "description": "День окончания отпуска"
+        },
+        "vacationEndMonthRu": {
+          "type": "string",
+          "example": "августа",
+          "description": "Месяц окончания отпуска (русский)"
+        },
+        "vacationEndYear": {
+          "type": "string",
+          "example": "2024",
+          "description": "Год окончания отпуска"
+        },
+        "currentDateDay": {
+          "type": "string",
+          "example": "10",
+          "description": "День подписания"
+        },
+        "currentDateMonthRu": {
+          "type": "string",
+          "example": "августа",
+          "description": "Месяц подписания (русский)"
+        },
+        "currentDateYear": {
+          "type": "string",
+          "example": "2024",
+          "description": "Год подписания"
         }
       }
     },
@@ -296,21 +266,22 @@
       "fileName": "04_prikaz-ob-otpuske-po-beremennosti-i-rodam.html",
       "type": "employer_order",
       "required": [
-        "employerName",
+        "employerShortName",
         "orderNumber",
-        "dateDay",
-        "dateMonthKz",
-        "dateMonthRu",
-        "dateYear",
+        "currentDateNumeric",
         "cityKz",
         "cityRu",
-        "employeePositionRod",
+        "dateDay",
+        "dateMonthRu",
+        "dateYear",
+        "employeePositionDat",
         "employeeFullNameRod",
         "vacationDays",
         "vacationDaysText",
         "vacationStartDate",
         "vacationEndDate",
         "employeeFullNameShortRod",
+        "employeeFullNameShort",
         "applicationDate",
         "sickLeaveDate",
         "sickLeaveSeries",
@@ -318,10 +289,10 @@
         "directorNameShort"
       ],
       "variables": {
-        "employerName": {
+        "employerShortName": {
           "type": "string",
           "example": "Жасмин",
-          "description": "Наименование работодателя"
+          "description": "Краткое наименование работодателя"
         },
         "orderNumber": {
           "type": "string",
@@ -358,10 +329,10 @@
           "example": "Алматы",
           "description": "Город на русском"
         },
-        "employeePositionRod": {
+        "employeePositionDat": {
           "type": "string",
-          "example": "менеджера по работе с клиентами",
-          "description": "Должность в родительном падеже"
+          "example": "менеджеру по работе с клиентами",
+          "description": "Должность в дательном падеже"
         },
         "employeeFullNameRod": {
           "type": "string",
@@ -393,6 +364,11 @@
           "example": "Еспулаевой В. А.",
           "description": "ФИО с инициалами в родительном падеже"
         },
+        "employeeFullNameShort": {
+          "type": "string",
+          "example": "Еспулаева В. А.",
+          "description": "ФИО с инициалами (именительный падеж)"
+        },
         "applicationDate": {
           "type": "string",
           "example": "15.10.2025",
@@ -417,6 +393,11 @@
           "type": "string",
           "example": "Карабаева Г.Е.",
           "description": "ФИО директора с инициалами"
+        },
+        "currentDateNumeric": {
+          "type": "string",
+          "example": "15.10.2025",
+          "description": "Дата приказа в формате ДД.ММ.ГГГГ"
         }
       }
     },
@@ -425,7 +406,7 @@
       "fileName": "05_prikaz-o-prodlenii-otpuska-po-beremennosti.html",
       "type": "employer_order",
       "required": [
-        "employerName",
+        "employerShortName",
         "orderNumber",
         "dateDay",
         "dateMonthKz",
@@ -433,13 +414,14 @@
         "dateYear",
         "cityKz",
         "cityRu",
-        "employeePositionRod",
+        "employeePositionDat",
         "employeeFullNameRod",
         "vacationDays",
         "vacationDaysText",
         "vacationStartDate",
         "vacationEndDate",
         "employeeFullNameShortRod",
+        "employeeFullNameShort",
         "applicationDate",
         "sickLeaveDate",
         "sickLeaveSeries",
@@ -447,10 +429,10 @@
         "directorNameShort"
       ],
       "variables": {
-        "employerName": {
+        "employerShortName": {
           "type": "string",
           "example": "Жасмин",
-          "description": "Наименование работодателя"
+          "description": "Краткое наименование работодателя"
         },
         "orderNumber": {
           "type": "string",
@@ -487,10 +469,10 @@
           "example": "Алматы",
           "description": "Город на русском"
         },
-        "employeePositionRod": {
+        "employeePositionDat": {
           "type": "string",
-          "example": "менеджера по работе с клиентами",
-          "description": "Должность в родительном падеже"
+          "example": "менеджеру по работе с клиентами",
+          "description": "Должность в дательном падеже"
         },
         "employeeFullNameRod": {
           "type": "string",
@@ -521,6 +503,11 @@
           "type": "string",
           "example": "Еспулаевой В. А.",
           "description": "ФИО с инициалами в родительном падеже"
+        },
+        "employeeFullNameShort": {
+          "type": "string",
+          "example": "Еспулаева В. А.",
+          "description": "ФИО с инициалами (именительный падеж)"
         },
         "applicationDate": {
           "type": "string",
@@ -554,7 +541,7 @@
       "fileName": "06_prikaz-o-vnesenii-izmeneniy-v-fio.html",
       "type": "employer_order",
       "required": [
-        "employerName",
+        "employerShortName",
         "orderNumber",
         "dateDay",
         "dateMonthKz",
@@ -567,7 +554,6 @@
         "oldLastName",
         "newLastName",
         "employeeFullNameShortRod",
-        "applicationDate",
         "marriageCertDate",
         "marriageCertNumber",
         "marriageCertIssuerRu",
@@ -577,11 +563,6 @@
         "directorNameShort"
       ],
       "variables": {
-        "employerName": {
-          "type": "string",
-          "example": "Жасмин",
-          "description": "Наименование работодателя"
-        },
         "orderNumber": {
           "type": "string",
           "example": "30",
@@ -642,11 +623,6 @@
           "example": "Роговой А.А.",
           "description": "ФИО с инициалами в родительном падеже"
         },
-        "applicationDate": {
-          "type": "string",
-          "example": "30 марта 2026 г.",
-          "description": "Дата заявления работника"
-        },
         "marriageCertDate": {
           "type": "string",
           "example": "19.12.2025",
@@ -681,6 +657,11 @@
           "type": "string",
           "example": "Карабаева Г.Е.",
           "description": "ФИО директора с инициалами"
+        },
+        "employerShortName": {
+          "type": "string",
+          "example": "Жасмин",
+          "description": "Краткое наименование работодателя"
         }
       }
     },
@@ -689,11 +670,9 @@
       "fileName": "07_prikaz-o-vyhode-iz-otpuska-po-uhodu.html",
       "type": "employer_order",
       "required": [
-        "employerName",
+        "employerShortName",
         "orderNumber",
-        "dateDay",
-        "dateMonthKz",
-        "dateMonthRu",
+        "orderDateNumeric",
         "dateYear",
         "cityKz",
         "cityRu",
@@ -701,34 +680,18 @@
         "employeeFullNameRod",
         "returnDate",
         "employeeFullNameShortRod",
-        "applicationDate",
         "directorNameShort"
       ],
       "variables": {
-        "employerName": {
-          "type": "string",
-          "example": "Жасмин",
-          "description": "Наименование работодателя"
-        },
         "orderNumber": {
           "type": "string",
           "example": "12-К",
           "description": "Номер приказа"
         },
-        "dateDay": {
+        "orderDateNumeric": {
           "type": "string",
-          "example": "12",
-          "description": "День"
-        },
-        "dateMonthKz": {
-          "type": "string",
-          "example": "қыркүйек",
-          "description": "Месяц на казахском"
-        },
-        "dateMonthRu": {
-          "type": "string",
-          "example": "сентября",
-          "description": "Месяц на русском"
+          "example": "12.09.2025 г.",
+          "description": "Дата приказа в формате ДД.ММ.ГГГГ г."
         },
         "dateYear": {
           "type": "string",
@@ -765,15 +728,15 @@
           "example": "Шүленбаевой А.Н.",
           "description": "ФИО с инициалами в родительном падеже"
         },
-        "applicationDate": {
-          "type": "string",
-          "example": "01.09.2025",
-          "description": "Дата заявления"
-        },
         "directorNameShort": {
           "type": "string",
           "example": "Карабаева Г.Е.",
           "description": "ФИО директора с инициалами"
+        },
+        "employerShortName": {
+          "type": "string",
+          "example": "Жасмин",
+          "description": "Краткое наименование работодателя"
         }
       }
     },
@@ -782,7 +745,7 @@
       "fileName": "08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu.html",
       "type": "employer_order",
       "required": [
-        "employerName",
+        "employerShortName",
         "orderNumber",
         "dateDay",
         "dateMonthKz",
@@ -792,20 +755,16 @@
         "cityRu",
         "employeePositionRod",
         "employeeFullNameRod",
+        "vacationDays",
+        "vacationDaysText",
         "vacationStartDate",
         "vacationEndDate",
+        "returnDate",
         "employeeFullNameShortRod",
         "applicationDate",
-        "certificateNumber",
-        "certificateDate",
         "directorNameShort"
       ],
       "variables": {
-        "employerName": {
-          "type": "string",
-          "example": "Жасмин",
-          "description": "Наименование работодателя"
-        },
         "orderNumber": {
           "type": "string",
           "example": "18-К",
@@ -851,6 +810,16 @@
           "example": "Еспулаевой Виктории Александровне",
           "description": "ФИО в родительном падеже"
         },
+        "vacationDays": {
+          "type": "string",
+          "example": "16",
+          "description": "Количество календарных дней цифрами"
+        },
+        "vacationDaysText": {
+          "type": "string",
+          "example": "шестнадцать",
+          "description": "Количество календарных дней прописью"
+        },
         "vacationStartDate": {
           "type": "string",
           "example": "18 февраля 2026 года",
@@ -860,6 +829,11 @@
           "type": "string",
           "example": "25 декабря 2028 года",
           "description": "Дата окончания отпуска"
+        },
+        "returnDate": {
+          "type": "string",
+          "example": "15 марта 2026 года",
+          "description": "День выхода на работу"
         },
         "employeeFullNameShortRod": {
           "type": "string",
@@ -871,20 +845,15 @@
           "example": "18 февраля 2026",
           "description": "Дата заявления"
         },
-        "certificateNumber": {
-          "type": "string",
-          "example": "10312626",
-          "description": "Номер свидетельства о рождении"
-        },
-        "certificateDate": {
-          "type": "string",
-          "example": "29 декабря 2025 года",
-          "description": "Дата свидетельства о рождении"
-        },
         "directorNameShort": {
           "type": "string",
           "example": "Карабаева Г.Е.",
           "description": "ФИО директора с инициалами"
+        },
+        "employerShortName": {
+          "type": "string",
+          "example": "Жасмин",
+          "description": "Краткое наименование работодателя"
         }
       }
     },
@@ -893,7 +862,7 @@
       "fileName": "09_zayavlenie-na-otpusk-po-beremennosti.html",
       "type": "employee_application",
       "required": [
-        "employerName",
+        "employerShortName",
         "directorNameShortDat",
         "employeePositionRod",
         "employeeFullName",
@@ -913,9 +882,9 @@
         "currentDate"
       ],
       "variables": {
-        "employerName": {
+        "employerShortName": {
           "type": "string",
-          "example": "ИП «Жасмин»",
+          "example": "Жасмин",
           "description": "Наименование работодателя"
         },
         "directorNameShortDat": {
@@ -1010,7 +979,7 @@
       "fileName": "10_zayavlenie-na-prodlenie-otpuska-po-beremennosti.html",
       "type": "employee_application",
       "required": [
-        "employerName",
+        "employerShortName",
         "directorNameShortDat",
         "employeePositionRod",
         "employeeFullName",
@@ -1030,9 +999,9 @@
         "currentDate"
       ],
       "variables": {
-        "employerName": {
+        "employerShortName": {
           "type": "string",
-          "example": "ИП «Жасмин»",
+          "example": "Жасмин",
           "description": "Наименование работодателя"
         },
         "directorNameShortDat": {
@@ -1059,6 +1028,11 @@
           "type": "string",
           "example": "+7 701 123 4567",
           "description": "Телефон"
+        },
+        "employeeResidentAdj": {
+          "type": "string",
+          "example": "проживающая",
+          "description": "Форма прилагательного проживающий/проживающая"
         },
         "vacationStartDay": {
           "type": "string",
@@ -1131,20 +1105,30 @@
         "directorName",
         "directorNameShort",
         "directorBasisRu",
+        "directorActing",
+        "employeeCitizen",
         "employeeFullName",
         "employeeFullNameShort",
         "employeeIIN",
-        "employeeAddressRu",
-        "employeeBank",
-        "employeeBankDetails",
         "employeeIdNumber",
         "employeeIdDate",
+        "employeeIdIssuerRu",
+        "employeeAddressRu",
         "contractNumber",
         "contractDate",
         "terminationDate",
+        "terminationDateDay",
+        "terminationDateMonthRu",
+        "terminationDateYear",
         "agreementDate",
         "cityRu",
-        "lastWorkingDay"
+        "handoverPosition",
+        "handoverEmployeeName",
+        "employerBank",
+        "employerBIC",
+        "employerBIN",
+        "employerAccount",
+        "employerAddressRu"
       ],
       "variables": {
         "employerName": {
@@ -1202,6 +1186,11 @@
           "example": "15.03.2018",
           "description": "Дата выдачи удостоверения"
         },
+        "employeeIdIssuerRu": {
+          "type": "string",
+          "example": "МВД РК",
+          "description": "Кем выдано удостоверение (русский)"
+        },
         "contractNumber": {
           "type": "string",
           "example": "40/25",
@@ -1217,20 +1206,45 @@
           "example": "15 марта 2026 года",
           "description": "Дата расторжения"
         },
+        "terminationDateDay": {
+          "type": "string",
+          "example": "15",
+          "description": "День расторжения"
+        },
+        "terminationDateMonthRu": {
+          "type": "string",
+          "example": "марта",
+          "description": "Месяц расторжения (русский)"
+        },
+        "terminationDateYear": {
+          "type": "string",
+          "example": "2026",
+          "description": "Год расторжения"
+        },
         "agreementDate": {
           "type": "string",
           "example": "15.03.2026",
           "description": "Дата соглашения"
         },
-        "lastWorkingDay": {
+        "directorActing": {
           "type": "string",
-          "example": "15 марта 2026",
-          "description": "Последний рабочий день"
+          "example": "действующего",
+          "description": "Форма 'действующий/действующая'"
         },
-        "compensationAmount": {
+        "employeeCitizen": {
           "type": "string",
-          "example": "150 000 ₸",
-          "description": "Сумма компенсации (опционально)"
+          "example": "гражданина",
+          "description": "Гражданин/гражданка (родительный падеж)"
+        },
+        "handoverPosition": {
+          "type": "string",
+          "example": "менеджеру по работе с клиентами",
+          "description": "Должность сотрудника, принимающего дела (дательный падеж)"
+        },
+        "handoverEmployeeName": {
+          "type": "string",
+          "example": "Ковалеву Владимиру Николаевичу",
+          "description": "ФИО сотрудника, принимающего дела и ценности (дательный падеж)"
         },
         "directorBasisRu": {
           "type": "string",
@@ -1241,6 +1255,31 @@
           "type": "string",
           "example": "Алматы",
           "description": "Город (русский)"
+        },
+        "employerBank": {
+          "type": "string",
+          "example": "АО «Kaspi Bank»",
+          "description": "Банк работодателя"
+        },
+        "employerBIC": {
+          "type": "string",
+          "example": "CASPKZKA",
+          "description": "БИК работодателя"
+        },
+        "employerBIN": {
+          "type": "string",
+          "example": "910729401967",
+          "description": "БИН работодателя"
+        },
+        "employerAccount": {
+          "type": "string",
+          "example": "KZ96722S000001382110KZT",
+          "description": "ИИК работодателя"
+        },
+        "employerAddressRu": {
+          "type": "string",
+          "example": "г. Астана, район Есиль, пр. Ұлы дала 65/2",
+          "description": "Юридический адрес работодателя"
         }
       }
     },
@@ -1657,104 +1696,335 @@
         "contractNumber",
         "contractDateDay",
         "contractDateMonthKz",
+        "contractDateMonthKzLoc",
         "contractDateMonthRu",
         "contractDateYear",
         "contractStartDateDay",
         "contractStartDateMonthRu",
         "contractStartDateMonthKz",
+        "contractStartDateMonthKzAbl",
         "contractStartDateYear",
         "contractEndDateDay",
         "contractEndDateMonthRu",
         "contractEndDateMonthKz",
+        "contractEndDateMonthKzDat",
         "contractEndDateYear",
         "employerName",
         "employerShortName",
         "directorNameKz",
         "directorNameRu",
         "directorNameRod",
-        "directorNameShortKz",
         "directorNameShortRu",
-        "directorBasisKz",
-        "directorBasisRu",
-        "directorActing",
         "employeeFullNameKz",
         "employeeFullNameRu",
-        "employeeCitizen",
-        "employeeCitizenKz",
         "employeeIIN",
         "idCardNumber",
         "idCardIssueDate",
         "idCardIssuerKz",
         "idCardIssuerRu",
-        "employeeAddressKz",
-        "employeeAddressRu",
+        "employeeAddressResidentRu",
+        "employeeAddressResidentKz",
+        "employeeAddressRegRu",
+        "employeeAddressRegKz",
         "employeePhone",
         "employeeEmail",
         "employeePositionKz",
         "employeePositionRu",
+        "employeePositionRod",
         "workplaceAddressKz",
         "workplaceAddressRu",
-        "salaryAmount",
+        "salaryAmountRu",
+        "salaryAmountKz",
         "probationPeriod",
+        "probationPeriodKz",
         "vacationDays",
         "vacationDaysText",
         "employerAddressRu",
+        "employerAddressKz",
+        "employerAddressRegRu",
+        "employerAddressRegKz",
         "employerBIC",
         "employerIIN",
         "employerBank",
+        "systemName",
         "internalRulesUrl"
       ],
       "variables": {
-        "contractNumber": { "type": "string", "example": "ТД-001/26", "description": "Номер договора" },
-        "contractDateDay": { "type": "string", "example": "28", "description": "День заключения" },
-        "contractDateMonthKz": { "type": "string", "example": "сәуір", "description": "Месяц заключения (казахский)" },
-        "contractDateMonthRu": { "type": "string", "example": "апреля", "description": "Месяц заключения (русский)" },
-        "contractDateYear": { "type": "string", "example": "2026", "description": "Год заключения" },
-        "contractStartDateDay": { "type": "string", "example": "28", "description": "День начала работы" },
-        "contractStartDateMonthRu": { "type": "string", "example": "апреля", "description": "Месяц начала работы (русский)" },
-        "contractStartDateMonthKz": { "type": "string", "example": "сәуір", "description": "Месяц начала работы (казахский)" },
-        "contractStartDateYear": { "type": "string", "example": "2026", "description": "Год начала работы" },
-        "contractEndDateDay": { "type": "string", "example": "28", "description": "День окончания договора" },
-        "contractEndDateMonthRu": { "type": "string", "example": "апреля", "description": "Месяц окончания (русский)" },
-        "contractEndDateMonthKz": { "type": "string", "example": "сәуір", "description": "Месяц окончания (казахский)" },
-        "contractEndDateYear": { "type": "string", "example": "2027", "description": "Год окончания договора" },
-        "employerName": { "type": "string", "example": "ИП «Жасмин»", "description": "Наименование работодателя" },
-        "employerShortName": { "type": "string", "example": "Жасмин", "description": "Краткое наименование работодателя" },
-        "directorNameKz": { "type": "string", "example": "Қарабаева Г.Е.", "description": "ФИО директора (казахский блок)" },
-        "directorNameRu": { "type": "string", "example": "Карабаева Г.Е.", "description": "ФИО директора (русский блок, именительный)" },
-        "directorNameRod": { "type": "string", "example": "Карабаевой Г.Е.", "description": "ФИО директора в родительном падеже" },
-        "directorNameShortKz": { "type": "string", "example": "Қарабаева Г.Е.", "description": "ФИО директора с инициалами (каз)" },
-        "directorNameShortRu": { "type": "string", "example": "Карабаева Г.Е.", "description": "ФИО директора с инициалами (рус)" },
-        "directorBasisKz": { "type": "string", "example": "Жарғысы", "description": "Основание полномочий (каз)" },
-        "directorBasisRu": { "type": "string", "example": "Устава", "description": "Основание полномочий (рус)" },
-        "directorActing": { "type": "string", "example": "действующей", "description": "действующий/действующей" },
-        "employeeFullNameKz": { "type": "string", "example": "Муратова Кунзира Бисенгалиевна", "description": "ФИО работника (казахский блок)" },
-        "employeeFullNameRu": { "type": "string", "example": "Муратова Кунзира Бисенгалиевна", "description": "ФИО работника (русский блок)" },
-        "employeeCitizen": { "type": "string", "example": "гражданка", "description": "гражданин/гражданка" },
-        "employeeCitizenKz": { "type": "string", "example": "азаматша", "description": "азамат/азаматша" },
-        "employeeIIN": { "type": "string", "example": "600313403315", "description": "ИИН / ЖСН" },
-        "idCardNumber": { "type": "string", "example": "061740580", "description": "Номер удостоверения" },
-        "idCardIssueDate": { "type": "string", "example": "16.09.2025", "description": "Дата выдачи удостоверения" },
-        "idCardIssuerKz": { "type": "string", "example": "ҚР ІІМ", "description": "Орган выдачи (казахский)" },
-        "idCardIssuerRu": { "type": "string", "example": "МВД РК", "description": "Орган выдачи (русский)" },
-        "employeeAddressKz": { "type": "string", "example": "Астана қаласы, Ұлы Дала даңғ., 65/2 үй, 261 пәтер", "description": "Адрес регистрации (казахский)" },
-        "employeeAddressRu": { "type": "string", "example": "г. Астана, пр. Улы Дала, д. 65/2, кв. 261", "description": "Адрес регистрации (русский)" },
-        "employeePhone": { "type": "string", "example": "+77714786359", "description": "Телефон" },
-        "employeeEmail": { "type": "string", "example": "tson2013@mail.ru", "description": "Email" },
-        "employeePositionKz": { "type": "string", "example": "клиенттермен жұмыс жөніндегі менеджер", "description": "Должность (казахский)" },
-        "employeePositionRu": { "type": "string", "example": "менеджера по работе с клиентами", "description": "Должность (русский)" },
-        "workplaceAddressKz": { "type": "string", "example": "Астана қаласы, Ұлы дала даңғ., 65/2 үй", "description": "Адрес места работы (казахский)" },
-        "workplaceAddressRu": { "type": "string", "example": "г. Астана, пр. Улы Дала, д. 65/2", "description": "Адрес места работы (русский)" },
-        "salaryAmount": { "type": "string", "example": "85 000 (сексен бес мың) тенге", "description": "Размер оплаты труда" },
-        "probationPeriod": { "type": "string", "example": "три месяца", "description": "Испытательный срок текстом" },
-        "vacationDays": { "type": "string", "example": "24", "description": "Дней отпуска" },
-        "vacationDaysText": { "type": "string", "example": "жиырма төрт", "description": "Дней отпуска прописью" },
-        "employerAddressRu": { "type": "string", "example": "г. Алматы, ул. Сатпаева, 30/8, офис 139", "description": "Адрес работодателя" },
-        "employerBIC": { "type": "string", "example": "CASPKZKA", "description": "БИК работодателя" },
-        "employerIIN": { "type": "string", "example": "910729401967", "description": "ИИН работодателя" },
-        "employerBank": { "type": "string", "example": "АО «Kaspi Bank»", "description": "Банк работодателя" },
-        "systemName": { "type": "string", "example": "edo.uchet.kz", "description": "Название системы ЭДО" },
-        "internalRulesUrl": { "type": "string", "example": "https://drive.google.com/drive/folders/1Ij1i31fvO0vZ7kG1jePrkVf59F0Bq1QT", "description": "Ссылка на Правила трудового распорядка" }
+        "contractNumber": {
+          "type": "string",
+          "example": "ТД-001/26",
+          "description": "Номер договора"
+        },
+        "contractDateDay": {
+          "type": "string",
+          "example": "28",
+          "description": "День заключения"
+        },
+        "contractDateMonthKz": {
+          "type": "string",
+          "example": "сәуір",
+          "description": "Месяц заключения (казахский)"
+        },
+        "contractDateMonthKzLoc": {
+          "type": "string",
+          "example": "сәуірдегі",
+          "description": "Месяц заключения (казахский, локатив)"
+        },
+        "contractDateMonthRu": {
+          "type": "string",
+          "example": "апреля",
+          "description": "Месяц заключения (русский)"
+        },
+        "contractDateYear": {
+          "type": "string",
+          "example": "2026",
+          "description": "Год заключения"
+        },
+        "contractStartDateDay": {
+          "type": "string",
+          "example": "28",
+          "description": "День начала работы"
+        },
+        "contractStartDateMonthRu": {
+          "type": "string",
+          "example": "апреля",
+          "description": "Месяц начала работы (русский)"
+        },
+        "contractStartDateMonthKz": {
+          "type": "string",
+          "example": "сәуір",
+          "description": "Месяц начала работы (казахский)"
+        },
+        "contractStartDateMonthKzAbl": {
+          "type": "string",
+          "example": "сәуірден",
+          "description": "Месяц начала работы (казахский, аблатив, с ...)"
+        },
+        "contractStartDateYear": {
+          "type": "string",
+          "example": "2026",
+          "description": "Год начала работы"
+        },
+        "contractEndDateDay": {
+          "type": "string",
+          "example": "28",
+          "description": "День окончания договора"
+        },
+        "contractEndDateMonthRu": {
+          "type": "string",
+          "example": "апреля",
+          "description": "Месяц окончания (русский)"
+        },
+        "contractEndDateMonthKz": {
+          "type": "string",
+          "example": "сәуір",
+          "description": "Месяц окончания (казахский)"
+        },
+        "contractEndDateMonthKzDat": {
+          "type": "string",
+          "example": "сәуірге",
+          "description": "Месяц окончания (казахский, дательный, по ...)"
+        },
+        "contractEndDateYear": {
+          "type": "string",
+          "example": "2027",
+          "description": "Год окончания договора"
+        },
+        "employerName": {
+          "type": "string",
+          "example": "ИП «Жасмин»",
+          "description": "Наименование работодателя"
+        },
+        "employerShortName": {
+          "type": "string",
+          "example": "Жасмин",
+          "description": "Краткое наименование работодателя"
+        },
+        "directorNameKz": {
+          "type": "string",
+          "example": "Қарабаева Г.Е.",
+          "description": "ФИО директора (казахский блок)"
+        },
+        "directorNameRu": {
+          "type": "string",
+          "example": "Карабаева Г.Е.",
+          "description": "ФИО директора (русский блок, именительный)"
+        },
+        "directorNameRod": {
+          "type": "string",
+          "example": "Карабаевой Г.Е.",
+          "description": "ФИО директора в родительном падеже"
+        },
+        "directorNameShortRu": {
+          "type": "string",
+          "example": "Карабаева Г.Е.",
+          "description": "ФИО директора с инициалами (рус)"
+        },
+        "employeeFullNameKz": {
+          "type": "string",
+          "example": "Муратова Кунзира Бисенгалиевна",
+          "description": "ФИО работника (казахский блок)"
+        },
+        "employeeFullNameRu": {
+          "type": "string",
+          "example": "Муратова Кунзира Бисенгалиевна",
+          "description": "ФИО работника (русский блок)"
+        },
+        "employeeIIN": {
+          "type": "string",
+          "example": "600313403315",
+          "description": "ИИН / ЖСН"
+        },
+        "idCardNumber": {
+          "type": "string",
+          "example": "061740580",
+          "description": "Номер удостоверения"
+        },
+        "idCardIssueDate": {
+          "type": "string",
+          "example": "16.09.2025",
+          "description": "Дата выдачи удостоверения"
+        },
+        "idCardIssuerKz": {
+          "type": "string",
+          "example": "ҚР ІІМ",
+          "description": "Орган выдачи (казахский)"
+        },
+        "idCardIssuerRu": {
+          "type": "string",
+          "example": "МВД РК",
+          "description": "Орган выдачи (русский)"
+        },
+        "employeeAddressResidentRu": {
+          "type": "string",
+          "example": "г. Астана, пр. Улы Дала, д. 65/2, кв. 261",
+          "description": "Адрес проживания (русский)"
+        },
+        "employeeAddressResidentKz": {
+          "type": "string",
+          "example": "Астана қаласы, Ұлы Дала даңғ., 65/2 үй, 261 пәтер",
+          "description": "Адрес проживания (казахский)"
+        },
+        "employeeAddressRegRu": {
+          "type": "string",
+          "example": "РК, обл. Акмолинская, Целиноградский р-н, Аккайын, учетный квартал 088, дом 159",
+          "description": "Адрес регистрации (русский)"
+        },
+        "employeeAddressRegKz": {
+          "type": "string",
+          "example": "ҚР, Ақмола облысы, Целиноград ауданы, Аккайын, есептік квартал 088, үй 159",
+          "description": "Адрес регистрации (казахский)"
+        },
+        "employeePhone": {
+          "type": "string",
+          "example": "+77714786359",
+          "description": "Телефон"
+        },
+        "employeeEmail": {
+          "type": "string",
+          "example": "tson2013@mail.ru",
+          "description": "Email"
+        },
+        "employeePositionKz": {
+          "type": "string",
+          "example": "клиенттермен жұмыс жөніндегі менеджер",
+          "description": "Должность (казахский)"
+        },
+        "employeePositionRu": {
+          "type": "string",
+          "example": "менеджера по работе с клиентами",
+          "description": "Должность (русский)"
+        },
+        "employeePositionRod": {
+          "type": "string",
+          "example": "менеджера по работе с клиентами",
+          "description": "Должность (родительный падеж)"
+        },
+        "workplaceAddressKz": {
+          "type": "string",
+          "example": "Астана қаласы, Ұлы дала даңғ., 65/2 үй",
+          "description": "Адрес места работы (казахский)"
+        },
+        "workplaceAddressRu": {
+          "type": "string",
+          "example": "г. Астана, пр. Улы Дала, д. 65/2",
+          "description": "Адрес места работы (русский)"
+        },
+        "salaryAmountRu": {
+          "type": "string",
+          "example": "85 000 (восемьдесят пять тысяч) тенге",
+          "description": "Размер оплаты труда (русский)"
+        },
+        "salaryAmountKz": {
+          "type": "string",
+          "example": "85 000 (сексен бес мың) теңге",
+          "description": "Размер оплаты труда (казахский)"
+        },
+        "probationPeriod": {
+          "type": "string",
+          "example": "три месяца",
+          "description": "Испытательный срок текстом (русский)"
+        },
+        "probationPeriodKz": {
+          "type": "string",
+          "example": "үш ай",
+          "description": "Испытательный срок текстом (казахский)"
+        },
+        "vacationDays": {
+          "type": "string",
+          "example": "24",
+          "description": "Дней отпуска"
+        },
+        "vacationDaysText": {
+          "type": "string",
+          "example": "жиырма төрт",
+          "description": "Дней отпуска прописью"
+        },
+        "employerAddressRu": {
+          "type": "string",
+          "example": "г. Алматы, ул. Сатпаева, 30/8, офис 139",
+          "description": "Адрес работодателя (русский)"
+        },
+        "employerAddressKz": {
+          "type": "string",
+          "example": "Алматы қ., Сәтбаев к-сі, 30/8, кеңсе 139",
+          "description": "Адрес работодателя (казахский)"
+        },
+        "employerAddressRegRu": {
+          "type": "string",
+          "example": "г. Алматы, ул. Сатпаева, 30/8, офис 139",
+          "description": "Адрес регистрации работодателя (русский)"
+        },
+        "employerAddressRegKz": {
+          "type": "string",
+          "example": "Алматы қ., Сәтбаев к-сі, 30/8, кеңсе 139",
+          "description": "Адрес регистрации работодателя (казахский)"
+        },
+        "employerBIC": {
+          "type": "string",
+          "example": "CASPKZKA",
+          "description": "БИК работодателя"
+        },
+        "employerIIN": {
+          "type": "string",
+          "example": "910729401967",
+          "description": "ИИН работодателя"
+        },
+        "employerBank": {
+          "type": "string",
+          "example": "АО «Kaspi Bank»",
+          "description": "Банк работодателя"
+        },
+        "systemName": {
+          "type": "string",
+          "example": "edo.uchet.kz",
+          "description": "Название системы ЭДО"
+        },
+        "internalRulesUrl": {
+          "type": "string",
+          "example": "https://drive.google.com/drive/folders/1Ij1i31fvO0vZ7kG1jePrkVf59F0Bq1QT",
+          "description": "Ссылка на Правила трудового распорядка"
+        }
       }
     },
     "16_zayavlenie-na-otpusk": {
@@ -1762,7 +2032,7 @@
       "fileName": "16_zayavlenie-na-otpusk.html",
       "type": "employee_application",
       "required": [
-        "employerName",
+        "employerShortName",
         "directorNameShortDat",
         "employeePositionRod",
         "employeeFullName",
@@ -1778,20 +2048,77 @@
         "currentDateYear"
       ],
       "variables": {
-        "employerName": { "type": "string", "example": "ИП «Жасмин»", "description": "Наименование работодателя" },
-        "directorNameShortDat": { "type": "string", "example": "Карабаевой Г.Е.", "description": "ФИО директора в дательном падеже" },
-        "employeePositionRod": { "type": "string", "example": "менеджера по работе с клиентами", "description": "Должность сотрудника (родительный падеж)" },
-        "employeeFullName": { "type": "string", "example": "Амангелдина Айгерим Амангелдиевна", "description": "ФИО сотрудника полностью" },
-        "vacationStartDay": { "type": "string", "example": "11", "description": "День начала отпуска" },
-        "vacationStartMonthRu": { "type": "string", "example": "марта", "description": "Месяц начала отпуска (русский)" },
-        "vacationStartYear": { "type": "string", "example": "2026", "description": "Год начала отпуска" },
-        "vacationEndDay": { "type": "string", "example": "6", "description": "День окончания отпуска" },
-        "vacationEndMonthRu": { "type": "string", "example": "апреля", "description": "Месяц окончания отпуска (русский)" },
-        "vacationEndYear": { "type": "string", "example": "2026", "description": "Год окончания отпуска" },
-        "vacationDays": { "type": "string", "example": "24", "description": "Продолжительность отпуска в календарных днях" },
-        "currentDateDay": { "type": "string", "example": "11", "description": "День подписания" },
-        "currentDateMonthRu": { "type": "string", "example": "марта", "description": "Месяц подписания (русский)" },
-        "currentDateYear": { "type": "string", "example": "2026", "description": "Год подписания" }
+        "employerShortName": {
+          "type": "string",
+          "example": "Жасмин",
+          "example": "ИП «Жасмин»",
+          "description": "Наименование работодателя"
+        },
+        "directorNameShortDat": {
+          "type": "string",
+          "example": "Карабаевой Г.Е.",
+          "description": "ФИО директора в дательном падеже"
+        },
+        "employeePositionRod": {
+          "type": "string",
+          "example": "менеджера по работе с клиентами",
+          "description": "Должность сотрудника (родительный падеж)"
+        },
+        "employeeFullName": {
+          "type": "string",
+          "example": "Амангелдина Айгерим Амангелдиевна",
+          "description": "ФИО сотрудника полностью"
+        },
+        "vacationStartDay": {
+          "type": "string",
+          "example": "11",
+          "description": "День начала отпуска"
+        },
+        "vacationStartMonthRu": {
+          "type": "string",
+          "example": "марта",
+          "description": "Месяц начала отпуска (русский)"
+        },
+        "vacationStartYear": {
+          "type": "string",
+          "example": "2026",
+          "description": "Год начала отпуска"
+        },
+        "vacationEndDay": {
+          "type": "string",
+          "example": "6",
+          "description": "День окончания отпуска"
+        },
+        "vacationEndMonthRu": {
+          "type": "string",
+          "example": "апреля",
+          "description": "Месяц окончания отпуска (русский)"
+        },
+        "vacationEndYear": {
+          "type": "string",
+          "example": "2026",
+          "description": "Год окончания отпуска"
+        },
+        "vacationDays": {
+          "type": "string",
+          "example": "24",
+          "description": "Продолжительность отпуска в календарных днях"
+        },
+        "currentDateDay": {
+          "type": "string",
+          "example": "11",
+          "description": "День подписания"
+        },
+        "currentDateMonthRu": {
+          "type": "string",
+          "example": "марта",
+          "description": "Месяц подписания (русский)"
+        },
+        "currentDateYear": {
+          "type": "string",
+          "example": "2026",
+          "description": "Год подписания"
+        }
       }
     },
     "17_prikaz-ob-otpuske": {
@@ -1818,23 +2145,91 @@
         "directorNameShort"
       ],
       "variables": {
-        "employerName": { "type": "string", "example": "ИП «Жасмин»", "description": "Наименование работодателя" },
-        "orderNumber": { "type": "string", "example": "14-К", "description": "Номер приказа" },
-        "dateDay": { "type": "string", "example": "25", "description": "День" },
-        "dateMonthKz": { "type": "string", "example": "мамыр", "description": "Месяц на казахском" },
-        "dateMonthRu": { "type": "string", "example": "мая", "description": "Месяц на русском" },
-        "dateYear": { "type": "string", "example": "2026", "description": "Год" },
-        "cityKz": { "type": "string", "example": "Алматы", "description": "Город на казахском" },
-        "cityRu": { "type": "string", "example": "Алматы", "description": "Город на русском" },
-        "employeeFullNameDat": { "type": "string", "example": "Амангелдину Айгерим Амангелдиевну", "description": "ФИО в дательном падеже" },
-        "employeeFullNameShortRod": { "type": "string", "example": "Амангелдина А.А.", "description": "ФИО с инициалами в родительном падеже" },
-        "employeePositionDat": { "type": "string", "example": "менеджеру по работе с клиентами", "description": "Должность в дательном падеже" },
-        "vacationDays": { "type": "string", "example": "14", "description": "Количество дней" },
-        "vacationDaysText": { "type": "string", "example": "четырнадцать", "description": "Количество дней прописью" },
-        "vacationStartDate": { "type": "string", "example": "25 мая 2026 года", "description": "Дата начала отпуска" },
-        "vacationEndDate": { "type": "string", "example": "7 июня 2026 года", "description": "Дата окончания отпуска" },
-        "applicationDate": { "type": "string", "example": "21.05.2026", "description": "Дата заявления" },
-        "directorNameShort": { "type": "string", "example": "Карабаева Г.Е.", "description": "ФИО директора с инициалами" }
+        "employerName": {
+          "type": "string",
+          "example": "ИП «Жасмин»",
+          "description": "Наименование работодателя"
+        },
+        "orderNumber": {
+          "type": "string",
+          "example": "14-К",
+          "description": "Номер приказа"
+        },
+        "dateDay": {
+          "type": "string",
+          "example": "25",
+          "description": "День"
+        },
+        "dateMonthKz": {
+          "type": "string",
+          "example": "мамыр",
+          "description": "Месяц на казахском"
+        },
+        "dateMonthRu": {
+          "type": "string",
+          "example": "мая",
+          "description": "Месяц на русском"
+        },
+        "dateYear": {
+          "type": "string",
+          "example": "2026",
+          "description": "Год"
+        },
+        "cityKz": {
+          "type": "string",
+          "example": "Алматы",
+          "description": "Город на казахском"
+        },
+        "cityRu": {
+          "type": "string",
+          "example": "Алматы",
+          "description": "Город на русском"
+        },
+        "employeeFullNameDat": {
+          "type": "string",
+          "example": "Амангелдину Айгерим Амангелдиевну",
+          "description": "ФИО в дательном падеже"
+        },
+        "employeeFullNameShortRod": {
+          "type": "string",
+          "example": "Амангелдина А.А.",
+          "description": "ФИО с инициалами в родительном падеже"
+        },
+        "employeePositionDat": {
+          "type": "string",
+          "example": "менеджеру по работе с клиентами",
+          "description": "Должность в дательном падеже"
+        },
+        "vacationDays": {
+          "type": "string",
+          "example": "14",
+          "description": "Количество дней"
+        },
+        "vacationDaysText": {
+          "type": "string",
+          "example": "четырнадцать",
+          "description": "Количество дней прописью"
+        },
+        "vacationStartDate": {
+          "type": "string",
+          "example": "25 мая 2026 года",
+          "description": "Дата начала отпуска"
+        },
+        "vacationEndDate": {
+          "type": "string",
+          "example": "7 июня 2026 года",
+          "description": "Дата окончания отпуска"
+        },
+        "applicationDate": {
+          "type": "string",
+          "example": "21.05.2026",
+          "description": "Дата заявления"
+        },
+        "directorNameShort": {
+          "type": "string",
+          "example": "Карабаева Г.Е.",
+          "description": "ФИО директора с инициалами"
+        }
       }
     },
     "18_zayavlenie-na-uvolnenie": {
@@ -1854,16 +2249,56 @@
         "currentDateYear"
       ],
       "variables": {
-        "employerName": { "type": "string", "example": "ИП «Жасмин»", "description": "Наименование работодателя" },
-        "directorNameShortDat": { "type": "string", "example": "Карабаевой Г.Е.", "description": "ФИО директора в дательном падеже" },
-        "employeePositionRod": { "type": "string", "example": "менеджера по работе с клиентами", "description": "Должность сотрудника (родительный падеж)" },
-        "employeeFullName": { "type": "string", "example": "Айткожаева Карина Юрьевна", "description": "ФИО сотрудника полностью" },
-        "terminationDateDay": { "type": "string", "example": "10", "description": "День увольнения" },
-        "terminationDateMonthRu": { "type": "string", "example": "апреля", "description": "Месяц увольнения (русский)" },
-        "terminationDateYear": { "type": "string", "example": "2026", "description": "Год увольнения" },
-        "currentDateDay": { "type": "string", "example": "10", "description": "День подписания" },
-        "currentDateMonthRu": { "type": "string", "example": "апреля", "description": "Месяц подписания (русский)" },
-        "currentDateYear": { "type": "string", "example": "2026", "description": "Год подписания" }
+        "employerName": {
+          "type": "string",
+          "example": "ИП «Жасмин»",
+          "description": "Наименование работодателя"
+        },
+        "directorNameShortDat": {
+          "type": "string",
+          "example": "Карабаевой Г.Е.",
+          "description": "ФИО директора в дательном падеже"
+        },
+        "employeePositionRod": {
+          "type": "string",
+          "example": "менеджера по работе с клиентами",
+          "description": "Должность сотрудника (родительный падеж)"
+        },
+        "employeeFullName": {
+          "type": "string",
+          "example": "Айткожаева Карина Юрьевна",
+          "description": "ФИО сотрудника полностью"
+        },
+        "terminationDateDay": {
+          "type": "string",
+          "example": "10",
+          "description": "День увольнения"
+        },
+        "terminationDateMonthRu": {
+          "type": "string",
+          "example": "апреля",
+          "description": "Месяц увольнения (русский)"
+        },
+        "terminationDateYear": {
+          "type": "string",
+          "example": "2026",
+          "description": "Год увольнения"
+        },
+        "currentDateDay": {
+          "type": "string",
+          "example": "10",
+          "description": "День подписания"
+        },
+        "currentDateMonthRu": {
+          "type": "string",
+          "example": "апреля",
+          "description": "Месяц подписания (русский)"
+        },
+        "currentDateYear": {
+          "type": "string",
+          "example": "2026",
+          "description": "Год подписания"
+        }
       }
     },
     "19_prikaz-ob-uvolnenii": {
@@ -1888,21 +2323,81 @@
         "directorNameShort"
       ],
       "variables": {
-        "employerName": { "type": "string", "example": "ИП «Жасмин»", "description": "Наименование работодателя" },
-        "orderNumber": { "type": "string", "example": "5-ЛС", "description": "Номер приказа" },
-        "dateDay": { "type": "string", "example": "10", "description": "День" },
-        "dateMonthKz": { "type": "string", "example": "сәуір", "description": "Месяц на казахском" },
-        "dateMonthRu": { "type": "string", "example": "апреля", "description": "Месяц на русском" },
-        "dateYear": { "type": "string", "example": "2026", "description": "Год" },
-        "cityKz": { "type": "string", "example": "Алматы", "description": "Город на казахском" },
-        "cityRu": { "type": "string", "example": "Алматы", "description": "Город на русском" },
-        "employeeFullNameInst": { "type": "string", "example": "Айткожаевой Кариной Юрьевной", "description": "ФИО в творительном падеже" },
-        "employeeFullNameShortRod": { "type": "string", "example": "Айткожаевой К.Ю.", "description": "ФИО с инициалами в родительном падеже" },
-        "employeePositionInst": { "type": "string", "example": "менеджером по работе с клиентами", "description": "Должность в творительном падеже" },
-        "terminationDate": { "type": "string", "example": "10 апреля 2026 года", "description": "Дата расторжения / увольнения" },
-        "applicationDate": { "type": "string", "example": "10.04.2026", "description": "Дата заявления" },
-        "unusedVacationDays": { "type": "string", "example": "8", "description": "Дни неиспользованного отпуска" },
-        "directorNameShort": { "type": "string", "example": "Карабаева Г.Е.", "description": "ФИО директора с инициалами" }
+        "employerName": {
+          "type": "string",
+          "example": "ИП «Жасмин»",
+          "description": "Наименование работодателя"
+        },
+        "orderNumber": {
+          "type": "string",
+          "example": "5-ЛС",
+          "description": "Номер приказа"
+        },
+        "dateDay": {
+          "type": "string",
+          "example": "10",
+          "description": "День"
+        },
+        "dateMonthKz": {
+          "type": "string",
+          "example": "сәуір",
+          "description": "Месяц на казахском"
+        },
+        "dateMonthRu": {
+          "type": "string",
+          "example": "апреля",
+          "description": "Месяц на русском"
+        },
+        "dateYear": {
+          "type": "string",
+          "example": "2026",
+          "description": "Год"
+        },
+        "cityKz": {
+          "type": "string",
+          "example": "Алматы",
+          "description": "Город на казахском"
+        },
+        "cityRu": {
+          "type": "string",
+          "example": "Алматы",
+          "description": "Город на русском"
+        },
+        "employeeFullNameInst": {
+          "type": "string",
+          "example": "Айткожаевой Кариной Юрьевной",
+          "description": "ФИО в творительном падеже"
+        },
+        "employeeFullNameShortRod": {
+          "type": "string",
+          "example": "Айткожаевой К.Ю.",
+          "description": "ФИО с инициалами в родительном падеже"
+        },
+        "employeePositionInst": {
+          "type": "string",
+          "example": "менеджером по работе с клиентами",
+          "description": "Должность в творительном падеже"
+        },
+        "terminationDate": {
+          "type": "string",
+          "example": "10 апреля 2026 года",
+          "description": "Дата расторжения / увольнения"
+        },
+        "applicationDate": {
+          "type": "string",
+          "example": "10.04.2026",
+          "description": "Дата заявления"
+        },
+        "unusedVacationDays": {
+          "type": "string",
+          "example": "8",
+          "description": "Дни неиспользованного отпуска"
+        },
+        "directorNameShort": {
+          "type": "string",
+          "example": "Карабаева Г.Е.",
+          "description": "ФИО директора с инициалами"
+        }
       }
     },
     "20_spravka-s-mesta-raboty": {
@@ -1910,9 +2405,9 @@
       "fileName": "20_spravka-s-mesta-raboty.html",
       "type": "other",
       "required": [
-        "employerName",
+        "employerShortName",
         "employeeFullName",
-        "employeePositionRu",
+        "employeePositionRod",
         "employeeIIN",
         "idCardNumber",
         "idCardIssueDate",
@@ -1928,22 +2423,86 @@
         "directorNameShort"
       ],
       "variables": {
-        "employerName": { "type": "string", "example": "ИП «Жасмин»", "description": "Наименование работодателя" },
-        "employeeFullName": { "type": "string", "example": "Нургали Диана", "description": "ФИО работника полностью" },
-        "employeePositionRu": { "type": "string", "example": "менеджера по работе с клиентами", "description": "Должность работника (именительный падеж)" },
-        "employeeIIN": { "type": "string", "example": "890112400603", "description": "ИИН работника" },
-        "idCardNumber": { "type": "string", "example": "055478493", "description": "Номер удостоверения личности" },
-        "idCardIssueDate": { "type": "string", "example": "23.01.2024", "description": "Дата выдачи удостоверения" },
-        "idCardIssuerRu": { "type": "string", "example": "МВД РК", "description": "Орган выдачи (русский)" },
-        "startDateDay": { "type": "string", "example": "12", "description": "День начала работы" },
-        "startDateMonthRu": { "type": "string", "example": "мая", "description": "Месяц начала работы (русский)" },
-        "startDateYear": { "type": "string", "example": "2025", "description": "Год начала работы" },
-        "currentDateDay": { "type": "string", "example": "16", "description": "День выдачи справки" },
-        "currentDateMonthRu": { "type": "string", "example": "марта", "description": "Месяц выдачи справки (русский)" },
-        "currentDateMonthKz": { "type": "string", "example": "наурыз", "description": "Месяц выдачи справки (казахский)" },
-        "currentDateYear": { "type": "string", "example": "2026", "description": "Год выдачи справки" },
-        "cityRu": { "type": "string", "example": "Алматы", "description": "Город на русском" },
-        "directorNameShort": { "type": "string", "example": "Карабаева Г.Е.", "description": "ФИО директора с инициалами" }
+        "employerShortName": {
+          "type": "string",
+          "example": "Жасмин",
+          "description": "Краткое наименование работодателя"
+        },
+        "employeeFullName": {
+          "type": "string",
+          "example": "Нургали Диана",
+          "description": "ФИО работника полностью"
+        },
+        "employeePositionRod": {
+          "type": "string",
+          "example": "менеджера по работе с клиентами",
+          "description": "Должность работника (родительный падеж)"
+        },
+        "employeeIIN": {
+          "type": "string",
+          "example": "890112400603",
+          "description": "ИИН работника"
+        },
+        "idCardNumber": {
+          "type": "string",
+          "example": "055478493",
+          "description": "Номер удостоверения личности"
+        },
+        "idCardIssueDate": {
+          "type": "string",
+          "example": "23.01.2024",
+          "description": "Дата выдачи удостоверения"
+        },
+        "idCardIssuerRu": {
+          "type": "string",
+          "example": "МВД РК",
+          "description": "Орган выдачи (русский)"
+        },
+        "startDateDay": {
+          "type": "string",
+          "example": "12",
+          "description": "День начала работы"
+        },
+        "startDateMonthRu": {
+          "type": "string",
+          "example": "мая",
+          "description": "Месяц начала работы (русский)"
+        },
+        "startDateYear": {
+          "type": "string",
+          "example": "2025",
+          "description": "Год начала работы"
+        },
+        "currentDateDay": {
+          "type": "string",
+          "example": "16",
+          "description": "День выдачи справки"
+        },
+        "currentDateMonthRu": {
+          "type": "string",
+          "example": "марта",
+          "description": "Месяц выдачи справки (русский)"
+        },
+        "currentDateMonthKz": {
+          "type": "string",
+          "example": "наурыз",
+          "description": "Месяц выдачи справки (казахский)"
+        },
+        "currentDateYear": {
+          "type": "string",
+          "example": "2026",
+          "description": "Год выдачи справки"
+        },
+        "cityRu": {
+          "type": "string",
+          "example": "Алматы",
+          "description": "Город на русском"
+        },
+        "directorNameShort": {
+          "type": "string",
+          "example": "Карабаева Г.Е.",
+          "description": "ФИО директора с инициалами"
+        }
       }
     }
   }

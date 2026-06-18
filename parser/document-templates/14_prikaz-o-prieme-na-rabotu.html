@@ -25,8 +25,8 @@
       vertical-align: top;
       padding: 5px;
     }
-    .bilingual-header .kz { text-align: left; }
-    .bilingual-header .ru { text-align: right; }
+    .bilingual-header .kz { text-align: center; }
+    .bilingual-header .ru { text-align: center; }
     .bilingual-header p {
       margin: 0;
       font-weight: bold;
@@ -42,7 +42,7 @@
       padding: 5px;
     }
     .meta-row .left { text-align: left; }
-    .meta-row .right { text-align: right; }
+    .meta-row .right { text-align: center; }
     .meta-row p { margin: 0; }
     .order-title {
       text-align: center;
@@ -71,12 +71,16 @@
       width: 150px;
       border-bottom: 1px solid #000;
     }
+    .acknowledge {
+      margin-top: 30px;
+    }
   </style>
 </head>
 <body>
   <!--
     Переменные:
-    {{employerName}}           — наименование работодателя (например: ИП «Жасмин»)
+    {{employerShortName}}      — краткое наименование работодателя (например: Жасмин)
+    {{employerName}}           — полное наименование работодателя
     {{orderNumber}}            — номер приказа
     {{dateDay}}                — день
     {{dateMonthRu}}            — месяц на русском
@@ -85,7 +89,7 @@
     {{cityRu}}                 — город на русском
     {{cityKz}}                 — город на казахском
     {{employeeFullNameVin}}    — ФИО в ВИНИТЕЛЬНОМ падеже (кого принять)
-    {{employeeFullNameShort}}  — ФИО с инициалами (именительный)
+    {{employeeFullNameShort}}  — ФИО с инициалами
     {{startDateDay}}           — день начала работы
     {{startDateMonthRu}}       — месяц начала (русский)
     {{startDateYear}}          — год начала
@@ -93,20 +97,23 @@
     {{workplaceAddressRu}}     — адрес места работы (русский)
     {{probationPeriod}}        — испытательный срок (например: три месяца)
     {{contractNumber}}         — номер трудового договора
-    {{contractDate}}           — дата трудового договора
+    {{contractDateDay}}        — день договора
+    {{contractDateMonthRu}}    — месяц договора (русский)
+    {{contractDateYear}}       — год договора
     {{directorNameShort}}      — ФИО директора с инициалами
   -->
 
   <table class="bilingual-header">
     <tr>
       <td class="kz">
-        <p>{{employerName}}</p>
-        <p>жеке кәсіпкер</p>
+        <p>«{{employerShortName}}»</p>
+        <p>Жеке</p>
+        <p>Кәсіпкер</p>
         <p>БҰЙРЫҚ</p>
       </td>
       <td class="ru">
-        <p>Индивидуальный предприниматель</p>
-        <p>{{employerName}}</p>
+        <p>Индивидуальный    предприниматель</p>
+        <p>«{{employerShortName}}»</p>
         <p>ПРИКАЗ</p>
       </td>
     </tr>
@@ -130,40 +137,64 @@
   </div>
 
   <p class="body-text no-indent">
-    В соответствии со статьей 34 Трудового кодекса Республики Казахстан от 23 ноября 2015 года № 414-V
-    и условиями трудового договора
-  </p>
-
-  <p class="body-text no-indent"><strong>ПРИКАЗЫВАЮ:</strong></p>
-
-  <p class="body-text">
-    Принять <strong>{{employeeFullNameVin}}</strong>, с «{{startDateDay}}» {{startDateMonthRu}} {{startDateYear}} года
-    в должности <strong>{{employeePositionRod}}</strong> с местом работы по адресу {{workplaceAddressRu}},
-    с испытательным сроком на {{probationPeriod}} с момента заключения трудового договора
-    и с оплатой труда согласно трудовому договору № {{contractNumber}} от {{contractDate}}.
+    В соответствии со статьей 34 Трудового кодекса Республики Казахстан от 23 ноября 2015 года № 414-V и условиями трудового договора <strong>ПРИКАЗЫВАЮ:</strong>
   </p>
 
   <p class="body-text">
-    <strong>Основание:</strong> трудовой договор от «{{contractDate}}» № {{contractNumber}}.
+    Принять {{employeeFullNameVin}}, с «{{startDateDay}}» {{startDateMonthRu}} {{startDateYear}} года в должности {{employeePositionRod}} с местом работы по адресу {{workplaceAddressRu}}, с испытательным сроком на {{probationPeriod}} с момента заключения трудового договора и с оплатой труда согласно трудовому договору № {{contractNumber}} от {{contractDateDay}} {{contractDateMonthRu}} {{contractDateYear}} года.
+  </p>
+
+  <p class="body-text no-indent">
+    <strong>Основание:</strong>
+  </p>
+  <p class="body-text">
+    трудовой договор от «{{contractDateDay}}» {{contractDateMonthRu}} {{contractDateYear}} года № {{contractNumber}}.
   </p>
 
   <table class="signature-table">
     <tr>
-      <td style="width: 30%;">
-        <p><strong>{{employerName}}</strong></p>
+      <td style="width: 35%; vertical-align: bottom;">
+        <p><strong>ИП «{{employerShortName}}»</strong></p>
+      </td>
+      <td style="width: 20%; vertical-align: bottom;">
         <p><strong>Директор</strong></p>
-        <p style="margin-top: 20px;"><span class="sign-line"></span></p>
-        <p style="font-size: 10pt;">(подпись)</p>
+      </td>
+      <td style="width: 10%;"></td>
+      <td style="width: 35%; vertical-align: bottom; text-align: center;">
         <p><strong>{{directorNameShort}}</strong></p>
       </td>
-      <td style="width: 30%;"></td>
-      <td style="width: 40%;">
-        <p>С приказом ознакомлен (-а):</p>
-        <p style="margin-top: 20px;"><span class="sign-line"></span></p>
-        <p style="font-size: 10pt;">(подпись)</p>
-        <p>({{employeeFullNameShort}})</p>
+    </tr>
+    <tr>
+      <td></td>
+      <td colspan="2" style="vertical-align: top; padding-top: 0;">
+        <p style="margin-top: 0;"><span class="sign-line"></span></p>
+        <p style="font-size: 10pt; margin-top: 4px;">(подпись)</p>
+      </td>
+      <td style="vertical-align: top; text-align: center; padding-top: 0;">
+        <p style="font-size: 10pt; margin-top: 4px;">(расшифровка подписи)</p>
       </td>
     </tr>
   </table>
+
+  <div class="acknowledge">
+    <p>С приказом ознакомлен (-а):</p>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 5px;">
+      <tr>
+        <td style="width: 50%;"></td>
+        <td style="width: 50%; vertical-align: bottom; text-align: center;">
+          <p>«{{dateDay}}» {{dateMonthRu}} {{dateYear}} г.</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="vertical-align: bottom;">
+          <p>(Ф. И. О.)</p>
+        </td>
+        <td style="vertical-align: top; text-align: center;">
+          <p style="margin-top: 10px;"><span class="sign-line"></span></p>
+          <p style="font-size: 10pt;">(подпись)</p>
+        </td>
+      </tr>
+    </table>
+  </div>
 </body>
 </html>

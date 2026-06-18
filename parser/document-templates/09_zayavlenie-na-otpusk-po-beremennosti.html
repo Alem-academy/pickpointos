@@ -48,7 +48,7 @@
 <body>
   <!--
     Переменные:
-    {{employerName}}        — наименование работодателя
+    {{employerShortName}}   — краткое наименование работодателя (например: Жасмин)
     {{directorNameShortDat}}   — ФИО директора в дательном падеже
     {{employeePositionRod}}    — должность сотрудника
     {{employeeFullName}}    — ФИО сотрудника
@@ -69,12 +69,12 @@
   -->
 
   <div class="header-right">
-    <p>Директору {{employerName}}</p>
+    <p>Директору ИП «{{employerShortName}}»</p>
     <p>{{directorNameShortDat}}</p>
     <p>от {{employeePositionRod}}</p>
     <p>{{employeeFullName}}</p>
-    <p>ИИН {{employeeIIN}}, {{employeeResidentAdj}} по адресу {{employeeAddressRu}}</p>
-    <p>тел. {{employeePhone}}</p>
+    <p>ИИН {{employeeIIN}}, {{employeeResidentAdj}} по адресу</p>
+    <p>{{employeeAddressRu}}, сот. {{employeePhone}}</p>
   </div>
 
   <div class="title">Заявление</div>
@@ -97,7 +97,7 @@
   </div>
 
   <div class="signature-block">
-    <p>{{currentDate}}</p>
+    <p>Дата {{currentDate}}</p>
     <p>{{employeeFullName}}, подпись <span class="line" style="width: 150px;"></span></p>
   </div>
 </body>

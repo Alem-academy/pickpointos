@@ -7,6 +7,8 @@ import { TerminationWizard } from './TerminationWizard';
 import { VacationWizard } from './VacationWizard';
 import { MaternityReturnWizard } from './MaternityReturnWizard';
 import { MaternityLeaveWizard } from './MaternityLeaveWizard';
+import { MaternityExtensionWizard } from './MaternityExtensionWizard';
+import { ChildcareLeaveWizard } from './ChildcareLeaveWizard';
 import { NameChangeWizard } from './NameChangeWizard';
 
 interface ProcessLauncherProps {
@@ -31,6 +33,8 @@ const PROCESS_ICONS: Record<string, React.ReactNode> = {
     termination: <UserX className="h-5 w-5" />,
     maternity_leave: <Baby className="h-5 w-5" />,
     maternity_return: <Baby className="h-5 w-5" />,
+    maternity_extension: <Clock className="h-5 w-5" />,
+    childcare_leave: <Baby className="h-5 w-5" />,
     name_change: <RefreshCw className="h-5 w-5" />,
     data_change: <RefreshCw className="h-5 w-5" />,
 };
@@ -41,6 +45,8 @@ const PROCESS_COLORS: Record<string, string> = {
     termination: 'red',
     maternity_leave: 'pink',
     maternity_return: 'pink',
+    maternity_extension: 'indigo',
+    childcare_leave: 'pink',
     name_change: 'orange',
     data_change: 'orange',
 };
@@ -50,6 +56,7 @@ const COLOR_CLASSES: Record<string, { bg: string; text: string; border: string; 
     purple: { bg: 'bg-purple-100', text: 'text-purple-600', border: 'border-purple-200', hoverBorder: 'hover:border-purple-300', hoverBg: 'hover:bg-purple-50', cardBg: 'bg-purple-50/30' },
     red: { bg: 'bg-red-100', text: 'text-red-600', border: 'border-red-200', hoverBorder: 'hover:border-red-300', hoverBg: 'hover:bg-red-50', cardBg: 'bg-red-50/30' },
     pink: { bg: 'bg-pink-100', text: 'text-pink-600', border: 'border-pink-200', hoverBorder: 'hover:border-pink-300', hoverBg: 'hover:bg-pink-50', cardBg: 'bg-pink-50/30' },
+    indigo: { bg: 'bg-indigo-100', text: 'text-indigo-600', border: 'border-indigo-200', hoverBorder: 'hover:border-indigo-300', hoverBg: 'hover:bg-indigo-50', cardBg: 'bg-indigo-50/30' },
     orange: { bg: 'bg-orange-100', text: 'text-orange-600', border: 'border-orange-200', hoverBorder: 'hover:border-orange-300', hoverBg: 'hover:bg-orange-50', cardBg: 'bg-orange-50/30' },
     slate: { bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-200', hoverBorder: 'hover:border-slate-300', hoverBg: 'hover:bg-slate-50', cardBg: 'bg-slate-50/30' },
 };
@@ -68,8 +75,12 @@ const DOC_TYPE_TO_PROCESS: Record<string, string> = {
     'termination_order': 'termination',
     '09_zayavlenie-na-otpusk-po-beremennosti': 'maternity_leave',
     '04_prikaz-ob-otpuske-po-beremennosti-i-rodam': 'maternity_leave',
+    '10_zayavlenie-na-prodlenie-otpuska-po-beremennosti': 'maternity_extension',
+    '05_prikaz-o-prodlenii-otpuska-po-beremennosti': 'maternity_extension',
     '01_zayavlenie-o-vyhode-s-dekreta': 'maternity_return',
     '07_prikaz-o-vyhode-iz-otpuska-po-uhodu': 'maternity_return',
+    '02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom': 'childcare_leave',
+    '08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu': 'childcare_leave',
     '06_prikaz-o-vnesenii-izmeneniy-v-fio': 'name_change',
     '12_dop-soglashenie-ob-izmenenii-familii': 'name_change',
     '03_zayavlenie-ob-izmenenii-personalnyh-dannyh': 'data_change',
@@ -332,6 +343,24 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
             )}
             {activeWizard === 'maternity_leave' && (
                 <MaternityLeaveWizard
+                    employeeId={employeeId}
+                    employeeName={employeeName}
+                    existingDocuments={wizardDocs}
+                    onClose={handleWizardClose}
+                    onSuccess={handleWizardClose}
+                />
+            )}
+            {activeWizard === 'maternity_extension' && (
+                <MaternityExtensionWizard
+                    employeeId={employeeId}
+                    employeeName={employeeName}
+                    existingDocuments={wizardDocs}
+                    onClose={handleWizardClose}
+                    onSuccess={handleWizardClose}
+                />
+            )}
+            {activeWizard === 'childcare_leave' && (
+                <ChildcareLeaveWizard
                     employeeId={employeeId}
                     employeeName={employeeName}
                     existingDocuments={wizardDocs}

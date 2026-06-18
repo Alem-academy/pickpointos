@@ -48,7 +48,6 @@
       text-align: center;
       font-weight: bold;
       margin: 20px 0;
-      text-transform: uppercase;
     }
     .body-text {
       text-align: justify;
@@ -80,33 +79,38 @@
 <body>
   <!--
     Переменные:
-    {{employerName}}           — наименование работодателя
-    {{orderNumber}}            — номер приказа
-    {{dateDay}}                — день
-    {{dateMonthRu}}            — месяц на русском
-    {{dateMonthKz}}            — месяц на казахском
-    {{dateYear}}               — год
-    {{cityRu}}                 — город на русском
-    {{cityKz}}                 — город на казахском
-    {{employeeFullNameInst}}   — ФИО в творительном падеже (с кем расторгнуть)
+    {{employerShortName}}        — краткое наименование работодателя
+    {{employerName}}             — полное наименование работодателя
+    {{orderNumber}}              — номер приказа
+    {{dateDay}}                  — день
+    {{dateMonthRu}}              — месяц на русском
+    {{dateMonthKz}}              — месяц на казахском
+    {{dateYear}}                 — год
+    {{cityRu}}                   — город на русском
+    {{cityKz}}                   — город на казахском
+    {{employeeFullNameInst}}     — ФИО в творительном падеже (с кем расторгнуть)
     {{employeeFullNameShortRod}} — ФИО с инициалами в родительном падеже
-    {{employeePositionInst}}   — должность в творительном падеже
-    {{terminationDate}}        — дата расторжения / увольнения
-    {{applicationDate}}        — дата заявления
-    {{unusedVacationDays}}     — дни неиспользованного отпуска
-    {{directorNameShort}}      — ФИО директора с инициалами
+    {{employeePositionInst}}     — должность в творительном падеже
+    {{terminationDate}}          — дата расторжения / увольнения
+    {{applicationDateDay}}       — день заявления
+    {{applicationDateMonthRu}}   — месяц заявления (русский)
+    {{applicationDateYear}}      — год заявления
+    {{unusedVacationDays}}       — дни неиспользованного отпуска
+    {{directorNameShort}}        — ФИО директора с инициалами
   -->
 
   <table class="bilingual-header">
     <tr>
       <td class="kz">
-        <p>{{employerName}}</p>
-        <p>жеке кәсіпкер</p>
+        <p>«{{employerShortName}}»</p>
+        <p>Жеке</p>
+        <p>Кәсіпкер</p>
         <p>БҰЙРЫҚ</p>
       </td>
       <td class="ru">
-        <p>Индивидуальный предприниматель</p>
-        <p>{{employerName}}</p>
+        <p>Индивидуальный</p>
+        <p>предприниматель</p>
+        <p>«{{employerShortName}}»</p>
         <p>ПРИКАЗ</p>
       </td>
     </tr>
@@ -115,7 +119,7 @@
   <table class="meta-row">
     <tr>
       <td class="left">
-        <p>«{{dateDay}}» {{dateMonthKz}} {{dateYear}} жыл</p>
+        <p>{{dateDay}} {{dateMonthKz}} {{dateYear}} ж.</p>
         <p>{{cityKz}} қаласы</p>
       </td>
       <td class="right">
@@ -126,19 +130,18 @@
   </table>
 
   <div class="order-title">
-    О расторжении трудового договора с {{employeeFullNameInst}}
+    О расторжении трудового договора с <strong>{{employeeFullNameInst}}</strong>.
   </div>
 
   <p class="body-text no-indent">
-    Согласно подпункту 5) статьи 49 Трудового кодекса Республики Казахстан,
+    Согласно подпункту 5) статьи 49 Трудового Кодекса Республики Казахстан,
     по инициативе работника,
+    <strong>ПРИКАЗЫВАЮ:</strong>
   </p>
-
-  <p class="body-text no-indent"><strong>ПРИКАЗЫВАЮ:</strong></p>
 
   <p class="body-text">
     Расторгнуть трудовой договор с <strong>{{employeeFullNameInst}}</strong>,
-    <strong>{{employeePositionInst}}</strong>, с {{terminationDate}}.
+    {{employeePositionInst}}, с {{terminationDate}}.
   </p>
 
   <p class="body-text">
@@ -147,7 +150,7 @@
   </p>
 
   <p class="body-text">
-    <strong>Основание:</strong> заявление <strong>{{employeeFullNameShortRod}}</strong> от {{applicationDate}}.
+    <strong>Основание:</strong> заявление <strong>{{employeeFullNameShortRod}}</strong> от {{applicationDateDay}} {{applicationDateMonthRu}} {{applicationDateYear}} года.
   </p>
 
   <table class="signature-table">
@@ -159,9 +162,9 @@
   </table>
 
   <div class="acknowledge">
-    <p>С приказом ознакомлен (-а):</p>
+    <p>С приказом ознакомлен(а):</p>
     <p>«{{dateDay}}» {{dateMonthRu}} {{dateYear}} г.</p>
-    <p><span class="sign-line"></span> {{employeeFullNameShortRod}}</p>
+    <p><span class="sign-line"></span> <strong>{{employeeFullNameShortRod}}</strong></p>
   </div>
 </body>
 </html>

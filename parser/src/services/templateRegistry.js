@@ -175,6 +175,20 @@ const PROCESS_DEFINITIONS = {
         editableParams: ['returnDate'],
         requiresEmployerSignature: true,
     },
+    childcare_leave: {
+        label: 'Отпуск без сохранения ЗП по уходу за ребёнком',
+        description: 'Заявление и приказ об отпуске без сохранения заработной платы по уходу за ребёнком',
+        documentTypes: ['02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom', '08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu'],
+        editableParams: ['vacationStart', 'vacationEnd'],
+        requiresEmployerSignature: true,
+    },
+    maternity_extension: {
+        label: 'Продление отпуска по беременности и родам',
+        description: 'Заявление и приказ о продлении отпуска по беременности и родам',
+        documentTypes: ['10_zayavlenie-na-prodlenie-otpuska-po-beremennosti', '05_prikaz-o-prodlenii-otpuska-po-beremennosti'],
+        editableParams: ['vacationStart', 'vacationEnd', 'sickLeaveNumber', 'sickLeaveDate', 'sickLeaveSeries'],
+        requiresEmployerSignature: true,
+    },
     name_change: {
         label: 'Изменение ФИО',
         description: 'Заявление, приказ и доп. соглашение об изменении фамилии',

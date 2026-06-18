@@ -44,11 +44,15 @@
     .meta-row .left { text-align: left; }
     .meta-row .right { text-align: right; }
     .meta-row p { margin: 0; }
+    .order-title-block {
+      margin: 20px 0;
+    }
     .order-title {
       text-align: center;
       font-weight: bold;
-      margin: 20px 0;
-      text-transform: uppercase;
+    }
+    .order-title.vacation-part:empty {
+      display: none;
     }
     .body-text {
       text-align: justify;
@@ -80,35 +84,40 @@
 <body>
   <!--
     Переменные:
-    {{employerName}}           — наименование работодателя
-    {{orderNumber}}            — номер приказа
-    {{dateDay}}                — день
-    {{dateMonthRu}}            — месяц на русском
-    {{dateMonthKz}}            — месяц на казахском
-    {{dateYear}}               — год
-    {{cityRu}}                 — город на русском
-    {{cityKz}}                 — город на казахском
-    {{employeeFullNameDat}}    — ФИО в дательном падеже (кому предоставить)
+    {{employerShortName}}        — краткое наименование работодателя
+    {{employerName}}             — полное наименование работодателя
+    {{orderNumber}}              — номер приказа
+    {{dateDay}}                  — день
+    {{dateMonthRu}}              — месяц на русском
+    {{dateMonthKz}}              — месяц на казахском
+    {{dateYear}}                 — год
+    {{cityRu}}                   — город на русском
+    {{cityKz}}                   — город на казахском
+    {{employeeFullNameDat}}      — ФИО в дательном падеже (кому предоставить)
     {{employeeFullNameShortRod}} — ФИО с инициалами в родительном падеже
-    {{employeePositionDat}}    — должность в дательном падеже
-    {{vacationDays}}           — количество дней
-    {{vacationDaysText}}       — количество дней прописью
-    {{vacationStartDate}}      — дата начала отпуска
-    {{vacationEndDate}}        — дата окончания отпуска
-    {{applicationDate}}        — дата заявления
-    {{directorNameShort}}      — ФИО директора с инициалами
+    {{employeePositionDat}}      — должность в дательном падеже
+    {{vacationDays}}             — количество дней
+    {{vacationDaysText}}         — количество дней прописью
+    {{vacationStartDate}}        — дата начала отпуска
+    {{vacationEndDate}}          — дата окончания отпуска
+    {{vacationPartTitle}}        — для части отпуска: "(части трудового отпуска)", иначе пусто
+    {{applicationDateDay}}       — день заявления
+    {{applicationDateMonthRu}}   — месяц заявления (русский)
+    {{applicationDateYear}}      — год заявления
+    {{directorNameShort}}        — ФИО директора с инициалами
   -->
 
   <table class="bilingual-header">
     <tr>
       <td class="kz">
-        <p>{{employerName}}</p>
-        <p>жеке кәсіпкер</p>
+        <p>«{{employerShortName}}»</p>
+        <p>Жеке</p>
+        <p>Кәсіпкер</p>
         <p>БҰЙРЫҚ</p>
       </td>
       <td class="ru">
         <p>Индивидуальный предприниматель</p>
-        <p>{{employerName}}</p>
+        <p>«{{employerShortName}}»</p>
         <p>ПРИКАЗ</p>
       </td>
     </tr>
@@ -117,7 +126,7 @@
   <table class="meta-row">
     <tr>
       <td class="left">
-        <p>«{{dateDay}}» {{dateMonthKz}} {{dateYear}} жыл</p>
+        <p>{{dateDay}} {{dateMonthKz}} {{dateYear}} ж.</p>
         <p>{{cityKz}} қаласы</p>
       </td>
       <td class="right">
@@ -127,27 +136,26 @@
     </tr>
   </table>
 
-  <div class="order-title">
-    О предоставлении ежегодного<br>
-    оплачиваемого трудового отпуска<br>
-    (части трудового отпуска)
+  <div class="order-title-block">
+    <div class="order-title">О предоставлении ежегодного</div>
+    <div class="order-title">оплачиваемого трудового отпуска</div>
+    <div class="order-title vacation-part">{{vacationPartTitle}}</div>
   </div>
 
   <p class="body-text no-indent">
     В соответствии с Трудовым кодексом Республики Казахстан от 23 ноября 2015 года № 414-V
     и во исполнение графика отпусков на {{dateYear}} года,
+    <strong>ПРИКАЗЫВАЮ:</strong>
   </p>
 
-  <p class="body-text no-indent"><strong>ПРИКАЗЫВАЮ:</strong></p>
-
   <p class="body-text">
-    Предоставить <strong>{{employeeFullNameDat}}</strong>, <strong>{{employeePositionDat}}</strong>,
+    Предоставить {{employeeFullNameDat}}, {{employeePositionDat}},
     очередной оплачиваемый ежегодный трудовой отпуск сроком на {{vacationDays}} ({{vacationDaysText}})
     календарных дней с {{vacationStartDate}} по {{vacationEndDate}} включительно.
   </p>
 
   <p class="body-text">
-    <strong>Основание:</strong> заявление <strong>{{employeeFullNameShortRod}}</strong> от {{applicationDate}}.
+    <strong>Основание:</strong> заявление {{employeeFullNameShortRod}} от {{applicationDateDay}} {{applicationDateMonthRu}} {{applicationDateYear}} года.
   </p>
 
   <table class="signature-table">
@@ -160,8 +168,7 @@
 
   <div class="acknowledge">
     <p>С приказом ознакомлен (-а):</p>
-    <p>«{{dateDay}}» {{dateMonthRu}} {{dateYear}} г.</p>
-    <p><span class="sign-line"></span> {{employeeFullNameShortRod}}</p>
+    <p>«{{dateDay}}» {{dateMonthRu}} {{dateYear}} г.&nbsp;&nbsp;&nbsp;&nbsp;<span class="sign-line"></span>&nbsp;{{employeeFullNameShortRod}}</p>
   </div>
 </body>
 </html>

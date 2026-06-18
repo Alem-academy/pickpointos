@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Заявление на отпуск по уходу за ребенком</title>
+  <title>Заявление на отпуск без сохранения заработной платы</title>
   <style>
     @page { size: A4; margin: 20mm; }
     * { box-sizing: border-box; }
@@ -16,7 +16,7 @@
       padding: 20mm;
     }
     .header-right {
-      text-align: left;
+      text-align: right;
       margin-bottom: 20px;
     }
     .header-right p {
@@ -30,21 +30,24 @@
     }
     .body-text {
       text-align: justify;
+      text-indent: 0;
       margin: 10px 0;
-    }
-    .attachments {
-      margin-top: 15px;
     }
     .signature-block {
       margin-top: 40px;
-      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
     }
-    .signature-row {
-      margin-top: 15px;
+    .signature-block .date {
+      text-align: left;
+    }
+    .signature-block .sign {
+      text-align: center;
     }
     .line {
       display: inline-block;
-      width: 200px;
+      width: 150px;
       border-bottom: 1px solid #000;
     }
   </style>
@@ -52,58 +55,44 @@
 <body>
   <!--
     Переменные:
-    {{employerName}}      — наименование работодателя
-    {{directorNameShortDat}} — ФИО директора в дательном падеже
-    {{employeePositionRod}}  — должность сотрудника
-    {{employeeFullName}}  — ФИО сотрудника полностью
-    {{employeeIIN}}       — ИИН сотрудника
-    {{employeeAddressRu}} — адрес проживания (русский)
-    {{employeePhone}}     — контактный телефон
-    {{vacationStartDay}}  — день начала отпуска
-    {{vacationStartMonthRu}}— месяц начала отпуска (русский)
+    {{employerShortName}} — краткое наименование работодателя (например: Жасмин)
+    {{directorNameShortDat}} — ФИО директора в дательном падеже (например: Карабаевой Г.Е.)
+    {{employeePositionRod}} — должность сотрудника (например: менеджера по работе с клиентами)
+    {{employeeFullName}} — ФИО сотрудника полностью
+    {{vacationStartDay}} — день начала отпуска
+    {{vacationStartMonthRu}} — месяц начала отпуска (русский)
     {{vacationStartYear}} — год начала отпуска
-    {{vacationEndDay}}    — день окончания отпуска
-    {{vacationEndMonthRu}}— месяц окончания отпуска (русский)
-    {{vacationEndYear}}   — год окончания отпуска
-    {{certificateNumber}} — номер свидетельства о рождении
-    {{certificateDay}}    — дата свидетельства (день)
-    {{certificateMonthRu}}— дата свидетельства (месяц, русский)
-    {{certificateYear}}   — дата свидетельства (год)
-    {{currentDate}}       — дата подписания
+    {{vacationEndDay}} — день окончания отпуска
+    {{vacationEndMonthRu}} — месяц окончания отпуска (русский)
+    {{vacationEndYear}} — год окончания отпуска
+    {{currentDateDay}} — день подписания
+    {{currentDateMonthRu}} — месяц подписания (русский)
+    {{currentDateYear}} — год подписания
   -->
 
   <div class="header-right">
-    <p>Директору {{employerName}}</p>
+    <p>Директору ИП «{{employerShortName}}»</p>
     <p>{{directorNameShortDat}}</p>
     <p>от {{employeePositionRod}}</p>
     <p>{{employeeFullName}}</p>
-    <p>ИИН {{employeeIIN}}, {{employeeResidentAdj}} по адресу {{employeeAddressRu}}</p>
-    <p>тел. {{employeePhone}}</p>
   </div>
 
-  <div class="title">Заявление</div>
+  <div class="title">Заявление.</div>
 
   <p class="body-text">
-    Прошу Вас предоставить мне отпуск без сохранения заработной платы по уходу 
-    за ребёнком до достижения им трёхлетнего возраста с 
-    «{{vacationStartDay}}» {{vacationStartMonthRu}} {{vacationStartYear}} года 
-    по «{{vacationEndDay}}» {{vacationEndMonthRu}} {{vacationEndYear}} года. 
-    Копия свидетельства о рождении ребенка прилагается.
+    Прошу Вас предоставить мне отпуск без сохранения заработной платы
+    с «{{vacationStartDay}}» {{vacationStartMonthRu}} {{vacationStartYear}} г.
+    по «{{vacationEndDay}}» {{vacationEndMonthRu}} {{vacationEndYear}} г.
   </p>
 
-  <div class="attachments">
-    <p>Прилагаемый документ:</p>
-    <ul>
-      <li>
-        копия свидетельства о рождении ребенка № {{certificateNumber}} 
-        от «{{certificateDay}}» {{certificateMonthRu}} {{certificateYear}} года.
-      </li>
-    </ul>
-  </div>
-
   <div class="signature-block">
-    <p class="signature-row">{{currentDate}}</p>
-    <p class="signature-row">{{employeeFullName}}, подпись <span class="line" style="width: 150px;"></span></p>
+    <div class="date">
+      «{{currentDateDay}}» {{currentDateMonthRu}} {{currentDateYear}} г.
+    </div>
+    <div class="sign">
+      <span class="line"></span>
+      <p style="font-size: 10pt; margin: 4px 0 0;">(подпись)</p>
+    </div>
   </div>
 </body>
 </html>

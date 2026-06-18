@@ -90,7 +90,7 @@
 <body>
   <!--
     Переменные:
-    {{employerName}}           — наименование работодателя
+    {{employerShortName}}          — краткое наименование работодателя
     {{orderNumber}}            — номер приказа
     {{dateDay}}                — день
     {{dateMonthKz}}            — месяц на казахском
@@ -102,7 +102,7 @@
     {{employeeFullNameRod}}    — ФИО в родительном падеже (старое)
     {{oldLastName}}            — старая фамилия
     {{newLastName}}            — новая фамилия
-    {{applicationDate}}        — дата заявления работника
+    {{employeeFullNameShortRod}} — ФИО с инициалами в родительном падеже
     {{marriageCertDate}}       — дата свидетельства о браке
     {{marriageCertNumber}}     — номер свидетельства о браке
     {{marriageCertIssuerRu}}   — кем выдано свидетельство о браке (русский)
@@ -115,12 +115,13 @@
   <table class="bilingual-header">
     <tr>
       <td class="kz">
-        <p>{{employerName}}</p>
-        <p>жеке кәсіпкер</p>
+        <p>«{{employerShortName}}»</p>
+        <p>Жеке</p>
+        <p>Кәсіпкер</p>
       </td>
       <td class="ru">
         <p>Индивидуальный предприниматель</p>
-        <p>{{employerName}}</p>
+        <p>«{{employerShortName}}»</p>
       </td>
     </tr>
   </table>
@@ -145,7 +146,8 @@
   <div style="height: 20px;"></div>
 
   <div class="order-title">
-    О внесении изменений в документы, содержащие персональные данные
+    О внесении изменении в документы, содержащие
+    персональные данные
   </div>
 
   <p class="body-text no-indent">
@@ -155,15 +157,15 @@
   <p class="body-text no-indent"><strong>ПРИКАЗЫВАЮ:</strong></p>
 
   <p class="body-text">
-    Изменить в учетных и иных официальных документах {{employerName}} 
+    Изменить в учетных и иных официальных документах ИП «{{employerShortName}}
     {{employeeFullNameRod}} фамилию {{oldLastName}} на фамилию {{newLastName}}.
   </p>
 
   <p class="body-text no-indent">
     <strong>Основание:</strong><br>
-    1. Заявление работника об изменении персональных данных {{newLastName}} {{employeeFullNameShortRod}} 
+    1. Заявление работника об изменении персональных данных {{employeeFullNameShortRod}}
     от «{{dateDay}}» {{dateMonthRu}} {{dateYear}} года;<br>
-    2. Копия свидетельства о заключении брака от {{marriageCertDate}} № {{marriageCertNumber}}, 
+    2. Копия свидетельства о заключении брака от {{marriageCertDate}} № {{marriageCertNumber}},
     {{marriageCertIssuerRu}};<br>
     3. Удостоверение личности № {{idCardNumber}}, от {{idCardIssueDate}} выданный {{idCardIssuerRu}}.
   </p>
@@ -171,7 +173,7 @@
   <table class="signature-table">
     <tr>
       <td style="text-align: left;">
-        <p><strong>ИП {{employerName}}</strong></p>
+        <p><strong>ИП {{employerShortName}}</strong></p>
         <p><strong>Директор</strong></p>
       </td>
       <td><span class="sign-line"></span></td>
@@ -185,7 +187,7 @@
   </table>
 
   <div class="acknowledge">
-    <p>С приказом {{employeeAcknowledged}}:</p>
+    <p>С приказом ознакомлен (-а):</p>
     <table class="acknowledge-table">
       <tr>
         <td></td>

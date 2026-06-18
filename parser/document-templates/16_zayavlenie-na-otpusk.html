@@ -31,7 +31,7 @@
     }
     .body-text {
       text-align: justify;
-      text-indent: 0;
+      text-indent: 30px;
       margin: 10px 0;
     }
     .signature-block {
@@ -56,7 +56,7 @@
 <body>
   <!--
     Переменные:
-    {{employerName}}           — наименование работодателя (например: ИП «Жасмин»)
+    {{employerShortName}}      — краткое наименование работодателя (например: Жасмин)
     {{directorNameShortDat}}   — ФИО директора в дательном падеже
     {{employeePositionRod}}    — должность сотрудника в родительном падеже
     {{employeeFullName}}       — ФИО сотрудника полностью
@@ -67,34 +67,32 @@
     {{vacationEndMonthRu}}     — месяц окончания отпуска (русский)
     {{vacationEndYear}}        — год окончания отпуска
     {{vacationDays}}           — продолжительность отпуска в календарных днях
-    {{currentDateDay}}         — день подписания
-    {{currentDateMonthRu}}     — месяц подписания (русский)
-    {{currentDateYear}}        — год подписания
+    {{currentDateNumeric}}     — дата подписания в формате ДД.ММ.ГГГГ
   -->
 
   <div class="header-right">
-    <p>Директору {{employerName}}</p>
+    <p>Директору ИП {{employerShortName}}</p>
     <p>{{directorNameShortDat}}</p>
     <p>от {{employeePositionRod}}</p>
     <p>{{employeeFullName}}</p>
   </div>
 
-  <div class="title">Заявление</div>
+  <div class="title">Заявление.</div>
 
   <p class="body-text">
     Прошу предоставить мне часть оплачиваемого ежегодного трудового отпуска
-    с «{{vacationStartDay}}» {{vacationStartMonthRu}} {{vacationStartYear}} года
-    по «{{vacationEndDay}}» {{vacationEndMonthRu}} {{vacationEndYear}} года
+    с {{vacationStartDay}} {{vacationStartMonthRu}} {{vacationStartYear}} года
+    по {{vacationEndDay}} {{vacationEndMonthRu}} {{vacationEndYear}} года
     продолжительностью {{vacationDays}} календарных дней.
   </p>
 
   <div class="signature-block">
     <div class="date">
-      «{{currentDateDay}}» {{currentDateMonthRu}} {{currentDateYear}} г.
+      {{currentDateNumeric}}
     </div>
     <div class="sign">
       <span class="line"></span>
-      <p style="font-size: 10pt; margin: 4px 0 0;">(подпись)</p>
+      <p style="font-size: 10pt; margin: 4px 0 0;">подпись</p>
       <p>{{employeeFullName}}</p>
     </div>
   </div>

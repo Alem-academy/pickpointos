@@ -75,9 +75,9 @@
 <body>
   <!--
     Переменные:
-    {{employerName}}           — наименование работодателя
+    {{employerShortName}}      — краткое наименование работодателя
     {{employeeFullName}}       — ФИО работника полностью
-    {{employeePositionRu}}     — должность работника (именительный падеж)
+    {{employeePositionRod}}    — должность работника (родительный падеж)
     {{employeeIIN}}            — ИИН работника
     {{idCardNumber}}           — номер удостоверения личности
     {{idCardIssueDate}}        — дата выдачи удостоверения
@@ -87,7 +87,6 @@
     {{startDateYear}}          — год начала работы
     {{currentDateDay}}         — день выдачи справки
     {{currentDateMonthRu}}     — месяц выдачи справки (русский)
-    {{currentDateMonthKz}}     — месяц выдачи справки (казахский)
     {{currentDateYear}}        — год выдачи справки
     {{cityRu}}                 — город на русском
     {{directorNameShort}}      — ФИО директора с инициалами
@@ -96,12 +95,14 @@
   <table class="bilingual-header">
     <tr>
       <td class="kz">
-        <p>{{employerName}}</p>
-        <p>жеке кәсіпкер</p>
+        <p>«{{employerShortName}}»</p>
+        <p>Жеке</p>
+        <p>Кәсіпкер</p>
       </td>
       <td class="ru">
-        <p>Индивидуальный предприниматель</p>
-        <p>{{employerName}}</p>
+        <p>Индивидуальный</p>
+        <p>предприниматель</p>
+        <p>«{{employerShortName}}»</p>
       </td>
     </tr>
   </table>
@@ -109,12 +110,11 @@
   <table class="meta-row">
     <tr>
       <td class="left">
-        <p>«{{currentDateDay}}» {{currentDateMonthKz}} {{currentDateYear}} жыл</p>
-        <p>{{cityRu}} қаласы</p>
+        <p>«{{currentDateDay}}» {{currentDateMonthRu}} {{currentDateYear}} года</p>
+        <p>город {{cityRu}}</p>
       </td>
       <td class="right">
-        <p>По месту требования</p>
-        <p>город {{cityRu}}</p>
+        <p style="text-align: center;">По месту требования</p>
       </td>
     </tr>
   </table>
@@ -123,8 +123,8 @@
 
   <p class="body-text">
     <strong>{{employeeFullName}}</strong>, (удостоверение личности № {{idCardNumber}}
-    от «{{idCardIssueDate}}» года, выдано {{idCardIssuerRu}}, ИИН {{employeeIIN}})
-    работает в должности <strong>{{employeePositionRu}}</strong> в {{employerName}}
+    от {{idCardIssueDate}}, выдано {{idCardIssuerRu}}, ИИН {{employeeIIN}})
+    работает в должности {{employeePositionRod}} в ИП «{{employerShortName}}»
     с «{{startDateDay}}» {{startDateMonthRu}} {{startDateYear}} года по настоящее время.
   </p>
 

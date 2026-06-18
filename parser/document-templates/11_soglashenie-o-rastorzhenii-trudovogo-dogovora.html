@@ -94,25 +94,12 @@
 <body>
   <!--
     Переменные:
-    {{employerName}}           — наименование работодателя
-    {{directorName}}           — ФИО директора полностью
-    {{directorNameShort}}      — ФИО директора с инициалами
-    {{directorBasisRu}}          — основание полномочий директора (Устава, Доверенности)
-    {{employeeFullName}}       — ФИО работника полностью
-    {{employeeFullNameShort}}  — ФИО работника с инициалами
-    {{employeeIIN}}            — ИИН работника
-    {{employeeAddressRu}}      — адрес работника (русский)
-    {{employeeBank}}           — банк работника
-    {{employeeBankDetails}}    — реквизиты счета работника
-    {{employeeIdNumber}}       — номер удостоверения личности
-    {{employeeIdDate}}         — дата выдачи удостоверения
-    {{contractNumber}}         — номер трудового договора
-    {{contractDate}}           — дата трудового договора
-    {{terminationDate}}        — дата расторжения
-    {{agreementDate}}          — дата соглашения
-    {{cityRu}}                   — город
-    {{lastWorkingDay}}         — последний рабочий день
-    {{compensationAmount}}     — сумма компенсации (если применимо)
+    employerName, directorName, directorNameShort, directorBasisRu, directorActing, employeeCitizen,
+    employeeFullName, employeeFullNameShort, employeeIIN,
+    employeeIdNumber, employeeIdDate, employeeIdIssuerRu, employeeAddressRu,
+    contractNumber, contractDate, terminationDate, agreementDate, cityRu,
+    handoverPosition, handoverEmployeeName,
+    employerBank, employerBIC, employerBIN, employerAccount, employerAddressRu
   -->
 
   <div class="doc-title">СОГЛАШЕНИЕ</div>
@@ -160,55 +147,62 @@
       <p>— выполнять работу согласно занимаемой должности, в полном объеме;</p>
       <p>— подчиняться правилам внутреннего трудового распорядка и не допускать нарушений 
         трудовой дисциплины. В противном случае Работник может быть привлечен к дисциплинарной 
-        ответственности или уволен по инициативе Работодателя, согласно ст. 52, 53, 54, 55 
-        Трудового кодекса Республики Казахстан.
+        ответственности или уволен по инициативе Работодателя, согласно пп. 8 п. 1 ст. 52 
+        Трудового кодекса Республики Казахстан (отсутствие Работника на работе без уважительной причины);
+      </p>
+      <p>— передать дела {{handoverPosition}} {{handoverEmployeeName}};</p>
+      <p>— сдать под подпись все материальные ценности, принадлежащие компании, 
+        {{handoverPosition}} {{handoverEmployeeName}}.
       </p>
     </div>
 
     <div class="clause">
       <p>
-        <strong>4.</strong> Работодатель обязан в день прекращения трудового договора 
-        выдать Работнику документы, связанные с работой, и произвести полный расчет 
-        в соответствии со ст. 115 Трудового кодекса Республики Казахстан.
-      </p>
-    </div>
-
-    <div class="clause">
-      <p>
-        <strong>5.</strong> Настоящее соглашение составлено в двух экземплярах, 
-        имеющих одинаковую юридическую силу, по одному экземпляру для каждой из сторон.
+        <strong>4.</strong> Настоящее соглашение составлено в двух экземплярах, 
+        обладающих равной юридической силой.
       </p>
     </div>
   </div>
 
   <div class="signature-section">
-    <div class="signature-row">
-      <div class="signature-col">
-        <p><strong>РАБОТОДАТЕЛЬ:</strong></p>
-        <p>{{employerName}}</p>
-        <p>Директор: {{directorNameShort}}</p>
-        <div style="margin-top: 20px;">
-          <span class="sign-line"></span>
-          <p class="sign-label">(подпись)</p>
-        </div>
-      </div>
-      <div class="signature-col">
-        <p><strong>РАБОТНИК:</strong></p>
-        <p>{{employeeFullName}}</p>
-        <p>ИИН: {{employeeIIN}}</p>
-        <div style="margin-top: 20px;">
-          <span class="sign-line"></span>
-          <p class="sign-label">(подпись)</p>
-        </div>
-      </div>
+    <p><strong>Работодатель</strong></p>
+    <p>{{employerName}}</p>
+    <p>Директор – {{directorNameShort}}</p>
+    <div style="margin-top: 20px;">
+      <span class="sign-line"></span>
+      <p class="sign-label">(подпись)</p>
     </div>
   </div>
 
   <div class="requisites">
-    <p><strong>Реквизиты и адреса сторон:</strong></p>
-    <p><strong>Работодатель:</strong> {{employerName}}, директор {{directorNameShort}}</p>
-    <p><strong>Работник:</strong> {{employeeFullName}}, ИИН {{employeeIIN}}, адрес: {{employeeAddressRu}}</p>
-    <p>Банк: {{employeeBank}}, {{employeeBankDetails}}</p>
+    <p>Банк: {{employerBank}}</p>
+    <p>БИК: {{employerBIC}}</p>
+    <p>БИН: {{employerBIN}}</p>
+    <p>ИИК: {{employerAccount}}</p>
+    <p>Юридический адрес: {{employerAddressRu}}</p>
+  </div>
+
+  <div class="signature-section" style="margin-top: 30px;">
+    <p><strong>Работник</strong></p>
+    <p>{{employeeFullName}} удостоверение личности</p>
+    <p>№ {{employeeIdNumber}}</p>
+    <p>дата {{employeeIdDate}},</p>
+    <p>выданное {{employeeIdIssuerRu}}</p>
+    <p>ИИН {{employeeIIN}}</p>
+    <p>{{employeeAddressRu}}</p>
+    <div style="margin-top: 20px;">
+      <span class="sign-line"></span>
+      <p class="sign-label">(подпись)</p>
+    </div>
+  </div>
+
+  <div class="requisites" style="margin-top: 30px;">
+    <p>Экземпляр настоящего соглашения о расторжении трудового договора получил (-а):</p>
+    <p>&nbsp;</p>
+    <p>{{employeeFullName}}</p>
+    <p>(подпись)</p>
+    <p>(расшифровка подписи)</p>
+    <p>«{{terminationDateDay}}» {{terminationDateMonthRu}} {{terminationDateYear}} года</p>
   </div>
 </body>
 </html>

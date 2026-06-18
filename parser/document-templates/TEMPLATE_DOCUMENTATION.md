@@ -117,9 +117,9 @@ await page.pdf({ format: 'A4', printBackground: true });
 
 | Переменная | Описание | Пример |
 |------------|----------|--------|
-| `employerName` | Наименование работодателя | ИП «Жасмин» |
+| `employerShortName` | Краткое наименование работодателя | Жасмин |
 | `directorNameShortDat` | ФИО директора, дат. падеж | Карабаевой Г.Е. |
-| `employeePosition` | Должность сотрудника | менеджера по работе с клиентами |
+| `employeePositionRod` | Должность сотрудника (род. падеж) | менеджера по работе с клиентами |
 | `employeeFullName` | ФИО сотрудника полностью | Иванова Мария Петровна |
 | `returnDateDay` | День выхода на работу | 15 |
 | `returnDateMonthRu` | Месяц выхода (русский) | октября |
@@ -444,10 +444,8 @@ await page.pdf({ format: 'A4', printBackground: true });
 | `startDateDay` | День начала работы | 28 |
 | `startDateMonthRu` | Месяц начала (русский) | апреля |
 | `startDateYear` | Год начала | 2026 |
-| `employeePosition` | Должность | менеджера по работе с клиентами |
-| `currentDateDay` | День подписания | 28 |
-| `currentDateMonthRu` | Месяц подписания (русский) | апреля |
-| `currentDateYear` | Год подписания | 2026 |
+| `employeePositionRod` | Должность (родительный падеж) | менеджера по работе с клиентами |
+| `currentDateNumeric` | Дата подписания (ДД.ММ.ГГГГ) | 28.04.2026 |
 
 ---
 
@@ -456,7 +454,8 @@ await page.pdf({ format: 'A4', printBackground: true });
 
 | Переменная | Описание | Пример |
 |------------|----------|--------|
-| `employerName` | Наименование работодателя | Жасмин |
+| `employerName` | Полное наименование работодателя | Индивидуальный предприниматель «Жасмин» |
+| `employerShortName` | Краткое наименование работодателя | Жасмин |
 | `orderNumber` | Номер приказа | 1-К |
 | `dateDay` | День | 28 |
 | `dateMonthKz` | Месяц (каз) | сәуір |
@@ -469,11 +468,13 @@ await page.pdf({ format: 'A4', printBackground: true });
 | `startDateDay` | День начала | 28 |
 | `startDateMonthRu` | Месяц начала (русский) | апреля |
 | `startDateYear` | Год начала | 2026 |
-| `employeePosition` | Должность | менеджера по работе с клиентами |
+| `employeePositionRod` | Должность (родительный падеж) | менеджера по работе с клиентами |
 | `workplaceAddressRu` | Адрес места работы (русский) | Сатпаев, ул. Улытауская, д. 90 |
 | `probationPeriod` | Испытательный срок | три месяца |
 | `contractNumber` | № трудового договора | ТД-002/26 |
-| `contractDate` | Дата трудового договора | 28.04.2026 |
+| `contractDateDay` | День договора | 28 |
+| `contractDateMonthRu` | Месяц договора (русский) | апреля |
+| `contractDateYear` | Год договора | 2026 |
 | `directorNameShort` | ФИО директора | Карабаева Г.Е. |
 
 **Важно:** `employeeFullNameVin` — это ФИО в винительном падеже для глагола «принять».
@@ -488,34 +489,54 @@ await page.pdf({ format: 'A4', printBackground: true });
 | `contractNumber` | № договора | ТД-001/26 |
 | `contractDateDay` | День заключения | 28 |
 | `contractDateMonthKz` | Месяц заключения (каз) | сәуір |
+| `contractDateMonthKzLoc` | Месяц заключения (каз, локатив) | сәуірдегі |
 | `contractDateMonthRu` | Месяц заключения (рус) | апреля |
 | `contractDateYear` | Год заключения | 2026 |
-| `employerName` | Наименование работодателя | Жасмин |
-| `directorNameKz` | ФИО директора (каз) | Карабаева Г.Е. |
+| `contractStartDateDay` | День начала работы | 28 |
+| `contractStartDateMonthRu` | Месяц начала работы (рус) | апреля |
+| `contractStartDateMonthKz` | Месяц начала работы (каз) | сәуір |
+| `contractStartDateYear` | Год начала работы | 2026 |
+| `contractEndDateDay` | День окончания договора | 28 |
+| `contractEndDateMonthRu` | Месяц окончания (рус) | апреля |
+| `contractEndDateMonthKz` | Месяц окончания (каз) | сәуір |
+| `contractEndDateYear` | Год окончания договора | 2027 |
+| `employerName` | Наименование работодателя | ИП «Жасмин» |
+| `employerShortName` | Краткое наименование работодателя | Жасмин |
+| `directorNameKz` | ФИО директора (каз) | Қарабаева Г.Е. |
 | `directorNameRu` | ФИО директора (рус) | Карабаева Г.Е. |
-| `directorNameShortKz` | ФИО директора с инициалами (каз) | Карабаева Г.Е. |
+| `directorNameRod` | ФИО директора в родительном падеже | Карабаевой Г.Е. |
 | `directorNameShortRu` | ФИО директора с инициалами (рус) | Карабаева Г.Е. |
-| `directorBasisKz` | Основание полномочий (каз) | Жарғысы |
-| `directorBasisRu` | Основание полномочий (рус) | Устава |
-| `employeeFullNameKz` | ФИО работника (каз) | Локутневская Дарья Максимовна |
-| `employeeFullNameRu` | ФИО работника (рус) | Локутневская Дарья Максимовна |
-| `employeeIIN` | ИИН / ЖСН | 021230650637 |
-| `idCardNumber` | № удостоверения | 056957700 |
-| `idCardIssueDate` | Дата выдачи | 15.12.2023 |
+| `employeeFullNameKz` | ФИО работника (каз) | Муратова Кунзира Бисенгалиевна |
+| `employeeFullNameRu` | ФИО работника (рус) | Муратова Кунзира Бисенгалиевна |
+| `employeeIIN` | ИИН / ЖСН | 600313403315 |
+| `idCardNumber` | № удостоверения | 061740580 |
+| `idCardIssueDate` | Дата выдачи | 16.09.2025 |
 | `idCardIssuerKz` | Орган выдачи (каз) | ҚР ІІМ |
 | `idCardIssuerRu` | Орган выдачи (рус) | МВД РК |
-| `employeeAddressKz` | Адрес регистрации (каз) | ҚР, Ақмола облысы, Целиноград ауданы, Аккайын, есептік квартал 088, үй 159 |
-| `employeeAddressRu` | Адрес регистрации (рус) | РК, обл. Акмолинская, Целиноградский р-н, Аккайын, учетный квартал 088, дом 159 |
-| `employeePhone` | Телефон | 7747987016 |
-| `employeeEmail` | Email | daryalokutnevskaya2002@gmail.com |
-| `employeePositionKz` | Должность (каз) | Менеджер по работе с клиентами / Клиенттермен жұмыс жөніндегі менеджер |
+| `employeeAddressResidentRu` | Адрес проживания (рус) | г. Астана, пр. Улы Дала, д. 65/2, кв. 261 |
+| `employeeAddressResidentKz` | Адрес проживания (каз) | Астана қаласы, Ұлы Дала даңғ., 65/2 үй, 261 пәтер |
+| `employeeAddressRegRu` | Адрес регистрации (рус) | РК, обл. Акмолинская, Целиноградский р-н, Аккайын, учетный квартал 088, дом 159 |
+| `employeeAddressRegKz` | Адрес регистрации (каз) | ҚР, Ақмола облысы, Целиноград ауданы, Аккайын, есептік квартал 088, үй 159 |
+| `employeePhone` | Телефон | +77714786359 |
+| `employeeEmail` | Email | tson2013@mail.ru |
+| `employeePositionKz` | Должность (каз) | клиенттермен жұмыс жөніндегі менеджер |
 | `employeePositionRu` | Должность (рус) | менеджер по работе с клиентами |
-| `workplaceAddressKz` | Адрес работы (каз) | Сатпаев, Ұлытау көшесі, 90 үй |
-| `workplaceAddressRu` | Адрес работы (рус) | Сатпаев, ул. Улытауская, д. 90 |
-| `salaryAmount` | Размер оплаты труда | 300 000 тенге |
-| `workSchedule` | График работы | 5/2, с 09:00 до 18:00 |
-| `cityKz` | Город (каз) | Астана |
-| `cityRu` | Город (рус) | Астана |
+| `employeePositionRod` | Должность (рус, род. падеж) | менеджера по работе с клиентами |
+| `workplaceAddressKz` | Адрес работы (каз) | Астана қаласы, Ұлы дала даңғ., 65/2 үй |
+| `workplaceAddressRu` | Адрес работы (рус) | г. Астана, пр. Улы Дала, д. 65/2 |
+| `salaryAmountRu` | Размер оплаты труда (рус) | 85 000 (восемьдесят пять тысяч) тенге |
+| `salaryAmountKz` | Размер оплаты труда (каз) | 85 000 (сексен бес мың) теңге |
+| `probationPeriod` | Испытательный срок (рус) | три месяца |
+| `probationPeriodKz` | Испытательный срок (каз) | үш ай |
+| `vacationDays` | Дней отпуска | 24 |
+| `vacationDaysText` | Дней отпуска прописью | жиырма төрт |
+| `employerAddressRu` | Адрес работодателя (рус) | г. Алматы, ул. Сатпаева, 30/8, офис 139 |
+| `employerAddressKz` | Адрес работодателя (каз) | Алматы қ., Сәтбаев к-сі, 30/8, кеңсе 139 |
+| `employerBIC` | БИК работодателя | CASPKZKA |
+| `employerIIN` | ИИН работодателя | 910729401967 |
+| `employerBank` | Банк работодателя | АО «Kaspi Bank» |
+| `systemName` | Название системы ЭДО | edo.uchet.kz |
+| `internalRulesUrl` | Ссылка на Правила трудового распорядка | https://drive.google.com/drive/folders/1Ij1i31fvO0vZ7kG1jePrkVf59F0Bq1QT |
 
 ---
 

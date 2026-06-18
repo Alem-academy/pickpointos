@@ -313,6 +313,10 @@ function buildTemplateData(emp, employer, schema, params = {}) {
     const MONTHS_RU_NOM = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
     const MONTHS_KZ = ['қаңтар','ақпан','наурыз','сәуір','мамыр','маусым','шілде','тамыз','қыркүйек','қазан','қараша','желтоқсан'];
     const MONTHS_KZ_DAT = ['қаңтарда','ақпанда','наурызда','сәуірде','мамырда','маусымда','шілдеде','тамызда','қыркүйекте','қазанда','қарашада','желтоқсанда'];
+    const MONTHS_KZ_LOC = ['қаңтардағы','ақпандағы','наурыздағы','сәуірдегі','мамырдағы','маусымдағы','шілдедегі','тамыздағы','қыркүйектегі','қазандағы','қарашадағы','желтоқсандағы'];
+    const MONTHS_KZ_ABL = ['қаңтардан','ақпаннан','наурыздан','сәуірден','мамырдан','маусымнан','шілдеден','тамыздан','қыркүйектен','қазаннан','қарашадан','желтоқсаннан'];
+    const MONTHS_KZ_DATIVE = ['қаңтарға','ақпанға','наурызға','сәуірге','мамырға','маусымға','шілдеге','тамызға','қыркүйекке','қазанға','қарашаға','желтоқсанға'];
+    const MONTHS_KZ_LOC_SIMPLE = ['қаңтарда','ақпанда','наурызда','сәуірде','мамырда','маусымда','шілдеде','тамызда','қыркүйекте','қазанда','қарашада','желтоқсанда'];
 
     // Helper: simple FIO case declension (basic Russian rules)
     // For production accuracy, integrate petrovich or store pre-declined forms in DB
@@ -439,63 +443,68 @@ function buildTemplateData(emp, employer, schema, params = {}) {
     function translateAddressToKazakh(address) {
         if (!address) return '';
         let a = address;
-        // Direct replacements (no regex boundaries needed)
-        a = a.replace(/^РК[.,]?\b/g, 'ҚР');
-        a = a.replace(/\bРК[.,]?\b/g, 'ҚР');
-        a = a.replace(/\bРеспублика Казахстан\b/gi, 'Қазақстан Республикасы');
+        // Unicode-aware word boundaries to avoid breaking city/street names
+        const B = '(?<![\\p{L}\\p{N}])'; // not preceded by letter/digit
+        const A = '(?![\\p{L}\\p{N}])'; // not followed by letter/digit
+        const u = 'giu';
+        a = a.replace(new RegExp('^РК[.,]?' + A, 'gu'), 'ҚР');
+        a = a.replace(new RegExp(B + 'РК[.,]?' + A, u), 'ҚР');
+        a = a.replace(new RegExp(B + 'Республика Казахстан' + A, u), 'Қазақстан Республикасы');
         a = a.replace(/МВД РК/g, 'ҚР ІІМ');
-        a = a.replace(/МВД/g, 'ІІМ');
-        a = a.replace(/обл\.\s*Акмолинская/gi, 'Ақмола облысы');
-        a = a.replace(/обл\.\s*Алматинская/gi, 'Алматы облысы');
-        a = a.replace(/обл\.\s*/gi, 'облысы ');
-        a = a.replace(/область/gi, 'облысы');
-        a = a.replace(/р-н/gi, 'ауданы');
-        a = a.replace(/район/gi, 'ауданы');
-        a = a.replace(/г\.\s*/gi, 'қаласы ');
-        a = a.replace(/город/gi, 'қаласы');
-        a = a.replace(/ул\.\s*/gi, 'көшесі ');
-        a = a.replace(/улица/gi, 'көшесі');
-        a = a.replace(/д\.\s*/gi, 'үй ');
-        a = a.replace(/дом/gi, 'үй');
-        a = a.replace(/кв\.\s*/gi, 'пәтер ');
-        a = a.replace(/квартира/gi, 'пәтер');
-        a = a.replace(/уч\.\s*квартал/gi, 'есептік квартал');
-        a = a.replace(/учетный квартал/gi, 'есептік квартал');
-        a = a.replace(/пос\.\s*/gi, 'ауылы ');
-        a = a.replace(/поселок/gi, 'ауылы');
-        a = a.replace(/с\.\s*/gi, 'ауылы ');
-        a = a.replace(/село/gi, 'ауылы');
-        a = a.replace(/пр\.\s*/gi, 'даңғылы ');
-        a = a.replace(/проспект/gi, 'даңғылы');
-        a = a.replace(/пер\.\s*/gi, 'оралымы ');
-        a = a.replace(/переулок/gi, 'оралымы');
-        a = a.replace(/мкр\.?\s*/gi, 'микрорайон ');
-        a = a.replace(/жк\.?\s*/gi, 'тұрғын үй кешені ');
-        a = a.replace(/жилой комплекс/gi, 'тұрғын үй кешені');
-        a = a.replace(/б-р\.?\s*/gi, 'бульвары ');
-        a = a.replace(/бульвар/gi, 'бульвары');
-        a = a.replace(/наб\.?\s*/gi, 'жағалауы ');
-        a = a.replace(/набережная/gi, 'жағалауы');
-        a = a.replace(/туп\.?\s*/gi, 'түтігі ');
-        a = a.replace(/тупик/gi, 'түтігі');
-        a = a.replace(/ш\.?\s*/gi, 'тас жолы ');
-        a = a.replace(/шоссе/gi, 'тас жолы');
-        a = a.replace(/пл\.?\s*/gi, 'алаңы ');
-        a = a.replace(/площадь/gi, 'алаңы');
-        a = a.replace(/км\.?\s*/gi, 'шақырым ');
-        a = a.replace(/километр/gi, 'шақырым');
-        a = a.replace(/\bТОО\b/g, 'ЖШС');
-        a = a.replace(/\bАО\b/g, 'АҚ');
-        a = a.replace(/\bИП\b/g, 'ЖК');
-        a = a.replace(/АО\s*«?Народный банк»?/gi, '«Халық банкі» АҚ');
-        a = a.replace(/АО\s*«?Halyk Bank»?/gi, '«Halyk Bank» АҚ');
-        a = a.replace(/Алмалинский/gi, 'Алмалы');
-        a = a.replace(/Ауэзовский/gi, 'Әуезов');
-        a = a.replace(/Бостандык/gi, 'Бостандық');
-        a = a.replace(/Жетысу/gi, 'Жетісу');
-        a = a.replace(/Медеу/gi, 'Медеу');
-        a = a.replace(/Наурызбай/gi, 'Наурызбай');
-        a = a.replace(/Турксиб/gi, 'Түркісіб');
+        a = a.replace(new RegExp(B + 'МВД' + A, u), 'ІІМ');
+        a = a.replace(new RegExp(B + 'обл\\.\\s*Акмолинская' + A, u), 'Ақмола облысы');
+        a = a.replace(new RegExp(B + 'обл\\.\\s*Алматинская' + A, u), 'Алматы облысы');
+        a = a.replace(new RegExp(B + 'обl\\.\\s*', u), 'облысы ');
+        a = a.replace(new RegExp(B + 'область' + A, u), 'облысы');
+        a = a.replace(new RegExp(B + 'р-н' + A, u), 'ауданы');
+        a = a.replace(new RegExp(B + 'район' + A, u), 'ауданы');
+        a = a.replace(new RegExp(B + 'г\\.\\s*', u), 'қаласы ');
+        a = a.replace(new RegExp(B + 'город' + A, u), 'қаласы');
+        a = a.replace(new RegExp(B + 'ул\\.\\s*', u), 'көшесі ');
+        a = a.replace(new RegExp(B + 'улица' + A, u), 'көшесі');
+        a = a.replace(new RegExp(B + 'д\\.\\s*', u), 'үй ');
+        a = a.replace(new RegExp(B + 'дом' + A, u), 'үй');
+        a = a.replace(new RegExp(B + 'кв\\.\\s*', u), 'пәтер ');
+        a = a.replace(new RegExp(B + 'квартира' + A, u), 'пәтер');
+        a = a.replace(new RegExp(B + 'уч\\.\\s*квартал' + A, u), 'есептік квартал');
+        a = a.replace(new RegExp(B + 'учетный квартал' + A, u), 'есептік квартал');
+        a = a.replace(new RegExp(B + 'пос\\.\\s*', u), 'ауылы ');
+        a = a.replace(new RegExp(B + 'поселок' + A, u), 'ауылы');
+        a = a.replace(new RegExp(B + 'с\\.\\s*', u), 'ауылы ');
+        a = a.replace(new RegExp(B + 'село' + A, u), 'ауылы');
+        a = a.replace(new RegExp(B + 'пр\\.\\s*', u), 'даңғылы ');
+        a = a.replace(new RegExp(B + 'проспект' + A, u), 'даңғылы');
+        a = a.replace(new RegExp(B + 'пер\\.\\s*', u), 'оралымы ');
+        a = a.replace(new RegExp(B + 'переулок' + A, u), 'оралымы');
+        a = a.replace(new RegExp(B + 'мкр\\.?\\s*', u), 'микрорайон ');
+        a = a.replace(new RegExp(B + 'жк\\.?\\s*', u), 'тұрғын үй кешені ');
+        a = a.replace(new RegExp(B + 'жилой комплекс' + A, u), 'тұрғын үй кешені');
+        a = a.replace(new RegExp(B + 'б-р\\.?\\s*', u), 'бульвары ');
+        a = a.replace(new RegExp(B + 'бульвар' + A, u), 'бульвары');
+        a = a.replace(new RegExp(B + 'наб\\.?\\s*', u), 'жағалауы ');
+        a = a.replace(new RegExp(B + 'набережная' + A, u), 'жағалауы');
+        a = a.replace(new RegExp(B + 'туп\\.?\\s*', u), 'түтігі ');
+        a = a.replace(new RegExp(B + 'тупик' + A, u), 'түтігі');
+        a = a.replace(new RegExp(B + 'ш\\.\\s*', u), 'тас жолы ');
+        a = a.replace(new RegExp(B + 'шоссе' + A, u), 'тас жолы');
+        a = a.replace(new RegExp(B + 'пл\\.?\\s*', u), 'алаңы ');
+        a = a.replace(new RegExp(B + 'площадь' + A, u), 'алаңы');
+        a = a.replace(new RegExp(B + 'км\\.?\\s*', u), 'шақырым ');
+        a = a.replace(new RegExp(B + 'километр' + A, u), 'шақырым');
+        a = a.replace(new RegExp(B + 'ТОО' + A, 'gu'), 'ЖШС');
+        a = a.replace(new RegExp(B + 'АО' + A, 'gu'), 'АҚ');
+        a = a.replace(new RegExp(B + 'ИП' + A, 'gu'), 'ЖК');
+        a = a.replace(new RegExp(B + 'АО\\s*«?Народный банк»?', 'giu'), '«Халық банкі» АҚ');
+        a = a.replace(new RegExp(B + 'АО\\s*«?Halyk Bank»?', 'giu'), '«Halyk Bank» АҚ');
+        a = a.replace(new RegExp(B + 'Алмалинский' + A, u), 'Алмалы');
+        a = a.replace(new RegExp(B + 'Ауэзовский' + A, u), 'Әуезов');
+        a = a.replace(new RegExp(B + 'Бостандык' + A, u), 'Бостандық');
+        a = a.replace(new RegExp(B + 'Жетысу' + A, u), 'Жетісу');
+        a = a.replace(new RegExp(B + 'Медеу' + A, u), 'Медеу');
+        a = a.replace(new RegExp(B + 'Наурызбай' + A, u), 'Наурызбай');
+        a = a.replace(new RegExp(B + 'Турксиб' + A, u), 'Түркісіб');
+        a = a.replace(new RegExp(B + 'Капшагай' + A, u), 'Қапшагай');
+        a = a.replace(new RegExp(B + 'Конаев' + A, u), 'Қонаев');
         return a;
     }
 
@@ -554,7 +563,7 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         employeeFullNameDat: declineFIO(fullName, 'dat'),
         employeeFullNameVin: declineFIO(fullName, 'vin'),
         employeeFullNameInst: declineFIO(fullName, 'inst'),
-        employeeFullNameShort: declineShortFIO(shortName, 'rod'), // backward compat for orders
+        employeeFullNameShort: shortName,
         employeeFullNameShortRod: declineShortFIO(shortName, 'rod'),
         employeeFullNameShortDat: declineShortFIO(shortName, 'dat'),
         employeeFullNameShortVin: declineShortFIO(shortName, 'vin'),
@@ -570,7 +579,9 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         employeeAddressRu: emp.registered_address || emp.address || '',
         employeeAddressKz: translateAddressToKazakh(emp.registered_address || emp.address || ''),
         employeeAddressResidentRu: emp.address || '',
+        employeeAddressResidentKz: translateAddressToKazakh(emp.address || ''),
         employeeAddressRegRu: emp.registered_address || emp.address || '',
+        employeeAddressRegKz: translateAddressToKazakh(emp.registered_address || emp.address || ''),
         employeePhone: emp.phone || '',
         employeeEmail: emp.email || '',
         employeeIBAN: emp.iban || '',
@@ -580,6 +591,9 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         idCardIssuerRu: emp.id_card_issued_by || '',
         idCardIssuerKz: translateAddressToKazakh(emp.id_card_issued_by || ''),
         employeeIdCardIssueDate: emp.id_card_issue_date ? new Date(emp.id_card_issue_date).toLocaleDateString('ru-RU') : '',
+        idCardIssueDay: emp.id_card_issue_date ? String(new Date(emp.id_card_issue_date).getDate()) : '',
+        idCardIssueMonthRu: emp.id_card_issue_date ? MONTHS_RU[new Date(emp.id_card_issue_date).getMonth()] : '',
+        idCardIssueYear: emp.id_card_issue_date ? String(new Date(emp.id_card_issue_date).getFullYear()) : '',
         employeeBank: emp.bank || '',
         employeeBankDetails: emp.iban || '',
         employeeIdNumber: emp.id_card_number || '',
@@ -607,6 +621,8 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         employerAddress: employer.address || '',
         employerAddressRu: employer.address || '',
         employerAddressKz: translateAddressToKazakh(employer.address || ''),
+        employerAddressRegRu: employer.registered_address || employer.address || '',
+        employerAddressRegKz: translateAddressToKazakh(employer.registered_address || employer.address || ''),
         employerBank: employer.bank || '',
         employerBIK: employer.bik || '',
         employerBIC: employer.bik || '',
@@ -640,6 +656,7 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         currentDateYear: String(now.getFullYear()),
         currentDateShort: `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}`,
         currentDateNumeric: `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}`,
+        orderDateNumeric: `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()} г.`,
 
         // Generic date
         dateDay: String(now.getDate()),
@@ -666,33 +683,52 @@ function buildTemplateData(emp, employer, schema, params = {}) {
                 contractDateDay: String(d.getDate()),
                 contractDateMonthRu: MONTHS_RU[d.getMonth()],
                 contractDateMonthKz: MONTHS_KZ[d.getMonth()],
+                contractDateMonthKzAbl: MONTHS_KZ_ABL[d.getMonth()],
+                contractDateMonthKzDat: MONTHS_KZ_DATIVE[d.getMonth()],
+                contractDateMonthKzLoc: MONTHS_KZ_LOC[d.getMonth()],
                 contractDateYear: String(d.getFullYear()),
                 contractStartDateDay: String(d.getDate()),
                 contractStartDateMonthRu: MONTHS_RU[d.getMonth()],
                 contractStartDateMonthKz: MONTHS_KZ[d.getMonth()],
+                contractStartDateMonthKzAbl: MONTHS_KZ_ABL[d.getMonth()],
+                contractStartDateMonthKzDat: MONTHS_KZ_DATIVE[d.getMonth()],
                 contractStartDateYear: String(d.getFullYear()),
             };
         })() : {}),
 
-        // Contract end date
-        ...(params.contractEndDate ? (() => {
-            const d = new Date(params.contractEndDate);
+        // Contract end date — explicit param or +1 year from contract/start date
+        ...((params.contractEndDate || params.contractDate || params.startDate || emp.hired_at) ? (() => {
+            const baseDate = params.contractDate || params.startDate || emp.hired_at;
+            let d;
+            if (params.contractEndDate) {
+                d = new Date(params.contractEndDate);
+            } else {
+                const base = new Date(baseDate);
+                d = new Date(base.getFullYear() + 1, base.getMonth(), base.getDate());
+            }
             return {
                 contractEndDate: `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`,
                 contractEndDateDay: String(d.getDate()),
                 contractEndDateMonthRu: MONTHS_RU[d.getMonth()],
                 contractEndDateMonthKz: MONTHS_KZ[d.getMonth()],
+                contractEndDateMonthKzAbl: MONTHS_KZ_ABL[d.getMonth()],
+                contractEndDateMonthKzDat: MONTHS_KZ_DATIVE[d.getMonth()],
                 contractEndDateYear: String(d.getFullYear()),
             };
         })() : {}),
 
-        // Probation period
+        // Probation period (text-only to match docx samples)
         probationPeriod: (() => {
             const m = parseInt(params.probationMonths, 10);
             if (!m || isNaN(m)) return 'три месяца';
             const forms = ['месяц', 'месяца', 'месяцев'];
             const form = m % 10 === 1 && m % 100 !== 11 ? 0 : [2,3,4].includes(m % 10) && ![12,13,14].includes(m % 100) ? 1 : 2;
-            return `${m} (${numberToWordsRu(m)}) ${forms[form]}`;
+            return `${numberToWordsRu(m)} ${forms[form]}`;
+        })(),
+        probationPeriodKz: (() => {
+            const m = parseInt(params.probationMonths, 10);
+            if (!m || isNaN(m)) return 'үш ай';
+            return `${numberToWordsKz(m)} ай`;
         })(),
 
         // City
@@ -705,6 +741,9 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         pvzName: emp.pvz_name || '',
         workplaceAddressRu: emp.pvz_address || '',
         workplaceAddressKz: translateAddressToKazakh(emp.pvz_address || ''),
+
+        // Vacation order title qualifier (empty for full vacation)
+        vacationPartTitle: params.vacationPartTitle || '',
     };
 
     // Merge auto + manual params (manual overrides auto only when non-empty)
@@ -1016,7 +1055,7 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
         }
 
         // Contract date
-        if (schemaVars.includes('contractDate') && !enhancedParams.contractDate) {
+        if ((schemaVars.includes('contractDate') || schemaVars.includes('contractDateDay')) && !enhancedParams.contractDate) {
             const contractRes = await query(
                 `SELECT created_at FROM documents WHERE employee_id = $1 AND type = 'contract' ORDER BY created_at DESC LIMIT 1`,
                 [employeeId]
@@ -1032,6 +1071,12 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
         if (schemaVars.includes('salaryAmount') && !enhancedParams.salaryAmount) {
             enhancedParams.salaryAmount = emp.base_rate ? `${Number(emp.base_rate).toLocaleString('ru-RU')} тенге` : '85 000 тенге';
         }
+        if ((schemaVars.includes('salaryAmountRu') || schemaVars.includes('salaryAmountKz')) && (!enhancedParams.salaryAmountRu || !enhancedParams.salaryAmountKz)) {
+            const baseRate = emp.base_rate ? Number(emp.base_rate) : 85000;
+            const formatted = baseRate.toLocaleString('ru-RU');
+            enhancedParams.salaryAmountRu = `${formatted} (${numberToWordsRu(baseRate)}) тенге`;
+            enhancedParams.salaryAmountKz = `${formatted} (${numberToWordsKz(baseRate)}) теңге`;
+        }
 
         // Work schedule
         if (schemaVars.includes('workSchedule') && !enhancedParams.workSchedule) {
@@ -1041,16 +1086,22 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
         // Probation period
         if (schemaVars.includes('probationPeriod') && !enhancedParams.probationPeriod) {
             if (emp.probation_months) {
-                const m = emp.probation_months;
-                const suffix = m === 1 ? '' : m < 5 ? 'а' : 'ев';
-                enhancedParams.probationPeriod = `${m} месяц${suffix}`;
+                const m = parseInt(emp.probation_months, 10);
+                const forms = ['месяц', 'месяца', 'месяцев'];
+                const form = m % 10 === 1 && m % 100 !== 11 ? 0 : [2,3,4].includes(m % 10) && ![12,13,14].includes(m % 100) ? 1 : 2;
+                enhancedParams.probationPeriod = `${numberToWordsRu(m)} ${forms[form]}`;
             } else if (emp.probation_until && emp.hired_at) {
                 const months = Math.round((new Date(emp.probation_until) - new Date(emp.hired_at)) / (30 * 24 * 60 * 60 * 1000));
-                const suffix = months === 1 ? '' : months < 5 ? 'а' : 'ев';
-                enhancedParams.probationPeriod = `${months} месяц${suffix}`;
+                const forms = ['месяц', 'месяца', 'месяцев'];
+                const form = months % 10 === 1 && months % 100 !== 11 ? 0 : [2,3,4].includes(months % 10) && ![12,13,14].includes(months % 100) ? 1 : 2;
+                enhancedParams.probationPeriod = `${numberToWordsRu(months)} ${forms[form]}`;
             } else {
-                enhancedParams.probationPeriod = '3 (три) месяца';
+                enhancedParams.probationPeriod = 'три месяца';
             }
+        }
+        if (schemaVars.includes('probationPeriodKz') && !enhancedParams.probationPeriodKz) {
+            const m = parseInt(emp.probation_months, 10) || 3;
+            enhancedParams.probationPeriodKz = `${numberToWordsKz(m)} ай`;
         }
 
         // ID card issue date (formatted)
@@ -1072,6 +1123,16 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
             if (isNaN(d.getTime())) return isoDate;
             return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
         }
+        function parseRuDateLongComponents(text) {
+            if (!text) return null;
+            const match = text.match(/^(\d{1,2})\s+(января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)\s+(\d{4})\s*года?$/i);
+            if (!match) return null;
+            const MONTHS_RU_IDX = {
+                'января': 0, 'февраля': 1, 'марта': 2, 'апреля': 3, 'мая': 4, 'июня': 5,
+                'июля': 6, 'августа': 7, 'сентября': 8, 'октября': 9, 'ноября': 10, 'декабря': 11
+            };
+            return { day: match[1], month: match[2], year: match[3] };
+        }
 
         if (schemaVars.includes('agreementDate')) {
             if (enhancedParams.agreementDate) {
@@ -1083,7 +1144,7 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
                 if (termIso) enhancedParams.agreementDate = formatRuDateShort(termIso);
             }
         }
-        if (schemaVars.includes('applicationDate')) {
+        if (schemaVars.includes('applicationDate') || schemaVars.includes('applicationDateDay')) {
             if (enhancedParams.applicationDate) {
                 const formatted = formatRuDateShort(enhancedParams.applicationDate);
                 if (formatted) enhancedParams.applicationDate = formatted;
@@ -1091,6 +1152,9 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
                 // Default applicationDate to terminationDate (short format) for termination documents
                 const termIso = userParams.terminationDate;
                 if (termIso) enhancedParams.applicationDate = formatRuDateShort(termIso);
+            } else {
+                // Default applicationDate to current date for vacation/order documents
+                enhancedParams.applicationDate = formatRuDateShort(new Date().toISOString());
             }
         }
         if (schemaVars.includes('lastWorkingDay') && enhancedParams.lastWorkingDay) {
@@ -1102,8 +1166,14 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
         const MONTHS_KZ_NOM = ['қаңтар','ақпан','наурыз','сәуір','мамыр','маусым','шілде','тамыз','қыркүйек','қазан','қараша','желтоқсан'];
         function computeDateComponents(isoDate, prefix) {
             if (!isoDate) return {};
-            const d = new Date(isoDate);
-            if (isNaN(d.getTime())) return {};
+            let d;
+            if (typeof isoDate === 'string' && /^\d{1,2}\.\d{1,2}\.\d{4}$/.test(isoDate)) {
+                const [day, month, year] = isoDate.split('.');
+                d = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`);
+            } else {
+                d = new Date(isoDate);
+            }
+            if (!d || isNaN(d.getTime())) return {};
             const comps = {};
             if (schemaVars.includes(`${prefix}Day`)) comps[`${prefix}Day`] = String(d.getDate());
             if (schemaVars.includes(`${prefix}MonthRu`)) comps[`${prefix}MonthRu`] = MONTHS_RU_FULL[d.getMonth()];
@@ -1119,6 +1189,7 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
             { field: 'vacationEnd', prefix: 'vacationEnd' },
             { field: 'sickLeaveDate', prefix: 'sickLeave' },
             { field: 'applicationDate', prefix: 'applicationDate' },
+            { field: 'contractDate', prefix: 'contractDate' },
             { field: 'startDate', prefix: 'startDate' },
             { field: 'terminationDate', prefix: 'terminationDate' },
         ];
@@ -1147,6 +1218,15 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
             const formatted = formatRuDateLong(enhancedParams.returnDate);
             if (formatted) enhancedParams.returnDate = formatted;
         }
+        // Auto-compute returnDate as day after vacationEnd if not provided
+        if (schemaVars.includes('returnDate') && !enhancedParams.returnDate && enhancedParams.vacationEnd) {
+            const end = new Date(enhancedParams.vacationEnd);
+            if (!isNaN(end.getTime())) {
+                end.setDate(end.getDate() + 1);
+                const formatted = formatRuDateLong(end.toISOString());
+                if (formatted) enhancedParams.returnDate = formatted;
+            }
+        }
         // Format applicationDate if needed as short string
         if (schemaVars.includes('applicationDate') && enhancedParams.applicationDate) {
             const formatted = formatRuDateShort(enhancedParams.applicationDate);
@@ -1166,8 +1246,18 @@ async function generateDocumentInternal(employeeId, type, userParams = {}, reqUs
             if (formatted) enhancedParams.sickLeaveDate = formatted;
         }
         if (schemaVars.includes('terminationDate') && enhancedParams.terminationDate) {
-            const formatted = formatRuDateLong(enhancedParams.terminationDate);
+            const termIso = enhancedParams.terminationDate;
+            const formatted = formatRuDateLong(termIso);
             if (formatted) enhancedParams.terminationDate = formatted;
+            // Also provide date components for templates that need them
+            if (schemaVars.includes('terminationDateDay') || schemaVars.includes('terminationDateMonthRu') || schemaVars.includes('terminationDateYear')) {
+                const d = new Date(termIso);
+                if (!isNaN(d.getTime())) {
+                    if (schemaVars.includes('terminationDateDay')) enhancedParams.terminationDateDay = String(d.getDate());
+                    if (schemaVars.includes('terminationDateMonthRu')) enhancedParams.terminationDateMonthRu = MONTHS_RU_FULL[d.getMonth()];
+                    if (schemaVars.includes('terminationDateYear')) enhancedParams.terminationDateYear = String(d.getFullYear());
+                }
+            }
         }
 
         // Compute vacation days and text

@@ -61,7 +61,7 @@
     {{marriageCertNumber}}  — номер свидетельства о заключении брака
     {{marriageCertDate}}    — дата свидетельства о браке
     {{idCardNumber}}        — номер удостоверения личности
-    {{idCardIssuedByRu}}    — кем выдано удостоверение (русский)
+    {{idCardIssuerRu}}      — кем выдано удостоверение (русский)
     {{idCardIssueDate}}     — дата выдачи удостоверения
     {{currentDate}}         — дата подписания
   -->
@@ -70,27 +70,27 @@
     <p>Директору {{employerName}}</p>
     <p>{{directorNameShortDat}}</p>
     <p>от {{employeePositionRod}}</p>
-    <p><span class="line"></span></p>
-    <p>ИИН <span class="line" style="width: 120px;"></span>, проживающей по адресу</p>
-    <p><span class="line"></span>, сот. <span class="line" style="width: 120px;"></span></p>
+    <p>{{employeeFullName}}</p>
+    <p>ИИН {{employeeIIN}}, проживающей по адресу</p>
+    <p>{{employeeAddressRu}}, сот. {{employeePhone}}</p>
   </div>
 
   <div class="title">Заявление</div>
 
   <p class="body-text">
-    Прошу изменить мои персональные данные в кадровых документах в связи с изменением 
-    фамилии по причине {{changeReason}}. Прежняя фамилия — <span class="line" style="width: 150px;"></span>, 
-    новая фамилия — <span class="line" style="width: 150px;"></span>. 
-    Подтверждающие документы прилагаю.
+    Прошу изменить мои персональные данные в кадровых документах в связи с изменением
+    фамилии по причине {{changeReason}}. Прежняя фамилия-{{oldLastName}},
+    новая фамилия-{{newLastName}}. Подтверждающие документы прилагаю.
   </p>
 
   <div class="attachments">
     <p>Прилагаемые документы:</p>
-    <p>— копия свидетельства о заключении брака № {{marriageCertNumber}} от {{marriageCertDate}};</p>
-    <p>— копия удостоверения личности № {{idCardNumber}} выданного {{idCardIssuedByRu}} от {{idCardIssueDate}}.</p>
+    <p>-копия свидетельства о заключении брака № {{marriageCertNumber}} от {{marriageCertDate}};</p>
+    <p>-копия удостоверения личности № {{idCardNumber}} выданного {{idCardIssuerRu}} от {{idCardIssueDate}}.</p>
   </div>
 
   <div class="signature-block">
+    <p>Дата</p>
     <p>{{currentDate}}</p>
     <p>{{employeeFullName}}, подпись <span class="line" style="width: 150px;"></span></p>
   </div>

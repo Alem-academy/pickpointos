@@ -80,32 +80,30 @@
 <body>
   <!--
     Переменные:
-    {{employerName}}         — наименование работодателя
+    {{employerShortName}}        — краткое наименование работодателя
     {{orderNumber}}          — номер приказа
-    {{dateDay}}              — день
-    {{dateMonthKz}}          — месяц на казахском
-    {{dateMonthRu}}          — месяц на русском
-    {{dateYear}}             — год
+    {{orderDateNumeric}}     — дата приказа в формате ДД.ММ.ГГГГ г.
+    {{dateYear}}             — год (для строки ознакомления)
     {{cityKz}}               — город на казахском
     {{cityRu}}               — город на русском
     {{employeePositionRod}}  — должность в родительном падеже
     {{employeeFullNameRod}}  — ФИО в родительном падеже
     {{returnDate}}           — дата выхода на работу
     {{employeeFullNameShortRod}} — ФИО с инициалами в родительном падеже
-    {{applicationDate}}      — дата заявления
     {{directorNameShort}}    — ФИО директора с инициалами
   -->
 
   <table class="bilingual-header">
     <tr>
       <td class="kz">
-        <p>{{employerName}}</p>
-        <p>жеке кәсіпкер</p>
+        <p>«{{employerShortName}}»</p>
+        <p>Жеке</p>
+        <p>Кәсіпкер</p>
         <p>БҰЙРЫҚ</p>
       </td>
       <td class="ru">
         <p>Индивидуальный предприниматель</p>
-        <p>{{employerName}}</p>
+        <p>«{{employerShortName}}»</p>
         <p>ПРИКАЗ</p>
       </td>
     </tr>
@@ -114,7 +112,7 @@
   <table class="meta-row">
     <tr>
       <td class="left">
-        <p>«{{dateDay}}» {{dateMonthKz}} {{dateYear}} жыл</p>
+        <p>{{orderDateNumeric}}</p>
         <p>{{cityKz}} қаласы</p>
       </td>
       <td class="right">
@@ -125,22 +123,19 @@
   </table>
 
   <div class="order-title">
-    О выходе из отпуска по уходу за ребенком
+    О выходе из отпуска по уходу за ребенком.
   </div>
 
   <p class="body-text no-indent">
-    <strong>В соответствии с пунктом 4 статьи 100 Трудового кодекса Республики Казахстан,</strong>
-  </p>
-
-  <p class="body-text no-indent"><strong>ПРИКАЗЫВАЮ:</strong></p>
-
-  <p class="body-text">
-    {{employeePositionRod}} {{employeeFullNameRod}} считать {{employeeReturned}} 
-    к обязанностям с {{returnDate}}.
+    В соответствии с пунктом 4 статьи 100 Трудового кодекса Республики Казахстан, <strong>ПРИКАЗЫВАЮ:</strong>
   </p>
 
   <p class="body-text">
-    <strong>Основание:</strong> заявление {{employeeFullNameShortRod}} от {{applicationDate}}.
+    {{employeePositionRod}} {{employeeFullNameRod}}, считать приступивши к обязанностям с {{returnDate}}.
+  </p>
+
+  <p class="body-text">
+    <strong>Основание:</strong> Заявление {{employeeFullNameShortRod}}
   </p>
 
   <table class="signature-table">
@@ -152,8 +147,8 @@
   </table>
 
   <div class="acknowledge">
-    <p>С приказом {{employeeAcknowledged}}:</p>
-    <p>«{{dateDay}}» {{dateMonthRu}} {{dateYear}} г.</p>
+    <p>С приказом ознакомлен(а):</p>
+    <p>«__» ____________ {{dateYear}} г.</p>
     <p><span class="sign-line"></span> {{employeeFullNameShortRod}}</p>
   </div>
 </body>

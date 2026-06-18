@@ -31,20 +31,18 @@
     }
     .body-text {
       text-align: justify;
-      text-indent: 0;
+      text-indent: 20px;
       margin: 10px 0;
     }
     .signature-block {
       margin-top: 40px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
+      text-align: right;
     }
-    .signature-block .date {
-      text-align: left;
+    .signature-block p {
+      margin: 4px 0;
     }
-    .signature-block .sign {
-      text-align: center;
+    .signature-block .sign-label {
+      font-size: 10pt;
     }
     .line {
       display: inline-block;
@@ -63,9 +61,6 @@
     {{terminationDateDay}}     — день увольнения
     {{terminationDateMonthRu}} — месяц увольнения (русский)
     {{terminationDateYear}}    — год увольнения
-    {{currentDateDay}}         — день подписания
-    {{currentDateMonthRu}}     — месяц подписания (русский)
-    {{currentDateYear}}        — год подписания
   -->
 
   <div class="header-right">
@@ -76,22 +71,18 @@
     <p>{{employeeFullName}}</p>
   </div>
 
-  <div class="title">Заявление</div>
+  <div class="title">Заявление.</div>
 
   <p class="body-text">
     Прошу Вас уволить меня по собственному желанию
-    с «{{terminationDateDay}}» {{terminationDateMonthRu}} {{terminationDateYear}} года.
+    с {{terminationDateDay}} {{terminationDateMonthRu}} {{terminationDateYear}} года.
   </p>
 
   <div class="signature-block">
-    <div class="date">
-      «{{currentDateDay}}» {{currentDateMonthRu}} {{currentDateYear}} г.
-    </div>
-    <div class="sign">
-      <span class="line"></span>
-      <p style="font-size: 10pt; margin: 4px 0 0;">(подпись)</p>
-      <p>{{employeeFullName}}</p>
-    </div>
+    <p>дата</p>
+    <p><span class="line"></span></p>
+    <p class="sign-label">подпись</p>
+    <p>{{employeeFullName}}</p>
   </div>
 </body>
 </html>

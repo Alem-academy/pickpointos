@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Приказ об отпуске без сохранения заработной платы по уходу за ребенком</title>
+  <title>Приказ об отпуске без сохранения заработной платы</title>
   <style>
     @page { size: A4; margin: 20mm; }
     * { box-sizing: border-box; }
@@ -58,10 +58,6 @@
     .body-text.no-indent {
       text-indent: 0;
     }
-    ol {
-      margin: 10px 0;
-      padding-left: 40px;
-    }
     .signature-table {
       width: 100%;
       margin-top: 30px;
@@ -70,31 +66,21 @@
     .signature-table td {
       vertical-align: bottom;
       padding: 5px;
-      text-align: center;
     }
     .sign-line {
       display: inline-block;
-      width: 200px;
+      width: 150px;
       border-bottom: 1px solid #000;
     }
     .acknowledge {
       margin-top: 30px;
-    }
-    .acknowledge-table {
-      width: 100%;
-      margin-top: 10px;
-      border-collapse: collapse;
-    }
-    .acknowledge-table td {
-      padding: 5px;
-      text-align: center;
     }
   </style>
 </head>
 <body>
   <!--
     Переменные:
-    {{employerName}}         — наименование работодателя
+    {{employerShortName}}        — краткое наименование работодателя
     {{orderNumber}}          — номер приказа
     {{dateDay}}              — день
     {{dateMonthKz}}          — месяц на казахском
@@ -104,104 +90,75 @@
     {{cityRu}}               — город на русском
     {{employeePositionRod}}  — должность в родительном падеже
     {{employeeFullNameRod}}  — ФИО в родительном падеже
+    {{vacationDays}}         — количество календарных дней (цифрами)
+    {{vacationDaysText}}     — количество календарных дней (прописью)
     {{vacationStartDate}}    — дата начала отпуска
     {{vacationEndDate}}      — дата окончания отпуска
+    {{returnDate}}           — день выхода на работу
     {{employeeFullNameShortRod}} — ФИО с инициалами в родительном падеже
     {{applicationDate}}      — дата заявления
-    {{certificateNumber}}    — номер свидетельства о рождении
-    {{certificateDate}}      — дата свидетельства о рождении
     {{directorNameShort}}    — ФИО директора с инициалами
   -->
 
   <table class="bilingual-header">
     <tr>
       <td class="kz">
-        <p>{{employerName}}</p>
-        <p>жеке кәсіпкер</p>
+        <p>«{{employerShortName}}»</p>
+        <p>Жеке</p>
+        <p>Кәсіпкер</p>
+        <p>БҰЙРЫҚ</p>
       </td>
       <td class="ru">
         <p>Индивидуальный предприниматель</p>
-        <p>{{employerName}}</p>
+        <p>«{{employerShortName}}»</p>
+        <p>ПРИКАЗ</p>
       </td>
     </tr>
   </table>
 
-  <div style="height: 20px;"></div>
-
   <table class="meta-row">
     <tr>
       <td class="left">
-        <p><strong>БҰЙРЫҚ</strong></p>
-        <p>«{{dateDay}}» {{dateMonthKz}} {{dateYear}} жыл</p>
+        <p>{{dateDay}} {{dateMonthKz}} {{dateYear}} ж.</p>
         <p>{{cityKz}} қаласы</p>
       </td>
       <td class="right">
-        <p><strong>ПРИКАЗ</strong></p>
         <p>№ {{orderNumber}}</p>
         <p>город {{cityRu}}</p>
       </td>
     </tr>
   </table>
 
-  <div style="height: 20px;"></div>
-
   <div class="order-title">
-    О предоставлении отпуска без сохранения заработной платы по уходу за ребёнком 
-    до достижения им возраста трёх лет
+    О предоставлении отпуска без сохранения
+    заработной платы.
   </div>
 
-  <p class="body-text no-indent"><strong>ПРИКАЗЫВАЮ:</strong></p>
-
-  <p class="body-text">
-    Предоставить {{employeePositionRod}} <strong>{{employeeFullNameRod}}</strong>, 
-    отпуск без сохранения заработной платы по уходу за ребёнком до достижения им 
-    трёхлетнего возраста с {{vacationStartDate}} по {{vacationEndDate}} включительно.
+  <p class="body-text no-indent">
+    В соответствии с пп. 1) ст. 97 Трудового Кодекса Республики Казахстан от 23 ноября 2015 года № 414-V и во исполнение Правил внутреннего распорядка <strong>ПРИКАЗЫВАЮ:</strong>
   </p>
 
-  <ol>
-    <li>Ознакомить всех заинтересованных лиц с настоящим Приказом.</li>
-  </ol>
+  <p class="body-text">
+    Предоставить {{employeeFullNameRod}}, {{employeePositionRod}}, отпуск без сохранения заработной платы на {{vacationDays}} ({{vacationDaysText}}) календарных дней с {{vacationStartDate}} по {{vacationEndDate}}. День выхода на работу {{returnDate}}.
+  </p>
 
-  <p class="body-text basis">
-    <strong>Основание:</strong> заявление <strong>{{employeeFullNameShortRod}}</strong> 
-    от {{applicationDate}}, копия свидетельства о рождении ребёнка № {{certificateNumber}} 
-    от {{certificateDate}}.
+  <p class="body-text">
+    <strong>Основание:</strong> заявление <strong>{{employeeFullNameShortRod}}</strong>
+    от {{applicationDate}}.
   </p>
 
   <table class="signature-table">
     <tr>
-      <td style="text-align: left;">
-        <p><strong>ИП {{employerName}}</strong></p>
-        <p><strong>Директор</strong></p>
-      </td>
-      <td></td>
-      <td></td>
-      <td style="text-align: right;"><strong>{{directorNameShort}}</strong></td>
-    </tr>
-    <tr>
-      <td></td>
-      <td><em>(подпись)</em></td>
-      <td></td>
-      <td><em>(расшифровка подписи)</em></td>
+      <td style="width: 30%;"><strong>Директор</strong></td>
+      <td style="width: 30%; text-align: center;"><span class="sign-line"></span></td>
+      <td style="width: 40%; text-align: right;"><strong>{{directorNameShort}}</strong></td>
     </tr>
   </table>
 
   <div class="acknowledge">
-    <p>С приказом {{employeeAcknowledged}}:</p>
-    <table class="acknowledge-table">
-      <tr>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td>«{{dateDay}}» {{dateMonthRu}} {{dateYear}} г.</td>
-      </tr>
-      <tr>
-        <td><em>(Ф. И. О.)</em></td>
-        <td></td>
-        <td><em>(подпись)</em></td>
-        <td></td>
-      </tr>
-    </table>
+    <p>С приказом ознакомлен(а):</p>
+    <p>«__» ____________ {{dateYear}} г.</p>
+    <p><span class="sign-line"></span> {{employeeFullNameShortRod}}</p>
   </div>
 </body>
 </html>

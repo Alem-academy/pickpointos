@@ -74,6 +74,9 @@ for (const file of files) {
     const now = new Date();
     const MONTHS_RU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
     const MONTHS_KZ = ['қаңтар','ақпан','наурыз','сәуір','мамыр','маусым','шілде','тамыз','қыркүйек','қазан','қараша','желтоқсан'];
+    const MONTHS_KZ_LOC = ['қаңтардағы','ақпандағы','наурыздағы','сәуірдегі','мамырдағы','маусымдағы','шілдедегі','тамыздағы','қыркүйектегі','қазандағы','қарашадағы','желтоқсандағы'];
+    const MONTHS_KZ_ABL = ['қаңтардан','ақпаннан','наурыздан','сәуірден','мамырдан','маусымнан','шілдеден','тамыздан','қыркүйектен','қазаннан','қарашадан','желтоқсаннан'];
+    const MONTHS_KZ_DATIVE = ['қаңтарға','ақпанға','наурызға','сәуірге','мамырға','маусымға','шілдеге','тамызға','қыркүйекке','қазанға','қарашаға','желтоқсанға'];
 
     const data = {};
     for (const varName of Object.keys(schema.variables || {})) {
@@ -82,11 +85,15 @@ for (const file of files) {
         else if (varName.includes('employerShort')) data[varName] = testEmployer.short_name;
         else if (varName.includes('employerBIN')) data[varName] = testEmployer.iin;
         else if (varName.includes('employerIIN')) data[varName] = testEmployer.iin;
+        else if (varName === 'employerAddressKz') data[varName] = 'Алматы қ., Сәтбаев к-сі, 30/8, кеңсе 139';
+        else if (varName === 'employerAddressRegRu') data[varName] = testEmployer.registered_address || testEmployer.address;
+        else if (varName === 'employerAddressRegKz') data[varName] = 'Алматы қ., Сәтбаев к-сі, 30/8, кеңсе 139';
         else if (varName.includes('employerAddress')) data[varName] = testEmployer.address;
         else if (varName.includes('employerBank')) data[varName] = testEmployer.bank;
         else if (varName.includes('employerBIK') || varName.includes('employerBIC')) data[varName] = testEmployer.bik;
         else if (varName.includes('employerIBAN') || varName.includes('employerAccount')) data[varName] = testEmployer.iban;
-        else if (varName === 'directorNameShort') data[varName] = testEmployer.director_name_dative;
+        else if (varName === 'directorNameShort') data[varName] = testEmployer.director_name;
+        else if (varName === 'directorNameRod') data[varName] = 'Карабаевой Г.Е.';
         else if (varName.includes('directorName') && varName.includes('Dat')) data[varName] = testEmployer.director_name_dative;
         else if (varName.includes('directorName')) data[varName] = testEmployer.director_name;
         else if (varName.includes('directorBasisKz')) data[varName] = 'Жарғысы';
@@ -99,13 +106,24 @@ for (const file of files) {
         else if (varName.includes('employeeFullName') && varName.includes('Vin')) data[varName] = 'Локутневскую Дарью Максимовну';
         else if (varName.includes('employeeFullName') && varName.includes('Rod')) data[varName] = 'Локутневской Дарьи Максимовны';
         else if (varName.includes('employeeFullName') && varName.includes('Dat')) data[varName] = 'Локутневской Дарье Максимовне';
+        else if (varName.includes('employeeFullName') && varName.includes('Inst')) data[varName] = 'Локутневской Дарьей Максимовной';
+        else if (varName === 'employeeFullNameKz') data[varName] = testEmployee.full_name;
         else if (varName.includes('employeeFullName')) data[varName] = testEmployee.full_name;
+        else if (varName === 'employeeCitizen') data[varName] = 'гражданин';
+        else if (varName === 'employeeResidentAdj') data[varName] = 'проживающий';
+        else if (varName === 'employeeAcknowledged') data[varName] = 'ознакомлен';
+        else if (varName === 'employeeReturned') data[varName] = 'приступившим';
+        else if (varName === 'directorActing') data[varName] = 'действующей';
         else if (varName.includes('employeePosition') && varName.includes('Rod')) data[varName] = 'менеджера по работе с клиентами';
+        else if (varName.includes('employeePosition') && varName.includes('Dat')) data[varName] = 'менеджеру по работе с клиентами';
+        else if (varName.includes('employeePosition') && varName.includes('Inst')) data[varName] = 'менеджером по работе с клиентами';
         else if (varName.includes('employeePosition')) data[varName] = 'Менеджер по работе с клиентами / Клиенттермен жұмыс жөніндегі менеджер';
         else if (varName.includes('employeeIIN')) data[varName] = testEmployee.iin;
         else if (varName.includes('employeeAddressKz')) data[varName] = 'ҚР, Ақмола облысы, Целиноград ауданы, Аккайын, есептік квартал 088, үй 159';
-        else if (varName.includes('employeeAddressResident')) data[varName] = testEmployee.address;
-        else if (varName.includes('employeeAddressReg')) data[varName] = testEmployee.registered_address;
+        else if (varName.includes('employeeAddressResidentKz')) data[varName] = 'Астана қаласы, Евгений Брусиловского 22, 87 пәтер';
+        else if (varName.includes('employeeAddressResidentRu')) data[varName] = testEmployee.address;
+        else if (varName.includes('employeeAddressRegKz')) data[varName] = 'ҚР, Ақмола облысы, Целиноград ауданы, Аккайын, есептік квартал 088, 159 үй';
+        else if (varName.includes('employeeAddressRegRu')) data[varName] = testEmployee.registered_address;
         else if (varName.includes('employeeAddress')) data[varName] = testEmployee.registered_address;
         else if (varName.includes('employeePhone')) data[varName] = testEmployee.phone;
         else if (varName.includes('employeeEmail')) data[varName] = testEmployee.email;
@@ -113,6 +131,9 @@ for (const file of files) {
         else if (varName.includes('employeeBankDetails')) data[varName] = testEmployer.iban;
         else if (varName.includes('idCardNumber') || varName.includes('employeeIdNumber')) data[varName] = testEmployee.id_card_number;
         else if (varName.includes('idCardIssueDate') || varName.includes('employeeIdDate')) data[varName] = '15.12.2023';
+        else if (varName === 'idCardIssueDay') data[varName] = '15';
+        else if (varName === 'idCardIssueMonthRu') data[varName] = 'декабря';
+        else if (varName === 'idCardIssueYear') data[varName] = '2023';
         else if (varName.includes('idCardIssuerKz')) data[varName] = 'ҚР ІІМ';
         else if (varName.includes('idCardIssuer')) data[varName] = testEmployee.id_card_issued_by;
         else if (varName.includes('workplaceAddressKz')) data[varName] = 'Сатпаев, Ұлытау көшесі, 90 үй';
@@ -123,13 +144,19 @@ for (const file of files) {
         else if (varName === 'currentDateMonthRu') data[varName] = MONTHS_RU[now.getMonth()];
         else if (varName === 'currentDateMonthKz') data[varName] = MONTHS_KZ[now.getMonth()];
         else if (varName === 'currentDateYear') data[varName] = String(now.getFullYear());
+        else if (varName === 'currentDateNumeric') data[varName] = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
+        else if (varName === 'orderDateNumeric') data[varName] = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()} г.`;
         else if (varName.includes('currentDate')) data[varName] = `${now.getDate()} ${MONTHS_RU[now.getMonth()]} ${now.getFullYear()} г.`;
         else if (varName === 'dateDay') data[varName] = '28';
         else if (varName.includes('DateDay') || varName.includes('StartDay') || varName.includes('EndDay')) data[varName] = '28';
+        else if (varName === 'contractDateMonthKzLoc') data[varName] = MONTHS_KZ_LOC[now.getMonth()];
+        else if (varName === 'contractStartDateMonthKzAbl') data[varName] = MONTHS_KZ_ABL[now.getMonth()];
+        else if (varName === 'contractEndDateMonthKzDat') data[varName] = MONTHS_KZ_DATIVE[now.getMonth()];
         else if (varName.includes('dateMonthKz') || varName.includes('MonthKz')) data[varName] = MONTHS_KZ[now.getMonth()];
         else if (varName.includes('dateMonthRu') || varName.includes('MonthRu')) data[varName] = MONTHS_RU[now.getMonth()];
         else if (varName === 'dateMonth') data[varName] = MONTHS_RU[now.getMonth()];
         else if (varName === 'dateYear') data[varName] = String(now.getFullYear());
+        else if (varName === 'contractEndDateYear') data[varName] = String(now.getFullYear() + 1);
         else if (varName.includes('DateYear') || varName.includes('StartYear') || varName.includes('EndYear')) data[varName] = String(now.getFullYear());
         else if (varName.includes('orderNumber')) data[varName] = '001-К';
         else if (varName.includes('contractNumber')) data[varName] = 'ТД-001/26';
@@ -146,14 +173,19 @@ for (const file of files) {
         else if (varName === 'terminationDateMonthKz') data[varName] = 'наурыз';
         else if (varName.includes('terminationDate')) data[varName] = '15 марта 2026 года';
         else if (varName.includes('lastWorkingDay')) data[varName] = '15 марта 2026';
+        else if (varName === 'vacationPartTitle') data[varName] = '(части трудового отпуска)';
+        else if (varName === 'vacationDays') data[varName] = '126';
+        else if (varName === 'vacationDaysText') data[varName] = 'сто двадцать шесть';
         else if (varName.includes('vacationDays')) data[varName] = '126';
-        else if (varName.includes('vacationDaysText')) data[varName] = 'сто двадцать шесть';
+        else if (varName.includes('unusedVacationDays')) data[varName] = '8';
         else if (varName.includes('vacationStartDate')) data[varName] = '15 октября 2025 года';
         else if (varName.includes('vacationEndDate')) data[varName] = '17 февраля 2026 года';
         else if (varName.includes('returnDate')) data[varName] = '12 сентября 2025 года';
         else if (varName.includes('startDate')) data[varName] = '28 апреля 2026 года';
+        else if (varName === 'probationPeriodKz') data[varName] = 'үш ай';
         else if (varName.includes('probationPeriod')) data[varName] = 'три месяца';
-        else if (varName.includes('salaryAmount')) data[varName] = '300 000 тенге';
+        else if (varName === 'salaryAmountRu') data[varName] = '300 000 (триста тысяч) тенге';
+        else if (varName === 'salaryAmountKz') data[varName] = '300 000 (үш жүз мың) теңге';
         else if (varName.includes('workSchedule')) data[varName] = '5/2, с 09:00 до 18:00';
         else if (varName.includes('certificateNumber')) data[varName] = '10312626';
         else if (varName.includes('certificateDate')) data[varName] = '29 декабря 2025 года';
@@ -168,8 +200,19 @@ for (const file of files) {
         else if (varName.includes('marriageCertDate')) data[varName] = '19.12.2025';
         else if (varName.includes('marriageCertIssuer')) data[varName] = 'Отдел №2 города Караганды по РАГС';
         else if (varName.includes('compensationAmount')) data[varName] = '150 000 ₸';
+        else if (varName === 'handoverPosition') data[varName] = 'менеджеру по работе с клиентами';
+        else if (varName === 'handoverEmployeeName') data[varName] = 'Ковалеву Владимиру Николаевичу';
+        else if (varName === 'employeeIdIssuerRu') data[varName] = 'МВД РК';
         else if (varName.includes('employeeFullNameOld')) data[varName] = 'Иванова Мария Петровна';
         else data[varName] = '__________';
+    }
+
+    // Ensure any placeholder used in the template has a value, even if not declared in schema
+    const templatePlaceholders = [...template.matchAll(/\{\{([a-zA-Z0-9_]+)\}\}/g)].map(m => m[1]);
+    for (const ph of templatePlaceholders) {
+        if (!(ph in data)) {
+            data[ph] = '__________';
+        }
     }
 
     const html = fillTemplate(template, data);

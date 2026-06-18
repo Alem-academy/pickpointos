@@ -53,32 +53,31 @@
   </style>
 </head>
 <body>
-  <!-- 
+  <!--
     Переменные:
-    {{employerName}}     — наименование работодателя (например: ИП «Жасмин»)
-    {{directorNameShortDat}}— ФИО директора в дательном падеже (например: Карабаевой Г.Е.)
+    {{employerShortName}} — краткое наименование работодателя (например: Жасмин)
+    {{directorNameShortDat}} — ФИО директора в дательном падеже (например: Карабаевой Г.Е.)
     {{employeePositionRod}} — должность сотрудника (например: менеджера по работе с клиентами)
     {{employeeFullName}} — ФИО сотрудника полностью
-    {{returnDateDay}}     — день выхода на работу
+    {{returnDateDay}} — день выхода на работу
     {{returnDateMonthRu}} — месяц выхода на работу (русский)
-    {{returnDateYear}}    — год выхода на работу
-    {{currentDateDay}}    — день подписания
-    {{currentDateMonthRu}}— месяц подписания (русский)
-    {{currentDateYear}}   — год подписания
+    {{returnDateYear}} — год выхода на работу
+    {{currentDateDay}} — день подписания
+    {{currentDateMonthRu}} — месяц подписания (русский)
+    {{currentDateYear}} — год подписания
   -->
 
   <div class="header-right">
-    <p>Директору {{employerName}}</p>
+    <p>Директору ИП «{{employerShortName}}»</p>
     <p>{{directorNameShortDat}}</p>
     <p>от {{employeePositionRod}}</p>
     <p>{{employeeFullName}}</p>
   </div>
 
-  <div class="title">Заявление</div>
+  <div class="title">Заявление.</div>
 
   <p class="body-text">
-    Прошу Вас прервать отпуск по уходу за ребёнком и допустить меня к работе 
-    с «{{returnDateDay}}» {{returnDateMonthRu}} {{returnDateYear}} года.
+    Прошу Вас прервать отпуск по уходу за ребёнком и допустить меня к работе с «{{returnDateDay}}» {{returnDateMonthRu}} {{returnDateYear}} года.
   </p>
 
   <div class="signature-block">

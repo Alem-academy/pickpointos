@@ -31,7 +31,7 @@
     }
     .body-text {
       text-align: justify;
-      text-indent: 0;
+      text-indent: 20px;
       margin: 10px 0;
     }
     .signature-block {
@@ -66,9 +66,7 @@
     {{startDateMonthRu}}       — месяц начала работы (русский)
     {{startDateYear}}          — год начала работы
     {{employeePositionRod}}    — должность в родительном падеже
-    {{currentDateDay}}         — день подписания
-    {{currentDateMonthRu}}     — месяц подписания (русский)
-    {{currentDateYear}}        — год подписания
+    {{currentDateNumeric}}     — дата подписания в формате ДД.ММ.ГГГГ
   -->
 
   <div class="header-right">
@@ -77,24 +75,23 @@
     <p>{{directorNameShortDat}}</p>
     <p>от {{employeeFullName}}</p>
     <p>Проживающий по адресу: {{employeeAddressResidentRu}}</p>
-    <p>Зарегистрированный по адресу: {{employeeAddressRegRu}}</p>
+    <p>Зарегестрированный по адресу: {{employeeAddressRegRu}}</p>
     <p>тел: {{employeePhone}}</p>
   </div>
 
-  <div class="title">Заявление</div>
+  <div class="title">Заявление.</div>
 
   <p class="body-text">
-    Прошу Вас принять меня на работу с «{{startDateDay}}» {{startDateMonthRu}} {{startDateYear}} года
-    на должность {{employeePositionRod}}.
+    Прошу Вас принять меня работу с {{startDateDay}} {{startDateMonthRu}} {{startDateYear}} года  на должность {{employeePositionRod}}.
   </p>
 
   <div class="signature-block">
     <div class="date">
-      «{{currentDateDay}}» {{currentDateMonthRu}} {{currentDateYear}} г.
+      {{currentDateNumeric}}
     </div>
     <div class="sign">
       <span class="line"></span>
-      <p style="font-size: 10pt; margin: 4px 0 0;">(подпись)</p>
+      <p style="font-size: 10pt; margin: 4px 0 0;">подпись</p>
       <p>{{employeeFullName}}</p>
     </div>
   </div>
