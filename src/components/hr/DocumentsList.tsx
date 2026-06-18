@@ -443,11 +443,6 @@ export function DocumentsList({ employeeId, documents: externalDocuments, onStat
                                                                 <Trash2 className={cn("h-4 w-4", doc.status === 'signed' ? 'opacity-30 cursor-not-allowed' : '')} />
                                                             </button>
                                                         </Tooltip>
-                                                        <Tooltip text="Отправить на email">
-                                                            <button onClick={() => handleSendEmail(doc.id, doc.type)} className="p-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded transition-colors">
-                                                                <Mail className="h-4 w-4" />
-                                                            </button>
-                                                        </Tooltip>
                                                     </div>
                                                 </div>
                                             );

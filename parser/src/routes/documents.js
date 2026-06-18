@@ -19,9 +19,10 @@ import {
 } from '../services/templates.js';
 import { storageService } from '../services/storage.service.js';
 import { emailService } from '../services/email.service.js';
+import { buildEmailContent } from '../services/emailTemplates.js';
 import { htmlToPdfBuffer } from '../services/pdfRender.service.js';
 import { Logger } from '../lib/logger.js';
-import { logDocumentGenerated } from '../lib/activityLogger.js';
+import { logActivity, logDocumentGenerated } from '../lib/activityLogger.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { generateSignatureSheet, getDocumentVerificationData } from '../services/signatureSheet.service.js';
 import { getTemplate, getSchema, listAllTemplates, getProcessDefinition, listProcesses } from '../services/templateRegistry.js';
@@ -1693,13 +1694,9 @@ router.post('/documents/:id/email', authenticateToken, async (req, res) => {
             return res.status(503).json({ error: 'Email service not configured' });
         }
 
-        if (!to) {
-            return res.status(400).json({ error: 'Email recipient (to) is required' });
-        }
-
         // Fetch document info
         const docResult = await query(
-            'SELECT id, type, file_url, file_name, status, employee_id FROM documents WHERE id = $1',
+            `SELECT id, type, scan_url, final_pdf_url, document_number, status, employee_id FROM documents WHERE id = $1`,
             [id]
         );
         if (docResult.rows.length === 0) {
@@ -1707,31 +1704,76 @@ router.post('/documents/:id/email', authenticateToken, async (req, res) => {
         }
 
         const doc = docResult.rows[0];
-        if (!doc.file_url) {
-            return res.status(400).json({ error: 'Документ ещё не сгенерирован (нет PDF)' });
-        }
 
-        // Fetch employee email as fallback
+        // Determine recipient
         let recipient = to;
-        if (recipient === 'employee' && doc.employee_id) {
-            const empResult = await query('SELECT email FROM employees WHERE id = $1', [doc.employee_id]);
-            if (empResult.rows.length > 0 && empResult.rows[0].email) {
-                recipient = empResult.rows[0].email;
-            } else {
+        let employeeName = '';
+        if (!recipient || recipient === 'employee') {
+            if (!doc.employee_id) {
+                return res.status(400).json({ error: 'У документа не указан сотрудник' });
+            }
+            const empResult = await query('SELECT email, full_name FROM employees WHERE id = $1', [doc.employee_id]);
+            if (empResult.rows.length === 0 || !empResult.rows[0].email) {
                 return res.status(400).json({ error: 'У сотрудника не указан email' });
             }
+            recipient = empResult.rows[0].email;
+            employeeName = empResult.rows[0].full_name;
         }
 
-        const fileName = doc.file_name || `${doc.type}_${id}.pdf`;
-        const defaultSubject = `Документ: ${doc.type}`;
-        const defaultHtml = `<p>Здравствуйте,</p><p>Во вложении находится документ.</p>`;
+        if (!recipient || !recipient.includes('@')) {
+            return res.status(400).json({ error: 'Некорректный email получателя' });
+        }
+
+        // Build PDF buffer
+        let pdfBuffer;
+        let source = '';
+        if (doc.final_pdf_url) {
+            // Prefer final signed PDF if available
+            const signedUrl = doc.final_pdf_url.startsWith('http')
+                ? doc.final_pdf_url
+                : await storageService.getFileUrl(doc.final_pdf_url);
+            const response = await axios.get(signedUrl, { responseType: 'arraybuffer', timeout: 30000 });
+            pdfBuffer = Buffer.from(response.data);
+            source = 'final_pdf';
+        } else if (doc.scan_url) {
+            // Render HTML to PDF
+            const htmlUrl = doc.scan_url.startsWith('http')
+                ? doc.scan_url
+                : await storageService.getFileUrl(doc.scan_url);
+            const response = await axios.get(htmlUrl, { responseType: 'text', timeout: 30000 });
+            pdfBuffer = await htmlToPdfBuffer(response.data, { lite: true });
+            source = 'scan_html';
+        } else {
+            return res.status(400).json({ error: 'Документ ещё не сгенерирован' });
+        }
+
+        const { subject: defaultSubject, html: defaultHtml } = buildEmailContent(doc.type, employeeName);
+        const fileName = `${getDocumentFileName(doc)}.pdf`;
 
         const result = await emailService.sendDocument({
             to: recipient,
             subject: subject || defaultSubject,
             html: html || defaultHtml,
-            fileKey: doc.file_url,
+            fileBuffer: pdfBuffer,
             fileName
+        });
+
+        // Log activity
+        await logActivity({
+            employeeId: doc.employee_id,
+            actionType: 'document_email_sent',
+            actionCategory: 'document',
+            title: 'Документ отправлен по email',
+            description: `Тип: ${doc.type}, получатель: ${recipient}`,
+            metadata: {
+                document_id: doc.id,
+                document_type: doc.type,
+                recipient,
+                source,
+                message_id: result?.id
+            },
+            performedById: req.user?.id,
+            performedByName: req.user?.name || 'HR'
         });
 
         res.json({ success: true, messageId: result?.id });
@@ -1740,6 +1782,14 @@ router.post('/documents/:id/email', authenticateToken, async (req, res) => {
         res.status(500).json({ error: 'Ошибка отправки email', details: err.message });
     }
 });
+
+function getDocumentFileName(doc) {
+    const safeType = String(doc.type || 'document').replace(/[^\w\-А-Яа-яЁё]/g, '_');
+    if (doc.document_number) {
+        return `${safeType}_${doc.document_number}`;
+    }
+    return `${safeType}_${doc.id}`;
+}
 
 // GET /documents/pending-employer-signature — Список документов, ожидающих подписи работодателя
 router.get('/documents/pending-employer-signature', authenticateToken, async (req, res) => {

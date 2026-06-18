@@ -27,21 +27,26 @@ export const emailService = {
      * @param {string} options.to — recipient email
      * @param {string} options.subject — email subject
      * @param {string} options.html — email body HTML
-     * @param {string} options.fileKey — S3/R2 key or URL of the PDF
+     * @param {string} [options.fileKey] — S3/R2 key or URL of the PDF
+     * @param {Buffer} [options.fileBuffer] — PDF buffer (alternative to fileKey)
      * @param {string} options.fileName — attachment file name
      * @returns {Promise<{id: string}>}
      */
-    async sendDocument({ to, subject, html, fileKey, fileName }) {
+    async sendDocument({ to, subject, html, fileKey, fileBuffer, fileName }) {
         if (!resend) {
             throw new Error('Email service is not configured (RESEND_API_KEY missing)');
         }
 
-        if (!to || !fileKey) {
-            throw new Error('Missing required fields: to and fileKey');
+        if (!to) {
+            throw new Error('Missing required field: to');
         }
 
-        // Download PDF from R2
-        const pdfBuffer = await storageService.downloadFile(fileKey);
+        if (!fileKey && !fileBuffer) {
+            throw new Error('Missing required field: fileKey or fileBuffer');
+        }
+
+        // Download PDF from R2 or use provided buffer
+        const pdfBuffer = fileBuffer || await storageService.downloadFile(fileKey);
         const base64Content = pdfBuffer.toString('base64');
 
         const result = await resend.emails.send({
