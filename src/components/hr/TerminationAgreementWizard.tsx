@@ -7,7 +7,7 @@ import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { SigexSignModal } from '../SigexSignModal';
 import { useWizardDocs } from './useWizardDocs';
 
-interface TerminationWizardProps {
+interface TerminationAgreementWizardProps {
     employeeId: string;
     employeeName?: string;
     existingDocuments?: Array<{ id: string; type: string; status: string }>;
@@ -16,8 +16,6 @@ interface TerminationWizardProps {
 }
 
 const DOC_TYPE_LABELS: Record<string, string> = {
-    '18_zayavlenie-na-uvolnenie': 'Заявление на увольнение',
-    '19_prikaz-ob-uvolnenii': 'Приказ об увольнении',
     '11_soglashenie-o-rastorzhenii-trudovogo-dogovora': 'Соглашение о расторжении ТД',
 };
 
@@ -27,7 +25,7 @@ const STEPS = [
     { label: 'Подписание', description: 'Отправьте на подпись' },
 ];
 
-export function TerminationWizard({ employeeId, employeeName, existingDocuments = [], onClose, onSuccess }: TerminationWizardProps) {
+export function TerminationAgreementWizard({ employeeId, employeeName, existingDocuments = [], onClose, onSuccess }: TerminationAgreementWizardProps) {
     const {
         hasExistingDocs,
         initialStep,
@@ -78,14 +76,14 @@ export function TerminationWizard({ employeeId, employeeName, existingDocuments 
 
         if (currentStep === 0) {
             const confirmed = window.confirm(
-                'Будет сформирован пакет документов на расторжение трудового договора:\n• Заявление на увольнение\n• Приказ об увольнении\n• Соглашение о расторжении ТД\n\nРанее сгенерированные документы останутся в системе. Продолжить?'
+                'Будет сформировано соглашение о расторжении трудового договора по соглашению сторон.\n\nРанее сгенерированные документы останутся в системе. Продолжить?'
             );
             if (!confirmed) return;
 
             setIsGenerating(true);
             setError(null);
             try {
-                const result = await api.generateProcessDocuments(employeeId, 'termination', {
+                const result = await api.generateProcessDocuments(employeeId, 'termination_agreement', {
                     terminationDate: params.terminationDate,
                     lastWorkingDay: params.lastWorkingDay,
                     compensationAmount: params.compensationAmount || undefined,
@@ -172,9 +170,9 @@ export function TerminationWizard({ employeeId, employeeName, existingDocuments 
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
                     <div>
                         <h2 className="text-lg font-bold text-slate-900">
-                            Расторжение ТД {employeeName && <span className="text-slate-500 font-normal">— {employeeName}</span>}
+                            Расторжение ТД по соглашению сторон {employeeName && <span className="text-slate-500 font-normal">— {employeeName}</span>}
                         </h2>
-                        <p className="text-sm text-slate-500">Пакет документов на расторжение трудового договора</p>
+                        <p className="text-sm text-slate-500">Соглашение о расторжении трудового договора</p>
                     </div>
                     <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors">
                         <X className="h-5 w-5" />

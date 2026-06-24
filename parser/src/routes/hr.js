@@ -418,6 +418,18 @@ router.patch('/employees/:id/status', async (req, res) => {
             sql += `, address = $${paramIdx++}`;
             params.push(req.body.address);
         }
+        if (req.body.phone !== undefined) {
+            sql += `, phone = $${paramIdx++}`;
+            params.push(req.body.phone);
+        }
+        if (req.body.email !== undefined) {
+            sql += `, email = $${paramIdx++}`;
+            params.push(req.body.email);
+        }
+        if (req.body.base_rate !== undefined) {
+            sql += `, base_rate = $${paramIdx++}`;
+            params.push(req.body.base_rate);
+        }
         if (req.body.gender !== undefined) {
             sql += `, gender = $${paramIdx++}`;
             params.push(req.body.gender);

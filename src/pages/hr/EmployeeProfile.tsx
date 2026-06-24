@@ -68,7 +68,6 @@ export default function EmployeeProfile() {
 
     const handleEdit = () => {
         setEditData({
-            full_name: employee?.full_name || '',
             patronymic: employee?.patronymic || '',
             phone: employee?.phone || '',
             email: employee?.email || '',
@@ -147,7 +146,7 @@ export default function EmployeeProfile() {
                             <div className="p-5 space-y-0.5">
                                 {isEditing ? (
                                     <>
-                                        <EditField label="ФИО" value={editData.full_name} onChange={v => setEditData({...editData, full_name: v})} />
+                                        <InfoRow icon={<User className="w-4 h-4" />} label="ФИО" value={employee.full_name} />
                                         <EditField label="Отчество" value={editData.patronymic || ''} onChange={v => setEditData({...editData, patronymic: v})} />
                                         <div className="py-2.5 border-b border-slate-100 last:border-0">
                                             <label className="block text-xs text-slate-500 font-medium mb-1">Телефон</label>

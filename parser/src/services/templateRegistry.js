@@ -144,7 +144,7 @@ const PROCESS_DEFINITIONS = {
         label: 'Приём на работу',
         description: 'Пакет документов для оформления нового сотрудника',
         documentTypes: ['13_zayavlenie-o-prieme-na-rabotu', '14_prikaz-o-prieme-na-rabotu', '15_trudovoy-dogovor'],
-        editableParams: ['probationMonths', 'contractEndDate', 'vacationDays'],
+        editableParams: ['probationMonths', 'contractEndDate', 'vacationDays', 'contractNumber', 'orderNumber'],
         requiresEmployerSignature: true,
     },
     vacation: {
@@ -154,10 +154,17 @@ const PROCESS_DEFINITIONS = {
         editableParams: ['vacationDays', 'vacationStart', 'vacationEnd'],
         requiresEmployerSignature: true,
     },
-    termination: {
-        label: 'Расторжение ТД',
-        description: 'Заявление на увольнение, приказ об увольнении и соглашение о расторжении',
-        documentTypes: ['18_zayavlenie-na-uvolnenie', '19_prikaz-ob-uvolnenii', '11_soglashenie-o-rastorzhenii-trudovogo-dogovora'],
+    termination_employee_initiative: {
+        label: 'Увольнение по инициативе работника',
+        description: 'Заявление на увольнение и приказ об увольнении',
+        documentTypes: ['18_zayavlenie-na-uvolnenie', '19_prikaz-ob-uvolnenii'],
+        editableParams: ['terminationDate', 'lastWorkingDay', 'compensationAmount', 'unusedVacationDays'],
+        requiresEmployerSignature: true,
+    },
+    termination_agreement: {
+        label: 'Расторжение ТД по соглашению сторон',
+        description: 'Соглашение о расторжении трудового договора',
+        documentTypes: ['11_soglashenie-o-rastorzhenii-trudovogo-dogovora'],
         editableParams: ['terminationDate', 'lastWorkingDay', 'compensationAmount', 'unusedVacationDays'],
         requiresEmployerSignature: true,
     },
@@ -176,8 +183,8 @@ const PROCESS_DEFINITIONS = {
         requiresEmployerSignature: true,
     },
     childcare_leave: {
-        label: 'Отпуск без сохранения ЗП по уходу за ребёнком',
-        description: 'Заявление и приказ об отпуске без сохранения заработной платы по уходу за ребёнком',
+        label: 'Отпуск по уходу за ребёнком до 3 лет',
+        description: 'Заявление и приказ об отпуске без сохранения заработной платы по уходу за ребёнком до 3 лет',
         documentTypes: ['02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom', '08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu'],
         editableParams: ['vacationStart', 'vacationEnd'],
         requiresEmployerSignature: true,

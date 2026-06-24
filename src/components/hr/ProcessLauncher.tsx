@@ -3,7 +3,8 @@ import { api } from '@/services/api';
 import { FileText, UserPlus, Plane, Baby, UserX, RefreshCw, CheckCircle2, Clock, ChevronRight, PenTool, Send, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { HiringWizard } from './HiringWizard';
-import { TerminationWizard } from './TerminationWizard';
+import { TerminationByEmployeeWizard } from './TerminationByEmployeeWizard';
+import { TerminationAgreementWizard } from './TerminationAgreementWizard';
 import { VacationWizard } from './VacationWizard';
 import { MaternityReturnWizard } from './MaternityReturnWizard';
 import { MaternityLeaveWizard } from './MaternityLeaveWizard';
@@ -30,7 +31,8 @@ interface ProcessInfo {
 const PROCESS_ICONS: Record<string, React.ReactNode> = {
     hiring: <UserPlus className="h-5 w-5" />,
     vacation: <Plane className="h-5 w-5" />,
-    termination: <UserX className="h-5 w-5" />,
+    termination_employee_initiative: <UserX className="h-5 w-5" />,
+    termination_agreement: <UserX className="h-5 w-5" />,
     maternity_leave: <Baby className="h-5 w-5" />,
     maternity_return: <Baby className="h-5 w-5" />,
     maternity_extension: <Clock className="h-5 w-5" />,
@@ -42,7 +44,8 @@ const PROCESS_ICONS: Record<string, React.ReactNode> = {
 const PROCESS_COLORS: Record<string, string> = {
     hiring: 'blue',
     vacation: 'purple',
-    termination: 'red',
+    termination_employee_initiative: 'red',
+    termination_agreement: 'red',
     maternity_leave: 'pink',
     maternity_return: 'pink',
     maternity_extension: 'indigo',
@@ -69,10 +72,10 @@ const DOC_TYPE_TO_PROCESS: Record<string, string> = {
     '17_prikaz-ob-otpuske': 'vacation',
     'vacation_application': 'vacation',
     'vacation_order': 'vacation',
-    '18_zayavlenie-na-uvolnenie': 'termination',
-    '19_prikaz-ob-uvolnenii': 'termination',
-    '11_soglashenie-o-rastorzhenii-trudovogo-dogovora': 'termination',
-    'termination_order': 'termination',
+    '18_zayavlenie-na-uvolnenie': 'termination_employee_initiative',
+    '19_prikaz-ob-uvolnenii': 'termination_employee_initiative',
+    '11_soglashenie-o-rastorzhenii-trudovogo-dogovora': 'termination_agreement',
+    'termination_order': 'termination_employee_initiative',
     '09_zayavlenie-na-otpusk-po-beremennosti': 'maternity_leave',
     '04_prikaz-ob-otpuske-po-beremennosti-i-rodam': 'maternity_leave',
     '10_zayavlenie-na-prodlenie-otpuska-po-beremennosti': 'maternity_extension',
@@ -89,9 +92,9 @@ const DOC_TYPE_TO_PROCESS: Record<string, string> = {
 // Generic DB types that can belong to multiple processes (legacy documents)
 const GENERIC_TYPE_TO_PROCESSES: Record<string, string[]> = {
     'employee_application': ['hiring', 'vacation', 'maternity_leave', 'maternity_return', 'name_change', 'data_change'],
-    'employer_order': ['hiring', 'vacation', 'termination', 'maternity_leave', 'maternity_return', 'name_change'],
-    'mutual_agreement': ['termination', 'name_change'],
-    'generated': ['hiring', 'vacation', 'termination', 'maternity_leave', 'maternity_return', 'name_change', 'data_change'],
+    'employer_order': ['hiring', 'vacation', 'termination_employee_initiative', 'maternity_leave', 'maternity_return', 'name_change'],
+    'mutual_agreement': ['termination_agreement', 'name_change'],
+    'generated': ['hiring', 'vacation', 'termination_employee_initiative', 'termination_agreement', 'maternity_leave', 'maternity_return', 'name_change', 'data_change'],
 };
 
 function typeBelongsToProcess(type: string, processKey: string): boolean {
@@ -314,8 +317,17 @@ export function ProcessLauncher({ employeeId, employeeName, documents, onDocumen
                     onSuccess={handleWizardClose}
                 />
             )}
-            {activeWizard === 'termination' && (
-                <TerminationWizard
+            {activeWizard === 'termination_employee_initiative' && (
+                <TerminationByEmployeeWizard
+                    employeeId={employeeId}
+                    employeeName={employeeName}
+                    existingDocuments={wizardDocs}
+                    onClose={handleWizardClose}
+                    onSuccess={handleWizardClose}
+                />
+            )}
+            {activeWizard === 'termination_agreement' && (
+                <TerminationAgreementWizard
                     employeeId={employeeId}
                     employeeName={employeeName}
                     existingDocuments={wizardDocs}

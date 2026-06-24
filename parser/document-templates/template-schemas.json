@@ -70,7 +70,7 @@
       }
     },
     "02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom": {
-      "templateName": "Заявление на отпуск без сохранения заработной платы",
+      "templateName": "Заявление на отпуск без сохранения заработной платы по уходу за ребёнком до 3 лет",
       "fileName": "02_zayavlenie-na-otpusk-po-uhodu-za-rebenkom.html",
       "type": "employee_application",
       "required": [
@@ -741,7 +741,7 @@
       }
     },
     "08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu": {
-      "templateName": "Приказ об отпуске без сохранения ЗП по уходу за ребенком",
+      "templateName": "Приказ об отпуске без сохранения ЗП по уходу за ребёнком до 3 лет",
       "fileName": "08_prikaz-ob-otpuske-bez-sohraneniya-zp-po-uhodu.html",
       "type": "employer_order",
       "required": [

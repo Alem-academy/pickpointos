@@ -56,6 +56,8 @@ export function HiringWizard({ employeeId, employeeName, existingDocuments = [],
         contractEndDate: '',
         vacationDays: '24',
         startDate: new Date().toISOString().split('T')[0],
+        contractNumber: '',
+        orderNumber: '',
     });
 
     // Load existing document content on mount
@@ -131,6 +133,8 @@ export function HiringWizard({ employeeId, employeeName, existingDocuments = [],
                     probationMonths: params.probationMonths || undefined,
                     contractEndDate: params.contractEndDate || undefined,
                     vacationDays: params.vacationDays || '24',
+                    contractNumber: params.contractNumber || undefined,
+                    orderNumber: params.orderNumber || undefined,
                 });
                 setGeneratedDocs(result.documents);
                 if (result.errors && result.errors.length > 0) {
@@ -336,6 +340,35 @@ export function HiringWizard({ employeeId, employeeName, existingDocuments = [],
                                         max="60"
                                         className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                                     />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                                            Номер трудового договора
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={params.contractNumber}
+                                            onChange={e => handleParamChange('contractNumber', e.target.value)}
+                                            placeholder="Авто"
+                                            className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                                        />
+                                        <p className="text-xs text-slate-400 mt-1">Если не указать — будет присвоен автоматически</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                                            Номер приказа о приёме
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={params.orderNumber}
+                                            onChange={e => handleParamChange('orderNumber', e.target.value)}
+                                            placeholder="Авто"
+                                            className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                                        />
+                                        <p className="text-xs text-slate-400 mt-1">Если не указать — будет присвоен автоматически</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
