@@ -743,6 +743,10 @@ function buildTemplateData(emp, employer, schema, params = {}) {
         workplaceAddressRu: emp.pvz_address || '',
         workplaceAddressKz: translateAddressToKazakh(emp.pvz_address || ''),
 
+        // Handover defaults for termination agreement (director receives affairs)
+        handoverPosition: declinePosition(position, 'dat'),
+        handoverEmployeeName: declineFIO(employer.director_name, 'dat'),
+
         // Vacation order title qualifier (empty for full vacation)
         vacationPartTitle: params.vacationPartTitle || '',
     };

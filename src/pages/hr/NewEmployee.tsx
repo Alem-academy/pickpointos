@@ -116,7 +116,14 @@ export default function NewEmployeePage() {
             setIsSubmitted(true);
         } catch (err) {
             console.error(err);
-            alert('Ошибка при создании сотрудника: ' + (err as Error).message);
+            let message = 'Ошибка при создании сотрудника';
+            if (err && typeof err === 'object' && 'response' in err) {
+                const data = (err as { response?: { data?: { error?: string } } }).response?.data;
+                if (data?.error) message = data.error;
+            } else if (err instanceof Error) {
+                message = err.message;
+            }
+            alert('Ошибка при создании сотрудника: ' + message);
         } finally {
             setIsLoading(false);
         }

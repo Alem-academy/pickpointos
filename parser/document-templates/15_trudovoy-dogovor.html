@@ -183,6 +183,31 @@
     .bilingual-table .section-title-row + tr td {
       padding-top: 2px;
     }
+    .quad-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 4px 0 12px;
+    }
+    .quad-table td {
+      width: 25%;
+      vertical-align: top;
+      padding: 3px 8px 3px 0;
+      text-align: justify;
+    }
+    .quad-table td + td {
+      padding-left: 8px;
+      padding-right: 0;
+      border-left: 1px solid #ccc;
+    }
+    .quad-table td:last-child {
+      padding-right: 0;
+    }
+    .quad-table .section-title-row td {
+      border-left: none;
+    }
+    .quad-table .section-title-row td + td {
+      border-left: 1px solid #ccc;
+    }
 </style>
 </head>
 <body>
@@ -190,7 +215,7 @@
 <div class="doc-subtitle">подписан электронной цифровой подписью сторон {{contractDateDay}} {{contractDateMonthRu}} {{contractDateYear}} года<br/>Тараптар {{contractDateYear}} жылғы {{contractDateDay}} {{contractDateMonthKzLoc}} электрондық цифрлық қолтаңбамен қол қойды.</div>
 
 
-<table class="preamble-table"><tr><td><p class="preamble-label"><strong>Русский:</strong></p><p class="preamble-text">Работодатель ИП «{{employerShortName}}», {{directorNameRu}}, именуемая в дальнейшем — <strong>Работодатель</strong>, с одной стороны, и гражданин(-ка) <strong>{{employeeFullNameRu}}</strong>, удостоверение личности/паспорт № {{idCardNumber}}, выдано {{idCardIssueDate}} {{idCardIssuerRu}}, ИИН {{employeeIIN}}, именуемый в дальнейшем — <strong>Работник</strong>, заключили настоящий трудовой договор (далее — <strong>Договор</strong>) о нижеследующем:</p></td><td><p class="preamble-label"><strong>Қазақша:</strong></p><p class="preamble-text">Жұмыс беруші – «{{employerShortName}}» ЖК, {{directorNameKz}}, бұдан әрі – <strong>Жұмыс беруші</strong>, бір тараптан, азамат(-ша) <strong>{{employeeFullNameKz}}</strong> жеке куәлік/паспорт № {{idCardNumber}}, {{idCardIssueDate}} ж. {{idCardIssuerKz}} берген, ЖСН {{employeeIIN}}, бұдан әрі – <strong>Жұмысшы</strong>, осы еңбек шартын (бұдан әрі – <strong>Шарт</strong>) төмендегідей жасасты:</p></td></tr></table>
+<table class="preamble-table"><tr><td><p class="preamble-text">Работодатель ИП «{{employerShortName}}», {{directorNameRu}}, именуемая в дальнейшем — <strong>Работодатель</strong>, с одной стороны, и гражданин(-ка) <strong>{{employeeFullNameRu}}</strong>, удостоверение личности/паспорт № {{idCardNumber}}, выдано {{idCardIssueDate}} {{idCardIssuerRu}}, ИИН {{employeeIIN}}, именуемый в дальнейшем — <strong>Работник</strong>, заключили настоящий трудовой договор (далее — <strong>Договор</strong>) о нижеследующем:</p></td><td><p class="preamble-text">Жұмыс беруші – «{{employerShortName}}» ЖК, {{directorNameKz}}, бұдан әрі – <strong>Жұмыс беруші</strong>, бір тараптан, азамат(-ша) <strong>{{employeeFullNameKz}}</strong> жеке куәлік/паспорт № {{idCardNumber}}, {{idCardIssueDate}} ж. {{idCardIssuerKz}} берген, ЖСН {{employeeIIN}}, бұдан әрі – <strong>Жұмысшы</strong>, осы еңбек шартын (бұдан әрі – <strong>Шарт</strong>) төмендегідей жасасты:</p></td></tr></table>
 <table class="bilingual-table"><tr class="section-title-row"><td><p class="section-title-ru">1. Предмет договора</p></td><td><p class="section-title-kz">1. Шарттың пәні</p></td></tr><tr><td>
 <p class="clause ru">Работодатель предоставляет Работнику работу в должности {{employeePositionRod}}, при выполнении которой Работник исполняет должностные обязанности в соответствии с законодательством Республики Казахстан и актами Работодателя.</p>
 <p class="clause ru">Место выполнения трудовых обязанностей в пункте выдачи заказов адресу: {{workplaceAddressRu}}.</p>
@@ -491,12 +516,11 @@
 <p class="clause kz"><strong>Заңды күші:</strong> Жоғарыда көрсетілген тәсілдермен жіберілген Хабарлама Тараптармен қағаз жеткізгіштегі құжатқа тең деп танылады, толық заңды күшке ие және келісу комиссиясында немесе сотта дауларды шешу кезінде дәлелдеме ретінде пайдаланылуы мүмкін.</p>
 <p class="clause kz"><strong>Тараптардың міндеттері:</strong> Тараптар пайдаланылатын цифрлық жүйелерде авторизация мен сәйкестендіруді қамтамасыз етуге, сондай-ақ өздерінің байланыс деректеріндегі өзгерістер туралы дереу хабарлауға міндетті. Көрсетілген байланыс арналарына қолжетімділіктің болмауына немесе басқа Тарапты хабардар етпестен нөмірдің өзгеруіне байланысты ақпаратты алмау тәуекелі мұндай бұзушылыққа жол берген Тарапқа жүктеледі.</p>
 <p class="clause kz">Осы Шартқа қол қою арқылы (оның ішінде цифрлық жүйеде ЭЦҚ қою жолымен) Қызметкер Жұмыс берушіге өзінің дербес деректерін жинауға және өңдеуге (оның ішінде трансшекаралық беру және үшінші тұлғаларға беру, жинақтау, сақтау, өзгерту, толықтыру, пайдалану, тарату, иесіздендіру, бұғаттау және жою) қағаз жеткізгіштерде де, сондай-ақ Жұмыс берушінің цифрлық жүйелеріндегі электрондық форматта да сөзсіз, ерікті және кері қайтарылмайтын келісімін береді. Жұмыс беруші шарт туралы және оған енгізілген өзгерістер туралы деректерді бірыңғай есепке алу жүйесіне енгізуге уәкілетті және құқылы.</p>
-<p class="clause kz">Қызметкер {{employerName}} Еңбек тәртібі қағидаларымен танысқанынын растайды, сондай-ақ аталған қағидалардың көшірмесі мына сілтемеде қолжетімді екендігін растайды: {{internalRulesUrl}}.</p></td></tr></table><table class="bilingual-table"><tr class="section-title-row"><td><p class="section-title-ru">14. Подписи сторон</p></td><td><p class="section-title-kz">Тараптардың қолдары</p></td></tr><tr><td>
-<p class="clause no-indent"><strong>Работодатель</strong></p>
+<p class="clause kz">Қызметкер {{employerName}} Еңбек тәртібі қағидаларымен танысқанынын растайды, сондай-ақ аталған қағидалардың көшірмесі мына сілтемеде қолжетімді екендігін растайды: {{internalRulesUrl}}.</p></td></tr></table><table class="quad-table"><tr class="section-title-row"><td colspan="2"><p class="section-title-ru">14. Подписи сторон</p></td><td colspan="2"><p class="section-title-kz">Тараптардың қолдары</p></td></tr><tr><td>
+<p class="clause no-indent"><strong>Работодатель</strong></p></td><td>
 <p class="clause no-indent"><strong>Работник</strong></p></td><td>
-<p class="clause no-indent kz"><strong>Жұмыс беруші</strong></p>
-<p class="clause no-indent kz"><strong>Жұмысшы</strong></p></td></tr></table>
-<table class="bilingual-table"><tr class="section-title-row"><td><p class="section-title-ru">14. Подписи сторон</p></td><td><p class="section-title-kz">Тараптардың қолдары</p></td></tr><tr><td><div class="ru">
+<p class="clause no-indent kz"><strong>Жұмыс беруші</strong></p></td><td>
+<p class="clause no-indent kz"><strong>Жұмысшы</strong></p></td></tr><tr><td><div class="ru">
 <p>{{employerName}}</p>
 <p>Адрес: {{employerAddressRu}}</p>
 <p>Адрес регистрации: {{employerAddressRegRu}}</p>
@@ -505,9 +529,13 @@
 <p>Банк: {{employerBank}}</p>
 <p>{{directorNameShortRu}}</p>
 <p>Директор</p>
-<br/>
+</div></td><td><div class="ru">
 <p>ФИО: {{employeeFullNameRu}}</p>
 <p>ИИН: {{employeeIIN}}</p>
+<p>Адрес: {{employeeAddressResidentRu}}</p>
+<p>Адрес регистрации: {{employeeAddressRegRu}}</p>
+<p>Моб. номер: {{employeePhone}}</p>
+<p>Электронная почта: {{employeeEmail}}</p>
 </div></td><td><div class="kz">
 <p>ЖК «{{employerShortName}}»</p>
 <p>Мекенжай: {{employerAddressKz}}</p>
@@ -517,7 +545,7 @@
 <p>Банк: {{employerBank}}</p>
 <p>{{directorNameShortRu}}</p>
 <p>Директор</p>
-<br/>
+</div></td><td><div class="kz">
 <p>ТАӘ: {{employeeFullNameKz}}</p>
 <p>ЖСН: {{employeeIIN}}</p>
 <p>Тұрғылықты мекенжайы: {{employeeAddressResidentKz}}</p>
@@ -547,7 +575,7 @@
 <div class="doc-title">Приложение № 1 к Трудовому договору / Қосымша № 1 Еңбек шартына</div>
 <div class="doc-subtitle">Договор о полной материальной ответственности / Толық материалдық жауапкершілік туралы шарт</div>
 <div class="doc-subtitle">подписан электронной цифровой подписью сторон {{contractDateDay}} {{contractDateMonthRu}} {{contractDateYear}} года / Тараптар {{contractDateYear}} жылғы {{contractDateDay}} {{contractDateMonthKzLoc}} электрондық цифрлық қолтаңбамен қол қойды.</div>
-<table class="bilingual-table"><tr><td><p class="clause ru">{{employerName}}, именуемое в дальнейшем «Работодатель», в лице {{directorNameRod}}, с одной стороны, и гражданин (-ка) Республики Казахстан {{employeeFullNameRu}}, именуемый (-ая) в дальнейшем «Работник», с другой стороны, далее совместно именуемые Стороны, в целях обеспечения сохранности материальных ценностей, принадлежащих Работодателю, заключили настоящий Договор о полной материальной ответственности (далее - Договор) о нижеследующем:</p></td><td><p class="clause kz">«{{employerShortName}}» ЖК, бұдан әрі «Жұмыс беруші» деп аталатын, атынан {{directorNameKz}}, бір тараптан, Қазақстан Республикасының азаматы {{employeeFullNameRu}}, бұдан әрі «Жұмысшы» деп аталатын, екінші тараптан, әрі қарай бірлесіп «Тараптар» деп аталатын, Жұмыс берушіге тиесілі материалдық құндылықтардың сақталуын қамтамасыз ету мақсатында осы Толық материалдық жауапкершілік туралы шартты (бұдан әрі - Шарт) төмендегідей етіп жасасты:</p></td></tr></table><table class="bilingual-table"><tr><td><li class="ru">1. Работник, занимающий у Работодателя на основании Трудового договора № {{contractNumber}} от «{{contractDateDay}}» {{contractDateMonthRu}} {{contractDateYear}} г. (далее - Трудовой договор) должность {{employeePositionRu}}  и выполняющий работу, непосредственно связанную с приемкой, передачей, хранением, обработкой, продажей (отпуском), перевозкой или применением в процессе выполнения своих трудовых обязанностей товарно-материальных ценностей, принадлежащих Работодателю и получаемых Работником по накладной, акту приема-передачи, расходному кассовому ордеру или под отчет по доверенности (далее - «Материальные ценности»), а также в случаях, когда материальная ответственность работника, занимающего, определенную должность, предусмотрена законодательством РК, принимает на себя полную материальную ответственность за не обеспечение сохранности переданных ему Работодателем Материальных ценностей. Обязанности Работника по обеспечению сохранности материальных ценностей прекращаются с момента возврата Материальных ценностей уполномоченному представителю Работодателя по акту приема-передачи.</li>
+<table class="bilingual-table"><tr><td><p class="clause ru">{{employerName}}, именуемое в дальнейшем «Работодатель», в лице {{directorNameRod}}, с одной стороны, и гражданин (-ка) Республики Казахстан {{employeeFullNameRu}}, именуемый (-ая) в дальнейшем «Работник», с другой стороны, далее совместно именуемые Стороны, в целях обеспечения сохранности материальных ценностей, принадлежащих Работодателю, заключили настоящий Договор о полной материальной ответственности (далее - Договор) о нижеследующем:</p></td><td><p class="clause kz">«{{employerShortName}}» ЖК, бұдан әрі «Жұмыс беруші» деп аталатын, атынан {{directorNameKz}}, бір тараптан, Қазақстан Республикасының азаматы {{employeeFullNameKz}}, бұдан әрі «Жұмысшы» деп аталатын, екінші тараптан, әрі қарай бірлесіп «Тараптар» деп аталатын, Жұмыс берушіге тиесілі материалдық құндылықтардың сақталуын қамтамасыз ету мақсатында осы Толық материалдық жауапкершілік туралы шартты (бұдан әрі - Шарт) төмендегідей етіп жасасты:</p></td></tr></table><table class="bilingual-table"><tr><td><li class="ru">1. Работник, занимающий у Работодателя на основании Трудового договора № {{contractNumber}} от «{{contractDateDay}}» {{contractDateMonthRu}} {{contractDateYear}} г. (далее - Трудовой договор) должность {{employeePositionRu}}  и выполняющий работу, непосредственно связанную с приемкой, передачей, хранением, обработкой, продажей (отпуском), перевозкой или применением в процессе выполнения своих трудовых обязанностей товарно-материальных ценностей, принадлежащих Работодателю и получаемых Работником по накладной, акту приема-передачи, расходному кассовому ордеру или под отчет по доверенности (далее - «Материальные ценности»), а также в случаях, когда материальная ответственность работника, занимающего, определенную должность, предусмотрена законодательством РК, принимает на себя полную материальную ответственность за не обеспечение сохранности переданных ему Работодателем Материальных ценностей. Обязанности Работника по обеспечению сохранности материальных ценностей прекращаются с момента возврата Материальных ценностей уполномоченному представителю Работодателя по акту приема-передачи.</li>
 <li class="ru">2. На основании п. 1 настоящего Договора Работник обязуется:
     <p class="clause ru">• бережно относиться к Материальным ценностям и принимать меры к предотвращению причинения убытков Работодателю в связи с утратой или повреждением Материальных ценностей;</p>
 <p class="clause ru">• своевременно сообщать Работодателю обо всех обстоятельствах, угрожающих обеспечению сохранности вверенных ему Материальных ценностей;</p>
@@ -587,11 +615,43 @@
 <p class="clause kz">4.7. Егер Материалдық құндылықтардың жоғалуы немесе зақымдануы Қызметкердің кінәсінен болмаса, ол материалдық жауапкершілік көтермейді.</p>
 </li>
 <li class="kz">5. Осы Келісім-шарттың әрекеті Еңбек шартының барлық мерзіміне таралады. Осы Келісім-шарттың әрекеті Еңбек шарты тоқтатылған кезде ғана тоқтатылуы мүмкін, егер Еңбек шартының тоқтатылу сәтінде Қызметкер Работодателю ешқандай залал келтірмеген және Материалдық құндылықтарды толықтай және тиісті жағдайда қайтарып берген болса. Әйтпесе, Қызметкердің Материалдық құндылықтардың жоғалуы немесе зақымдануы салдарынан Работодателю келтірілген залалды өтеу бойынша міндеттемелері толық орындалғанға дейін сақталады.</li>
-<li class="kz">6. Осы Келісім-шарт Word форматында электрондық түрде дайындалып, тараптар www.{{systemName}} онлайн сервисінде электрондық цифрлық қолтаңбамен қол қою арқылы жасалды.</li></td></tr></table><table class="bilingual-table"><tr class="section-title-row"><td><p class="section-title-ru">Подписи сторон</p></td><td><p class="section-title-kz">Тараптардың қолдары</p></td></tr><tr><td>
-<p class="clause no-indent"><strong>Работодатель</strong></p>
+<li class="kz">6. Осы Келісім-шарт Word форматында электрондық түрде дайындалып, тараптар www.{{systemName}} онлайн сервисінде электрондық цифрлық қолтаңбамен қол қою арқылы жасалды.</li></td></tr></table><table class="quad-table"><tr class="section-title-row"><td colspan="2"><p class="section-title-ru">Подписи сторон</p></td><td colspan="2"><p class="section-title-kz">Тараптардың қолдары</p></td></tr><tr><td>
+<p class="clause no-indent"><strong>Работодатель</strong></p></td><td>
 <p class="clause no-indent"><strong>Работник</strong></p></td><td>
-<p class="clause no-indent kz"><strong>Жұмыс беруші</strong></p>
-<p class="clause no-indent kz"><strong>Жұмысшы</strong></p></td></tr></table>
+<p class="clause no-indent kz"><strong>Жұмыс беруші</strong></p></td><td>
+<p class="clause no-indent kz"><strong>Жұмысшы</strong></p></td></tr><tr><td><div class="ru">
+<p>{{employerName}}</p>
+<p>Адрес: {{employerAddressRu}}</p>
+<p>Адрес регистрации: {{employerAddressRegRu}}</p>
+<p>БИК: {{employerBIC}}</p>
+<p>ИИН: {{employerIIN}}</p>
+<p>Банк: {{employerBank}}</p>
+<p>{{directorNameShortRu}}</p>
+<p>Директор</p>
+</div></td><td><div class="ru">
+<p>ФИО: {{employeeFullNameRu}}</p>
+<p>ИИН: {{employeeIIN}}</p>
+<p>Адрес: {{employeeAddressResidentRu}}</p>
+<p>Адрес регистрации: {{employeeAddressRegRu}}</p>
+<p>Моб. номер: {{employeePhone}}</p>
+<p>Электронная почта: {{employeeEmail}}</p>
+</div></td><td><div class="kz">
+<p>ЖК «{{employerShortName}}»</p>
+<p>Мекенжай: {{employerAddressKz}}</p>
+<p>Тіркеу мекенжайы: {{employerAddressRegKz}}</p>
+<p>БИК: {{employerBIC}}</p>
+<p>ЖСН: {{employerIIN}}</p>
+<p>Банк: {{employerBank}}</p>
+<p>{{directorNameShortRu}}</p>
+<p>Директор</p>
+</div></td><td><div class="kz">
+<p>ТАӘ: {{employeeFullNameKz}}</p>
+<p>ЖСН: {{employeeIIN}}</p>
+<p>Тұрғылықты мекенжайы: {{employeeAddressResidentKz}}</p>
+<p>Тіркеу мекенжайы: {{employeeAddressRegKz}}</p>
+<p>Ұялы телефон: {{employeePhone}}</p>
+<p>Электрондық пошта: {{employeeEmail}}</p>
+</div></td></tr></table>
 
 <p class="clause ru">Настоящим подтверждаю подписание и заключение настоящего Договора о полной материальной ответственности своим ЭЦП при подписании Трудового договора</p>
 <p class="clause kz">Осы арқылы Еңбек шартын қол қою кезінде өзімнің ЭЦҚ-ммен толық материалдық жауапкершілік туралы осы Шартқа қол қойғанымды және оны жасасқанымды растаймын.</p>
@@ -705,27 +765,91 @@
 <li class="kz">4.3. Шарт, сондай-ақ Шартты орындауға байланысты туындайтын барлық құқықтық қатынастар Қазақстан Республикасының заңнамасына сәйкес реттеледі және түсіндіріледі.</li>
 <li class="kz">4.4. Дауды сотқа дейін реттеу Қазақстан Республикасының заңнамасының талаптарына сәйкес жүзеге асырылады.</li>
 <li class="kz">4.5. Шарт орыс тілінде жасалып, Жұмыс берушімен бекітіледі және оның талаптары барлық Қызметкерлерге бірдей және тең дәрежеде қолданылады.</li>
-<li class="kz">4.6. Осы Шарт электрондық нысанда Word форматында жасалып, тараптармен www.{{systemName}} онлайн сервисінде электрондық цифрлық қолтаңбалар арқылы жасалды.</li></td></tr></table><table class="bilingual-table"><tr class="section-title-row"><td><p class="section-title-ru">Подписи сторон</p></td><td><p class="section-title-kz">Тараптардың қолдары</p></td></tr><tr><td>
-<p class="clause no-indent"><strong>Работодатель</strong></p>
+<li class="kz">4.6. Осы Шарт электрондық нысанда Word форматында жасалып, тараптармен www.{{systemName}} онлайн сервисінде электрондық цифрлық қолтаңбалар арқылы жасалды.</li></td></tr></table><table class="quad-table"><tr class="section-title-row"><td colspan="2"><p class="section-title-ru">Подписи сторон</p></td><td colspan="2"><p class="section-title-kz">Тараптардың қолдары</p></td></tr><tr><td>
+<p class="clause no-indent"><strong>Работодатель</strong></p></td><td>
 <p class="clause no-indent"><strong>Работник</strong></p></td><td>
-<p class="clause no-indent kz"><strong>Жұмыс беруші</strong></p>
-<p class="clause no-indent kz"><strong>Жұмысшы</strong></p></td></tr></table>
+<p class="clause no-indent kz"><strong>Жұмыс беруші</strong></p></td><td>
+<p class="clause no-indent kz"><strong>Жұмысшы</strong></p></td></tr><tr><td><div class="ru">
+<p>{{employerName}}</p>
+<p>Адрес: {{employerAddressRu}}</p>
+<p>Адрес регистрации: {{employerAddressRegRu}}</p>
+<p>БИК: {{employerBIC}}</p>
+<p>ИИН: {{employerIIN}}</p>
+<p>Банк: {{employerBank}}</p>
+<p>{{directorNameShortRu}}</p>
+<p>Директор</p>
+</div></td><td><div class="ru">
+<p>ФИО: {{employeeFullNameRu}}</p>
+<p>ИИН: {{employeeIIN}}</p>
+<p>Адрес: {{employeeAddressResidentRu}}</p>
+<p>Адрес регистрации: {{employeeAddressRegRu}}</p>
+<p>Моб. номер: {{employeePhone}}</p>
+<p>Электронная почта: {{employeeEmail}}</p>
+</div></td><td><div class="kz">
+<p>ЖК «{{employerShortName}}»</p>
+<p>Мекенжай: {{employerAddressKz}}</p>
+<p>Тіркеу мекенжайы: {{employerAddressRegKz}}</p>
+<p>БИК: {{employerBIC}}</p>
+<p>ЖСН: {{employerIIN}}</p>
+<p>Банк: {{employerBank}}</p>
+<p>{{directorNameShortRu}}</p>
+<p>Директор</p>
+</div></td><td><div class="kz">
+<p>ТАӘ: {{employeeFullNameKz}}</p>
+<p>ЖСН: {{employeeIIN}}</p>
+<p>Тұрғылықты мекенжайы: {{employeeAddressResidentKz}}</p>
+<p>Тіркеу мекенжайы: {{employeeAddressRegKz}}</p>
+<p>Ұялы телефон: {{employeePhone}}</p>
+<p>Электрондық пошта: {{employeeEmail}}</p>
+</div></td></tr></table>
 
 <div class="page-break"></div>
 <div class="doc-title">Приложение № 3 к Трудовому договору / Еңбек шартына № 3 қосымша</div>
 <div class="doc-subtitle">Соглашение о присоединении к договору коллективной (солидарной) материальной ответственности / Ұжымдық (бірлескен) материалдық жауапкершілік туралы шартқа қосылу туралы келісім</div>
 <div class="doc-subtitle">подписан электронной цифровой подписью сторон {{contractDateDay}} {{contractDateMonthRu}} {{contractDateYear}} года / тараптардың электрондық цифрлық қолтаңбасымен {{contractDateYear}} жылғы {{contractDateDay}} {{contractDateMonthKzLoc}} қол қойылды</div>
-<table class="bilingual-table"><tr><td><p class="clause ru">{{employerName}}, {{directorNameRu}}, с одной стороны, и в лице работника ФИО {{employeeFullNameRu}}, (далее – «Работник»), работником Товарищества, с другой стороны, далее совместно именуемые «Стороны», заключили настоящее соглашение (далее – Соглашение) о нижеследующем:</p></td><td><p class="clause kz">«{{employerShortName}}» жеке кәсіпкері, {{directorNameKz}}, бір тараптан, және Қызметкер – {{employeeFullNameRu}}, екінші тараптан, бұдан әрі бірлесіп «Тараптар» деп аталатындар, осы келісімді (бұдан әрі - «Келісім») төмендегілер туралы жасасты:</p></td></tr></table><p class="clause ru">Работник присоединяется к договору коллективной (солидарной) материальной ответственности от {{contractDateDay}} {{contractDateMonthRu}} {{contractDateYear}} года (далее - Договор).  Работник подтверждает, что ознакомился с Договором, понимает его текст, выражает свое согласие с ним и обязуется выполнять обязательства и условия Договора в полном объеме;</p>
+<table class="bilingual-table"><tr><td><p class="clause ru">{{employerName}}, {{directorNameRu}}, с одной стороны, и {{employeeFullNameRu}}, (далее – «Работник»), с другой стороны, далее совместно именуемые «Стороны», заключили настоящее соглашение (далее – Соглашение) о нижеследующем:</p></td><td><p class="clause kz">«{{employerShortName}}» жеке кәсіпкері, {{directorNameKz}}, бір тараптан, және Қызметкер – {{employeeFullNameKz}}, екінші тараптан, бұдан әрі бірлесіп «Тараптар» деп аталатындар, осы келісімді (бұдан әрі - «Келісім») төмендегілер туралы жасасты:</p></td></tr></table><p class="clause ru">Работник присоединяется к договору коллективной (солидарной) материальной ответственности от {{contractDateDay}} {{contractDateMonthRu}} {{contractDateYear}} года (далее - Договор).  Работник подтверждает, что ознакомился с Договором, понимает его текст, выражает свое согласие с ним и обязуется выполнять обязательства и условия Договора в полном объеме;</p>
 <table class="bilingual-table"><tr><td><li class="ru">3. Настоящее Соглашение вступает в силу с даты, указанной в его преамбуле и является неотъемлемой частью Договора;</li>
 <li class="ru">4. Настоящее Соглашение составлен в электронной форме в Word и заключен сторонами путем подписания электронными цифровыми подписями в онлайн сервисе www.{{systemName}}.</li>
 </td><td><li class="kz">1. Қызметкер {{contractDateYear}} жылғы {{contractDateDay}} {{contractDateMonthKzLoc}} ұжымдық (бірлескен) материалдық жауапкершілік туралы шартқа (бұдан әрі - Шарт) қосылады. Қызметкер Шартпен танысқанын, оның мәтінін түсінгенін, онымен келісетінін және Шартта көзделген міндеттемелер мен шарттарды толық көлемде орындауға міндеттенетінін растайды.</li>
 <li class="kz">2. Осы Келісімнің кіріспесінде көрсетілген күннен бастап Шарттың барлық шарттары, құқықтары мен міндеттемелері Тараптардың қатынастарына қолданылады;</li>
 <li class="kz">3. Осы Келісім оның кіріспесінде көрсетілген күннен бастап күшіне енеді және Шарттың ажырамас бөлігі болып табылады;</li>
-<li class="kz">4. Аталған Келісім Word форматындағы электрондық түрде жасалып, тараптармен www.{{systemName}} онлайн сервисінде электрондық цифрлық қолтаңбаларды қою арқылы жасалды.</li></td></tr></table><table class="bilingual-table"><tr class="section-title-row"><td><p class="section-title-ru">Подписи сторон</p></td><td><p class="section-title-kz">Тараптардың қолдары</p></td></tr><tr><td>
-<p class="clause no-indent"><strong>Работодатель</strong></p>
+<li class="kz">4. Аталған Келісім Word форматындағы электрондық түрде жасалып, тараптармен www.{{systemName}} онлайн сервисінде электрондық цифрлық қолтаңбаларды қою арқылы жасалды.</li></td></tr></table><table class="quad-table"><tr class="section-title-row"><td colspan="2"><p class="section-title-ru">Подписи сторон</p></td><td colspan="2"><p class="section-title-kz">Тараптардың қолдары</p></td></tr><tr><td>
+<p class="clause no-indent"><strong>Работодатель</strong></p></td><td>
 <p class="clause no-indent"><strong>Работник</strong></p></td><td>
-<p class="clause no-indent kz"><strong>Жұмыс беруші</strong></p>
-<p class="clause no-indent kz"><strong>Жұмысшы</strong></p></td></tr></table>
+<p class="clause no-indent kz"><strong>Жұмыс беруші</strong></p></td><td>
+<p class="clause no-indent kz"><strong>Жұмысшы</strong></p></td></tr><tr><td><div class="ru">
+<p>{{employerName}}</p>
+<p>Адрес: {{employerAddressRu}}</p>
+<p>Адрес регистрации: {{employerAddressRegRu}}</p>
+<p>БИК: {{employerBIC}}</p>
+<p>ИИН: {{employerIIN}}</p>
+<p>Банк: {{employerBank}}</p>
+<p>{{directorNameShortRu}}</p>
+<p>Директор</p>
+</div></td><td><div class="ru">
+<p>ФИО: {{employeeFullNameRu}}</p>
+<p>ИИН: {{employeeIIN}}</p>
+<p>Адрес: {{employeeAddressResidentRu}}</p>
+<p>Адрес регистрации: {{employeeAddressRegRu}}</p>
+<p>Моб. номер: {{employeePhone}}</p>
+<p>Электронная почта: {{employeeEmail}}</p>
+</div></td><td><div class="kz">
+<p>ЖК «{{employerShortName}}»</p>
+<p>Мекенжай: {{employerAddressKz}}</p>
+<p>Тіркеу мекенжайы: {{employerAddressRegKz}}</p>
+<p>БИК: {{employerBIC}}</p>
+<p>ЖСН: {{employerIIN}}</p>
+<p>Банк: {{employerBank}}</p>
+<p>{{directorNameShortRu}}</p>
+<p>Директор</p>
+</div></td><td><div class="kz">
+<p>ТАӘ: {{employeeFullNameKz}}</p>
+<p>ЖСН: {{employeeIIN}}</p>
+<p>Тұрғылықты мекенжайы: {{employeeAddressResidentKz}}</p>
+<p>Тіркеу мекенжайы: {{employeeAddressRegKz}}</p>
+<p>Ұялы телефон: {{employeePhone}}</p>
+<p>Электрондық пошта: {{employeeEmail}}</p>
+</div></td></tr></table>
 
 </body>
 </html>

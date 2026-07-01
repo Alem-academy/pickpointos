@@ -137,7 +137,14 @@ export function AddEmployeeModal({ isOpen, onClose, onSuccess }: AddEmployeeModa
             });
         } catch (err) {
             console.error('Failed to create employee:', err);
-            setErrors({ general: 'Ошибка при создании сотрудника. Проверьте данные или попробуйте позже.' });
+            let message = 'Ошибка при создании сотрудника. Проверьте данные или попробуйте позже.';
+            if (err && typeof err === 'object' && 'response' in err) {
+                const data = (err as { response?: { data?: { error?: string } } }).response?.data;
+                if (data?.error) message = data.error;
+            } else if (err instanceof Error) {
+                message = err.message;
+            }
+            setErrors({ general: message });
         } finally {
             setIsLoading(false);
         }
